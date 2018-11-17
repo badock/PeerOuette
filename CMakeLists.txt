@@ -34,4 +34,4 @@ endif()
 include_directories(".")
 INCLUDE_DIRECTORIES(${SDL2_INCLUDE_DIR} ${FFMPEG_INCLUDE_DIR})
 
-target_link_libraries(${PROJECT_NAME} ${FFMPEG_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${FFMPEG_LIBRARIES} ${SDL2_LIBRARY})
