@@ -9,7 +9,9 @@ add_executable(GameClientSDL
         src/video/ffmpeg.cpp
         src/video/ffmpeg.h
         src/log/log.c
-        src/log/log.h)
+        src/log/log.h
+        src/queue/queue.c
+        src/queue/queue.h)
 
 INCLUDE(FindPkgConfig)
 

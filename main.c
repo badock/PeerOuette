@@ -10,7 +10,8 @@
 #include <sys/stat.h>
 #include <SDL.h>
 #include <SDL_thread.h>
-#include<stdlib.h>
+#include <stdlib.h>
+#include "src/queue/queue.h"
 
 // compatibility with newer API
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(55,28,1)
@@ -31,6 +32,16 @@ void usleep(unsigned int usec)
 #undef main
 
 char *VIDEO_FILE_PATH = "misc/bigbunny.mp4";
+
+typedef struct StreamingEnvironment {
+    SDL_Thread *frame_extractor_tid;
+    SDL_Thread *frame_encoder_tid;
+    SDL_Thread *frame_decoder_tid;
+    SDL_Thread *frame_output_tid;
+    SimpleQueue *simpleQueue;
+} StreamingEnvironment;
+
+StreamingEnvironment *global_streaming_environment;
 
 void SaveFrame(AVFrame *pFrame, int width, int height, int iFrame) {
     FILE *pFile;
@@ -60,8 +71,43 @@ void SaveFrame(AVFrame *pFrame, int width, int height, int iFrame) {
     fclose(pFile);
 }
 
+int frame_extractor_thread(void *arg) {
+    StreamingEnvironment *se = (StreamingEnvironment*) arg;
+    for(;;) {
+        log_info("frame_extractor_thread: plop");
+        for (int i=0; i<3; i++) {
+            int* ptr_i = malloc(sizeof(int));
+            *ptr_i = i;
+            simple_queue_push(se->simpleQueue, ptr_i);
+        }
+        sleep(1);
+    }
+    return 0;
+}
+
+int frame_output_thread(void *arg) {
+    StreamingEnvironment *se = (StreamingEnvironment*) arg;
+    int i = 0;
+    for(;;) {
+        log_info("frame_output_thread: plop");
+        int* ptr_i = simple_queue_pop(se->simpleQueue);
+        log_info("i: %i -> %i", i, *ptr_i);
+        i++;
+//        sleep(1);
+    }
+    return 0;
+}
+
 int main(int argc, char* argv[]){
     log_info("Simple GameClient has started");
+
+    // Initialize streaming environment and threads
+    log_info("Initializing streaming environment");
+    StreamingEnvironment *se;
+    se = av_mallocz(sizeof(StreamingEnvironment));
+    se->simpleQueue = simple_queue_create();
+    se->frame_extractor_tid = SDL_CreateThread(frame_extractor_thread, "frame_extractor_thread", se);
+    se->frame_output_tid = SDL_CreateThread(frame_output_thread, "frame_output_thread", se);
 
     // [SDL] Initializing SDL library
     log_info("Initializing SDL library");
