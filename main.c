@@ -201,7 +201,7 @@ int frame_output_thread(void *arg) {
         sws_scale(sws_ctx, (uint8_t const * const *) frame_data->pFrame->data,
                   frame_data->pFrame->linesize, 0, se->pCodecCtx->height, pict.data,
                   pict.linesize);
-        SaveFrame(frame_data->pFrame, se->pCodecCtx->width, se->pCodecCtx->height, i, 1);
+//        SaveFrame(frame_data->pFrame, se->pCodecCtx->width, se->pCodecCtx->height, i, 1);
 
         // Put back the pframe in its the pool of pframes
         log_info("READ ====> %i (%i)", frame_data->id, i);
@@ -224,8 +224,6 @@ int frame_output_thread(void *arg) {
 
         usleep(33.333 * 1000);
         i++;
-
-        av_free(frame_data->pFrame);
     }
 
     // [SDL] Cleaning SDL data
@@ -285,9 +283,10 @@ int frame_extractor_thread(void *arg) {
             // Did we get a video frame?
             if(frameFinished) {
                 // Push frame to the output_video thread
+                AVFrame* old_pframe = frame_data->pFrame;
                 frame_data->pFrame = av_frame_clone(frame_data->pFrame);
                 simple_queue_push(se->frame_output_thread_queue, frame_data);
-                SaveFrame(frame_data->pFrame, se->pCodecCtx->width, se->pCodecCtx->height, i, 0);
+                av_free(old_pframe);
                 i++;
             }
         }
