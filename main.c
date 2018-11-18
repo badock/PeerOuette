@@ -23,7 +23,7 @@
 #include <Windows.h>
 void usleep(unsigned int usec)
 {
-	Sleep(500);
+	Sleep(usec / 1000);
 }
 #else
 #include <unistd.h>
@@ -102,7 +102,11 @@ void SaveFrame(AVFrame *pFrame, int width, int height, int iFrame, int debug) {
     // Ensure tmp folder exists
     struct stat st = {0};
     if (stat("tmp", &st) == -1) {
+        #if defined(WIN32) && __MINGW32__
+        mkdir("tmp");
+        # else
         mkdir("tmp", 0700);
+        #endif
     }
 
     // Open file
