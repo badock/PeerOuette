@@ -50,6 +50,6 @@ add_custom_target(DLLCopyBinaries
 	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/deps/FFmpeg.Nightly/build/native/bin/Win32/swresample-3.dll ${CMAKE_BINARY_DIR}/Debug
 
 )
+add_dependencies(GameClientSDL DLLCopyBinaries)
 endif()
 
-add_dependencies(GameClientSDL DLLCopyBinaries)
