@@ -34,16 +34,67 @@ void usleep(unsigned int usec)
 char *VIDEO_FILE_PATH = "misc/bigbunny.mp4";
 
 typedef struct StreamingEnvironment {
-    SDL_Thread *frame_extractor_tid;
-    SDL_Thread *frame_encoder_tid;
-    SDL_Thread *frame_decoder_tid;
-    SDL_Thread *frame_output_tid;
-    SimpleQueue *simpleQueue;
+    SDL_Thread *frame_extractor_thread;
+    SDL_Thread *frame_encoder_thread;
+    SDL_Thread *frame_decoder_thread;
+    SDL_Thread *frame_output_thread;
+    SimpleQueue * frame_extractor_pframe_pool;
+    SimpleQueue *frame_output_thread_queue;
+    AVCodecContext* pCodecCtx;
+    AVFormatContext *pFormatCtx;
+    SDL_Window *screen;
+    SDL_Renderer *renderer;
+    int videoStream;
+    int initialized;
+    int screen_is_initialized;
+    int finishing;
 } StreamingEnvironment;
+
+typedef struct FrameData {
+    AVFrame *pFrame;
+    AVFrame *pFrameRGB;
+    uint8_t *buffer;
+    int id;
+} FrameData;
 
 StreamingEnvironment *global_streaming_environment;
 
-void SaveFrame(AVFrame *pFrame, int width, int height, int iFrame) {
+FrameData* frame_data_create(StreamingEnvironment* se) {
+    FrameData* frame_data = (FrameData*) malloc(sizeof(FrameData));
+
+    // [FFMPEG] Allocate an AVFrame structure
+    frame_data->pFrameRGB=av_frame_alloc();
+    if(frame_data->pFrameRGB==NULL)
+        return -1;
+
+    // [FFMPEG] Determine required buffer size and allocate buffer
+    int numBytes;
+    numBytes=avpicture_get_size(AV_PIX_FMT_RGB24,
+                                se->pCodecCtx->width,
+                                se->pCodecCtx->height);
+    frame_data->buffer=(uint8_t *)av_malloc(numBytes*sizeof(uint8_t));
+
+    // [FFMPEG] Assign appropriate parts of buffer to image planes in pFrameRGB
+    // Note that pFrameRGB is an AVFrame, but AVFrame is a superset
+    // of AVPicture
+    avpicture_fill((AVPicture *) frame_data->pFrameRGB,
+                   frame_data->buffer,
+                   AV_PIX_FMT_RGB24,
+                   se->pCodecCtx->width,
+                   se->pCodecCtx->height);
+
+    frame_data->pFrame = av_frame_alloc();
+    return frame_data;
+}
+
+FrameData* frame_data_destroy(FrameData* frame_data) {
+    av_frame_free(frame_data->pFrame);
+    av_free(frame_data->buffer);
+    av_free(frame_data->pFrameRGB);
+    free(frame_data);
+}
+
+void SaveFrame(AVFrame *pFrame, int width, int height, int iFrame, int debug) {
     FILE *pFile;
     char szFilename[32];
     int  y;
@@ -55,7 +106,11 @@ void SaveFrame(AVFrame *pFrame, int width, int height, int iFrame) {
     }
 
     // Open file
-    sprintf(szFilename, "tmp/frame%d.ppm", iFrame);
+    if (debug) {
+        sprintf(szFilename, "tmp/frame_%d_debug.ppm", iFrame);
+    } else {
+        sprintf(szFilename, "tmp/frame_%d.ppm", iFrame);
+    }
     pFile=fopen(szFilename, "wb");
     if(pFile==NULL)
         return;
@@ -71,30 +126,176 @@ void SaveFrame(AVFrame *pFrame, int width, int height, int iFrame) {
     fclose(pFile);
 }
 
-int frame_extractor_thread(void *arg) {
+int frame_output_thread(void *arg) {
     StreamingEnvironment *se = (StreamingEnvironment*) arg;
-    for(;;) {
-        log_info("frame_extractor_thread: plop");
-        for (int i=0; i<3; i++) {
-            int* ptr_i = malloc(sizeof(int));
-            *ptr_i = i;
-            simple_queue_push(se->simpleQueue, ptr_i);
-        }
-        sleep(1);
+
+    while(se->initialized != 1) {
+        usleep(50 * 1000);
     }
+
+    // [SDL] Create a YUV overlay
+    log_info("Creating a YUV overlay");
+    SDL_Texture *texture;
+    struct SwsContext *sws_ctx = NULL;
+
+    texture = SDL_CreateTexture(
+            se->renderer,
+            SDL_PIXELFORMAT_YV12,
+            SDL_TEXTUREACCESS_STREAMING,
+            se->pCodecCtx->width,
+            se->pCodecCtx->height
+    );
+    if (!texture) {
+        fprintf(stderr, "SDL: could not create texture - exiting\n");
+        exit(1);
+    }
+
+    // initialize SWS context for software scaling
+    sws_ctx = sws_getContext(se->pCodecCtx->width,
+                             se->pCodecCtx->height,
+                             se->pCodecCtx->pix_fmt,
+                             se->pCodecCtx->width,
+                             se->pCodecCtx->height,
+                             AV_PIX_FMT_YUV420P,
+                             SWS_BILINEAR,
+                             NULL,
+                             NULL,
+                             NULL);
+
+
+    // [SDL] set up YV12 pixel array (12 bits per pixel)
+    Uint8 *yPlane, *uPlane, *vPlane;
+    size_t yPlaneSz, uvPlaneSz;
+    int uvPitch;
+    yPlaneSz = se->pCodecCtx->width * se->pCodecCtx->height;
+    uvPlaneSz = se->pCodecCtx->width * se->pCodecCtx->height / 4;
+    yPlane = (Uint8*)malloc(yPlaneSz);
+    uPlane = (Uint8*)malloc(uvPlaneSz);
+    vPlane = (Uint8*)malloc(uvPlaneSz);
+    if (!yPlane || !uPlane || !vPlane) {
+        fprintf(stderr, "Could not allocate pixel buffers - exiting\n");
+        exit(1);
+    }
+
+    uvPitch = se->pCodecCtx->width / 2;
+
+    // Screen is ready
+    log_info("[SDL] screen is ready");
+    se->screen_is_initialized = 1;
+
+    int i = 0;
+    while(se->finishing != 1) {
+        log_info("frame_output_thread: %i elements in queue", simple_queue_length(se->frame_output_thread_queue));
+        FrameData* frame_data = simple_queue_pop(se->frame_output_thread_queue);
+
+        // [SDL] Create an AV Picture
+        AVPicture pict;
+        pict.data[0] = yPlane;
+        pict.data[1] = uPlane;
+        pict.data[2] = vPlane;
+        pict.linesize[0] = se->pCodecCtx->width;
+        pict.linesize[1] = uvPitch;
+        pict.linesize[2] = uvPitch;
+
+        // Convert the image into YUV format that SDL uses
+        sws_scale(sws_ctx, (uint8_t const * const *) frame_data->pFrame->data,
+                  frame_data->pFrame->linesize, 0, se->pCodecCtx->height, pict.data,
+                  pict.linesize);
+        SaveFrame(frame_data->pFrame, se->pCodecCtx->width, se->pCodecCtx->height, i, 1);
+
+        // Put back the pframe in its the pool of pframes
+        log_info("READ ====> %i (%i)", frame_data->id, i);
+        simple_queue_push(se->frame_extractor_pframe_pool, frame_data);
+
+        // [SDL] update SDL overlay
+        SDL_UpdateYUVTexture(
+                texture,
+                NULL,
+                yPlane,
+                se->pCodecCtx->width,
+                uPlane,
+                uvPitch,
+                vPlane,
+                uvPitch
+        );
+        SDL_RenderClear(se->renderer);
+        SDL_RenderCopy(se->renderer, texture, NULL, NULL);
+        SDL_RenderPresent(se->renderer);
+
+        usleep(33.333 * 1000);
+        i++;
+
+        av_free(frame_data->pFrame);
+    }
+
+    // [SDL] Cleaning SDL data
+    log_info("Cleaning SDL data");
+    SDL_DestroyTexture(texture);
+    SDL_DestroyRenderer(se->renderer);
+    SDL_DestroyWindow(se->screen);
+
+    // [SDL] Free the YUV image
+    log_info("Free the YUV image");
+    free(yPlane);
+    free(uPlane);
+    free(vPlane);
+
     return 0;
 }
 
-int frame_output_thread(void *arg) {
+int frame_extractor_thread(void *arg) {
     StreamingEnvironment *se = (StreamingEnvironment*) arg;
-    int i = 0;
-    for(;;) {
-        log_info("frame_output_thread: plop");
-        int* ptr_i = simple_queue_pop(se->simpleQueue);
-        log_info("i: %i -> %i", i, *ptr_i);
-        i++;
-//        sleep(1);
+
+    while(!se->initialized) {
+        usleep(30 * 1000);
     }
+
+    // [FFMPEG] Initialize frame pool
+    for (int i=0; i<500; i++) {
+        FrameData* frame_data = frame_data_create(se);
+        frame_data->id = i;
+        simple_queue_push(se->frame_extractor_pframe_pool, frame_data);
+    }
+
+    // Application is ready to read frame and display frames
+    se->initialized = 1;
+
+    // [FFMPEG] Reading frames
+    log_info("Reading frames");
+    SDL_Event event;
+    AVPacket packet;
+    int i=0;
+
+    while(! se->screen_is_initialized) {
+        usleep(30 * 1000);
+    }
+
+    int frameFinished;
+    while(av_read_frame(se->pFormatCtx, &packet)>=0) {
+        // Is this a packet from the video stream?
+        if(packet.stream_index == se->videoStream) {
+            // [FFMPEG] Allocate video frame
+            log_info("frame_extractor_pframe_pool: %i elements in queue", simple_queue_length(se->frame_extractor_pframe_pool));
+            FrameData* frame_data = simple_queue_pop(se->frame_extractor_pframe_pool);
+            log_info("WRITE ====> %i (%i)", frame_data->id, i);
+
+            // Decode video frame
+            avcodec_decode_video2(se->pCodecCtx, frame_data->pFrame, &frameFinished, &packet);
+
+            // Did we get a video frame?
+            if(frameFinished) {
+                // Push frame to the output_video thread
+                frame_data->pFrame = av_frame_clone(frame_data->pFrame);
+                simple_queue_push(se->frame_output_thread_queue, frame_data);
+                SaveFrame(frame_data->pFrame, se->pCodecCtx->width, se->pCodecCtx->height, i, 0);
+                i++;
+            }
+        }
+
+        // Free the packet that was allocated by av_read_frame
+        av_free_packet(&packet);
+    }
+
     return 0;
 }
 
@@ -105,84 +306,74 @@ int main(int argc, char* argv[]){
     log_info("Initializing streaming environment");
     StreamingEnvironment *se;
     se = av_mallocz(sizeof(StreamingEnvironment));
-    se->simpleQueue = simple_queue_create();
-    se->frame_extractor_tid = SDL_CreateThread(frame_extractor_thread, "frame_extractor_thread", se);
-    se->frame_output_tid = SDL_CreateThread(frame_output_thread, "frame_output_thread", se);
-
-    // [SDL] Initializing SDL library
-    log_info("Initializing SDL library");
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER)) {
-        fprintf(stderr, "Could not initialize SDL - %s\n", SDL_GetError());
-        exit(1);
-    }
+    se->frame_extractor_pframe_pool = simple_queue_create();
+    se->frame_output_thread_queue = simple_queue_create();
+    se->frame_extractor_thread = SDL_CreateThread(frame_extractor_thread, "frame_extractor_thread", se);
+    se->frame_output_thread = SDL_CreateThread(frame_output_thread, "frame_output_thread", se);
+    se->pCodecCtx = NULL;
+    se->finishing = 0;
+    se->initialized = 0;
+    se->screen_is_initialized = 0;
 
     // [FFMPEG] Registering file formats and codecs
     log_info("Registering file formats and codecs");
     av_register_all();
-    AVFormatContext *pFormatCtx = NULL;
+//    AVFormatContext *pFormatCtx = NULL;
 
     // [FFMPEG] Open video file
     log_info("Open video file: %s", VIDEO_FILE_PATH);
-    if (avformat_open_input(&pFormatCtx, VIDEO_FILE_PATH, NULL, NULL) != 0 ) {
+    if (avformat_open_input(&se->pFormatCtx, VIDEO_FILE_PATH, NULL, NULL) != 0 ) {
         log_error("Could not open video file: %s", VIDEO_FILE_PATH);
         return -1;
     }
 
     // [FFMPEG] Retrieve stream information
     log_info("Retrieve stream information");
-    if(avformat_find_stream_info(pFormatCtx, NULL) < 0){
+    if(avformat_find_stream_info(se->pFormatCtx, NULL) < 0){
         log_error("Couldn't find stream information");
         return -1;
     }
 
     // [FFMPEG] Dump information about file onto standard error
     log_info("Dump information about file");
-    av_dump_format(pFormatCtx, 0, VIDEO_FILE_PATH, 0);
+    av_dump_format(se->pFormatCtx, 0, VIDEO_FILE_PATH, 0);
 
-    int i, videoStream;
+    int i;
     AVCodecContext *pCodecCtxOrig = NULL;
-    AVCodecContext *pCodecCtx = NULL;
+    se->pCodecCtx = NULL;
 
     // [FFMPEG] Find the first video stream
     log_info("Find the first video stream");
-    videoStream=-1;
-    for(i=0; i<pFormatCtx->nb_streams; i++)
-        if(pFormatCtx->streams[i]->codec->codec_type==AVMEDIA_TYPE_VIDEO) {
-            videoStream=i;
+    se->videoStream=-1;
+    for(i=0; i<se->pFormatCtx->nb_streams; i++)
+        if(se->pFormatCtx->streams[i]->codec->codec_type==AVMEDIA_TYPE_VIDEO) {
+            se->videoStream=i;
             break;
         }
-    if(videoStream==-1){
+    if(se->videoStream==-1){
         log_error("Didn't find a video stream");
         return -1;
     }
 
     // [FFMPEG] Get a pointer to the codec context for the video stream
-    pCodecCtx = pFormatCtx->streams[videoStream]->codec;
+    se->pCodecCtx = se->pFormatCtx->streams[se->videoStream]->codec;
 
     AVCodec *pCodec = NULL;
 
     // [FFMPEG] Find the decoder for the video stream
     log_info("Find the decoder for the video stream");
 
-    pCodec=avcodec_find_decoder(pCodecCtx->codec_id);
+    pCodec=avcodec_find_decoder(se->pCodecCtx->codec_id);
     if (pCodec==NULL) {
         log_error("Unsupported codec!\n");
         return -1; // Codec not found
     }
 
-//    // Copy context
-//    log_info("Copy context");
-//    pCodecCtx = avcodec_alloc_context3(pCodec);
-//    if (avcodec_copy_context(pCodecCtx, pCodecCtxOrig) != 0) {
-//        log_error("Couldn't copy codec context");
-//        return -1; // Error copying codec context
-//    }
-
-    // Open codec
-    log_info("Open codec");
-    if (avcodec_open2(pCodecCtx, pCodec, NULL) < 0) {
-        log_error("Could not open codec");
-        return -1;
+    // [SDL] Initializing SDL library
+    log_info("Initializing SDL library");
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER)) {
+        fprintf(stderr, "Could not initialize SDL - %s\n", SDL_GetError());
+        exit(1);
     }
 
     // [SDL] Creating a display
@@ -195,176 +386,47 @@ int main(int argc, char* argv[]){
             "FFmpeg Tutorial",
             SDL_WINDOWPOS_UNDEFINED,
             SDL_WINDOWPOS_UNDEFINED,
-            pCodecCtx->width,
-            pCodecCtx->height,
+            se->pCodecCtx->width,
+            se->pCodecCtx->height,
             screen_flags
     );
     SDL_ShowWindow(screen);
+    se->screen = screen;
 
-    if (!screen) {
+    if (!se->screen) {
         fprintf(stderr, "SDL: could not create window - exiting\n");
         exit(1);
     }
 
-    SDL_Renderer *renderer;
-    renderer = SDL_CreateRenderer(screen, -1, 0);
-    if (!renderer) {
+    se->renderer = SDL_CreateRenderer(se->screen, -1, 0);
+    if (!se->renderer) {
         fprintf(stderr, "SDL: could not create renderer - exiting\n");
         exit(1);
     }
 
-
-    // [SDL] Create a YUV overlay
-    log_info("Creating a YUV overlay");
-    SDL_Texture *texture;
-    struct SwsContext *sws_ctx = NULL;
-
-    texture = SDL_CreateTexture(
-            renderer,
-            SDL_PIXELFORMAT_YV12,
-            SDL_TEXTUREACCESS_STREAMING,
-            pCodecCtx->width,
-            pCodecCtx->height
-    );
-    if (!texture) {
-        fprintf(stderr, "SDL: could not create texture - exiting\n");
-        exit(1);
-    }
-
-    // initialize SWS context for software scaling
-    sws_ctx = sws_getContext(pCodecCtx->width, pCodecCtx->height,
-                             pCodecCtx->pix_fmt, pCodecCtx->width, pCodecCtx->height,
-                             AV_PIX_FMT_YUV420P,
-                             SWS_BILINEAR,
-                             NULL,
-                             NULL,
-                             NULL);
-
-    // [FFMPEG] Allocate video frame
-    log_info("Allocate video frame");
-    AVFrame *pFrame = NULL;
-    pFrame=av_frame_alloc();
-
-    // [FFMPEG] Allocate an AVFrame structure
-    log_info("Allocate an AVFrame structure");
-    AVFrame *pFrameRGB = NULL;
-    pFrameRGB=av_frame_alloc();
-    if(pFrameRGB==NULL)
+    // Open codec
+    log_info("Open codec");
+    if (avcodec_open2(se->pCodecCtx, pCodec, NULL) < 0) {
+        log_error("Could not open codec");
         return -1;
-
-    // [FFMPEG] Determine required buffer size and allocate buffer
-    log_info("Determine required buffer size and allocate buffer");
-    uint8_t *buffer = NULL;
-    int numBytes;
-    numBytes=avpicture_get_size(AV_PIX_FMT_RGB24, pCodecCtx->width,
-                                pCodecCtx->height);
-    buffer=(uint8_t *)av_malloc(numBytes*sizeof(uint8_t));
-
-    // [FFMPEG] Assign appropriate parts of buffer to image planes in pFrameRGB
-    // Note that pFrameRGB is an AVFrame, but AVFrame is a superset
-    // of AVPicture
-    log_info("Assign appropriate parts of buffer to image planes in pFrameRGB");
-    avpicture_fill((AVPicture *)pFrameRGB, buffer, AV_PIX_FMT_RGB24,
-                   pCodecCtx->width, pCodecCtx->height);
-
-//    // [FFMPEG] Initialize SWS context for software scaling
-//    log_info("Initialize SWS context for software scaling");
-////    struct SwsContext *sws_ctx = NULL;
-//    sws_ctx = sws_getContext(pCodecCtx->width,
-//                             pCodecCtx->height,
-//                             pCodecCtx->pix_fmt,
-//                             pCodecCtx->width,
-//                             pCodecCtx->height,
-//                             AV_PIX_FMT_RGB24,
-//                             SWS_BILINEAR,
-//                             NULL,
-//                             NULL,
-//                             NULL
-//    );
-
-
-    // [SDL] set up YV12 pixel array (12 bits per pixel)
-    Uint8 *yPlane, *uPlane, *vPlane;
-    size_t yPlaneSz, uvPlaneSz;
-    int uvPitch;
-    yPlaneSz = pCodecCtx->width * pCodecCtx->height;
-    uvPlaneSz = pCodecCtx->width * pCodecCtx->height / 4;
-    yPlane = (Uint8*)malloc(yPlaneSz);
-    uPlane = (Uint8*)malloc(uvPlaneSz);
-    vPlane = (Uint8*)malloc(uvPlaneSz);
-    if (!yPlane || !uPlane || !vPlane) {
-        fprintf(stderr, "Could not allocate pixel buffers - exiting\n");
-        exit(1);
     }
 
-    // [FFMPEG] Reading frames
-    log_info("Reading frames");
-    int frameFinished;
+    // Application is ready to read frame and display frames
+    se->initialized = 1;
+
     SDL_Event event;
-    AVPacket packet;
-    i=0;
-    uvPitch = pCodecCtx->width / 2;
-    while(av_read_frame(pFormatCtx, &packet)>=0) {
-//        SDL_PumpEvents();
-        // Is this a packet from the video stream?
-        if(packet.stream_index==videoStream) {
-            // Decode video frame
-            avcodec_decode_video2(pCodecCtx, pFrame, &frameFinished, &packet);
 
-            // Did we get a video frame?
-            if(frameFinished) {
-                // [SDL] Create an AV Picture
-                AVPicture pict;
-                pict.data[0] = yPlane;
-                pict.data[1] = uPlane;
-                pict.data[2] = vPlane;
-                pict.linesize[0] = pCodecCtx->width;
-                pict.linesize[1] = uvPitch;
-                pict.linesize[2] = uvPitch;
+    while(! se->screen_is_initialized) {
+        usleep(30 * 1000);
+    }
 
-                // Convert the image into YUV format that SDL uses
-                sws_scale(sws_ctx, (uint8_t const * const *) pFrame->data,
-                          pFrame->linesize, 0, pCodecCtx->height, pict.data,
-                          pict.linesize);
-
-                // Save the frame to disk
-                ++i;
-//                SaveFrame(pFrameRGB, pCodecCtx->width,
-//                          pCodecCtx->height, i);
-
-
-                // [SDL] update SDL overlay
-                SDL_UpdateYUVTexture(
-                        texture,
-                        NULL,
-                        yPlane,
-                        pCodecCtx->width,
-                        uPlane,
-                        uvPitch,
-                        vPlane,
-                        uvPitch
-                );
-                SDL_RenderClear(renderer);
-                SDL_RenderCopy(renderer, texture, NULL, NULL);
-                SDL_RenderPresent(renderer);
-
-                usleep(33.333 * 1000);
-            }
-
-        }
-
-        // Free the packet that was allocated by av_read_frame
-        av_free_packet(&packet);
-
+    while(!se->finishing) {
         // [SDL] handle events
         while (SDL_PollEvent(&event)) {
             switch (event.type) {
                 case SDL_QUIT:
-                    SDL_DestroyTexture(texture);
-                    SDL_DestroyRenderer(renderer);
-                    SDL_DestroyWindow(screen);
+                    se->finishing = 1;
                     SDL_Quit();
-                    exit(0);
                     break;
                 default:
                     break;
@@ -372,30 +434,20 @@ int main(int argc, char* argv[]){
         }
     }
 
-    // [SDL] Free the YUV image
-    log_info("Free the YUV image");
-    av_frame_free(&pFrame);
-    free(yPlane);
-    free(uPlane);
-    free(vPlane);
-
     // [FFMPEG] Free the RGB image
-    log_info("Free the RGB image");
-    av_free(buffer);
-    av_free(pFrameRGB);
-
-    // [FFMPEG] Free the YUV frame
-    log_info("Free the YUV frame");
-    av_free(pFrame);
+    while (! simple_queue_is_empty(se->frame_extractor_pframe_pool)) {
+        FrameData* frame_data = simple_queue_pop(se->frame_extractor_pframe_pool);
+        frame_data_destroy(frame_data);
+    }
 
     // [FFMPEG] Close the codecs
     log_info("Close the codecs");
-    avcodec_close(pCodecCtx);
+    avcodec_close(se->pCodecCtx);
     avcodec_close(pCodecCtxOrig);
 
     // [FFMPEG] Close the video file
     log_info("Close the video file");
-    avformat_close_input(&pFormatCtx);
+    avformat_close_input(&se->pFormatCtx);
 
     log_info("Simple GameClient is exiting");
 

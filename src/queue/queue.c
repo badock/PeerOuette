@@ -64,5 +64,24 @@ void simple_queue_push(SimpleQueue *simple_queue, void *element) {
     SDL_CondSignal(simple_queue->cond);
     // Release the lock on the queue
     SDL_UnlockMutex(simple_queue->mutex);
-    int i = 0;
+}
+
+int simple_queue_is_empty(SimpleQueue *simple_queue) {
+    return simple_queue->next == NULL;
+}
+
+int simple_queue_length(SimpleQueue *simple_queue) {
+    if (simple_queue->next == NULL) {
+        return 0;
+    } else {
+        // Create an "iterator" on queue nodes, which is initialized to the first node
+        QueueNode* iter_queue_node = simple_queue->next;
+        int length = 1;
+        // We search for the last element of the queue
+        while(iter_queue_node->next_queue_node != NULL) {
+            iter_queue_node = iter_queue_node->next_queue_node;
+            length += 1;
+        }
+        return length;
+    }
 }
