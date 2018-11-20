@@ -11,7 +11,7 @@ add_executable(GameClientSDL
         src/log/log.c
         src/log/log.h
         src/queue/queue.c
-        src/queue/queue.h)
+        src/queue/queue.h src/capture/capture.cpp src/capture/capture.h)
 
 INCLUDE(FindPkgConfig)
 
@@ -36,20 +36,25 @@ endif()
 include_directories(".")
 INCLUDE_DIRECTORIES(${SDL2_INCLUDE_DIR} ${FFMPEG_INCLUDE_DIR})
 
+if(WIN32)
+    find_package (DirectX)
+    INCLUDE_DIRECTORIES(${DirectX_XYZ_INCLUDE_DIR})
+endif()
+
 target_link_libraries(${PROJECT_NAME} ${FFMPEG_LIBRARIES} ${SDL2_LIBRARY})
 
 if(WIN32)
-add_custom_target(DLLCopyBinaries
-	# todo: check if debug and release folder exist
-	# debug version
-	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/deps/sdl2.redist/build/native/bin/Win32/dynamic/SDL2.dll ${CMAKE_BINARY_DIR}/Debug
-	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/deps/FFmpeg.Nightly/build/native/bin/Win32/avcodec-58.dll ${CMAKE_BINARY_DIR}/Debug
-	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/deps/FFmpeg.Nightly/build/native/bin/Win32/swscale-5.dll ${CMAKE_BINARY_DIR}/Debug
-	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/deps/FFmpeg.Nightly/build/native/bin/Win32/avformat-58.dll ${CMAKE_BINARY_DIR}/Debug
-	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/deps/FFmpeg.Nightly/build/native/bin/Win32/avutil-56.dll ${CMAKE_BINARY_DIR}/Debug
-	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/deps/FFmpeg.Nightly/build/native/bin/Win32/swresample-3.dll ${CMAKE_BINARY_DIR}/Debug
+    add_custom_target(DLLCopyBinaries
+        # todo: check if debug and release folder exist
+        # debug version
+        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/deps/sdl2.redist/build/native/bin/Win32/dynamic/SDL2.dll ${CMAKE_BINARY_DIR}/Debug
+        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/deps/FFmpeg.Nightly/build/native/bin/Win32/avcodec-58.dll ${CMAKE_BINARY_DIR}/Debug
+        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/deps/FFmpeg.Nightly/build/native/bin/Win32/swscale-5.dll ${CMAKE_BINARY_DIR}/Debug
+        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/deps/FFmpeg.Nightly/build/native/bin/Win32/avformat-58.dll ${CMAKE_BINARY_DIR}/Debug
+        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/deps/FFmpeg.Nightly/build/native/bin/Win32/avutil-56.dll ${CMAKE_BINARY_DIR}/Debug
+        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/deps/FFmpeg.Nightly/build/native/bin/Win32/swresample-3.dll ${CMAKE_BINARY_DIR}/Debug
 
-)
-add_dependencies(GameClientSDL DLLCopyBinaries)
+    )
+    add_dependencies(GameClientSDL DLLCopyBinaries)
 endif()
 
