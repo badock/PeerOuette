@@ -38,6 +38,9 @@ typedef struct StreamingEnvironment {
     SDL_Thread *frame_encoder_thread;
     SDL_Thread *frame_decoder_thread;
     SDL_Thread *frame_output_thread;
+    #if defined(WIN32)
+    SDL_Thread *gpu_frame_extractor_thread;
+    #endif
     SimpleQueue * frame_extractor_pframe_pool;
     SimpleQueue *frame_output_thread_queue;
     AVCodecContext* pCodecCtx;
@@ -129,6 +132,23 @@ void SaveFrame(AVFrame *pFrame, int width, int height, int iFrame, int debug) {
     // Close file
     fclose(pFile);
 }
+
+#if defined(WIN32)
+int gpu_frame_extractor_thread(void *arg) {
+    StreamingEnvironment *se = (StreamingEnvironment*) arg;
+
+    while(se->initialized != 1) {
+        usleep(50 * 1000);
+    }
+
+    int frameFinished;
+    while(1) {
+        usleep(16 * 1000);
+    }
+
+    return 0;
+}
+#endif
 
 int frame_output_thread(void *arg) {
     StreamingEnvironment *se = (StreamingEnvironment*) arg;
@@ -313,6 +333,9 @@ int main(int argc, char* argv[]){
     se->frame_output_thread_queue = simple_queue_create();
     se->frame_extractor_thread = SDL_CreateThread(frame_extractor_thread, "frame_extractor_thread", se);
     se->frame_output_thread = SDL_CreateThread(frame_output_thread, "frame_output_thread", se);
+    #if defined(WIN32)
+    se->gpu_frame_extractor_thread = SDL_CreateThread(gpu_frame_extractor_thread, "gpu_frame_extractor_thread", se);
+    #endif
     se->pCodecCtx = NULL;
     se->finishing = 0;
     se->initialized = 0;

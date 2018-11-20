@@ -4,16 +4,29 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/CMakeModules)
 project(GameClientSDL)
 set(CMAKE_CXX_STANDARD 11)
 
-add_executable(GameClientSDL
-        main.c
-        src/video/ffmpeg.cpp
-        src/video/ffmpeg.h
-        src/log/log.c
-        src/log/log.h
-        src/queue/queue.c
-        src/queue/queue.h src/capture/capture.cpp src/capture/capture.h)
-
+if(WIN32)
+    add_executable(GameClientSDL
+            main.c
+            src/video/ffmpeg.cpp
+            src/video/ffmpeg.h
+            src/log/log.c
+            src/log/log.h
+            src/queue/queue.c
+            src/queue/queue.h
+            src/capture/capture.cpp
+            src/capture/capture.h)
+else()
+    add_executable(GameClientSDL
+            main.c
+            src/video/ffmpeg.cpp
+            src/video/ffmpeg.h
+            src/log/log.c
+            src/log/log.h
+            src/queue/queue.c
+            src/queue/queue.h)
+endif()
 INCLUDE(FindPkgConfig)
+
 
 if(WIN32)
   set(SDL2_DIR deps/sdl2/build/native)
