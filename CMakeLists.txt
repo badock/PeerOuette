@@ -6,18 +6,22 @@ set(CMAKE_CXX_STANDARD 11)
 
 if(WIN32)
     add_executable(GameClientSDL
-            main.c
+            main.cpp
+            src/streaming/streaming.cpp
+            src/streaming/streaming.h
             src/video/ffmpeg.cpp
             src/video/ffmpeg.h
-            src/log/log.c
+            src/log/log.cpp
             src/log/log.h
-            src/queue/queue.c
+            src/queue/queue.cpp
             src/queue/queue.h
-            src/capture/capture.cpp
-            src/capture/capture.h)
+            src/dxcapture/capture.cpp
+            src/dxcapture/capture.h)
 else()
     add_executable(GameClientSDL
-            main.c
+            main.cpp
+            src/streaming/streaming.cpp
+            src/streaming/streaming.h
             src/video/ffmpeg.cpp
             src/video/ffmpeg.h
             src/log/log.c
@@ -51,10 +55,21 @@ INCLUDE_DIRECTORIES(${SDL2_INCLUDE_DIR} ${FFMPEG_INCLUDE_DIR})
 
 if(WIN32)
     find_package (DirectX)
-    INCLUDE_DIRECTORIES(${DirectX_XYZ_INCLUDE_DIR})
+    if(DirectX11_FOUND)
+        message("Found DirectX libraries")
+        message("DirectX11_INCLUDE_DIRS = ${DirectX11_INCLUDE_DIRS} ")
+        message("DirectX11_LIBRARIES = ${DirectX11_LIBRARIES} ")
+    else()
+        message(FATAL_ERROR "FFMPEG not found")
+    endif()
+    INCLUDE_DIRECTORIES(${DirectX11_INCLUDE_DIRS})
 endif()
 
-target_link_libraries(${PROJECT_NAME} ${FFMPEG_LIBRARIES} ${SDL2_LIBRARY})
+if(WIN32)
+    target_link_libraries(${PROJECT_NAME} ${FFMPEG_LIBRARIES} ${SDL2_LIBRARY} ${DirectX11_LIBRARIES})
+else()
+    target_link_libraries(${PROJECT_NAME} ${FFMPEG_LIBRARIES} ${SDL2_LIBRARY})
+endif()
 
 if(WIN32)
     add_custom_target(DLLCopyBinaries

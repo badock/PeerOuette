@@ -4,6 +4,7 @@ deps
 .vs
 CMakeSettings.json
 cmake-build-debug-visual-studio
+cmake-build-release-mingw/
 
 ## CMAKE
 

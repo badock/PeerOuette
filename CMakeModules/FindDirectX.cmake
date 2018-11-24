@@ -1,125 +1,142 @@
-# - try to find DirectX include directories and libraries
+#-------------------------------------------------------------------
+# This file is part of the CMake build system for OGRE
+#     (Object-oriented Graphics Rendering Engine)
+# For the latest info, see http://www.ogre3d.org/
 #
-# Once done this will define:
-#
-#  DirectX_XYZ_INCLUDE_FOUND - system has the include for the XYZ API
-#  DirectX_XYZ_INCLUDE_DIR   - include directory for the XYZ API
-#
-# Where XYZ can be any of:
-#
-#  DDRAW
-#  D3D
-#  D3D8
-#  D3D9
-#  D3D10
-#  D3D10_1
-#  D3D11
-#  D3D11_1
-#  D3D11_2
-#  D2D1
-#
+# The contents of this file are placed in the public domain. Feel
+# free to make use of it in any way you like.
+#-------------------------------------------------------------------
 
+# -----------------------------------------------------------------------------
+# Find DirectX11 SDK
+# Define:
+# DirectX11_FOUND
+# DirectX11_INCLUDE_DIRS
+# DirectX11_LIBRARIES
 
-include (CheckIncludeFileCXX)
-include (FindPackageMessage)
+if(WIN32) # The only platform it makes sense to check for DirectX11 SDK
+    include(FindPkgMacros)
+    findpkg_begin(DirectX11)
 
+    # Windows Phone
+    if(WINDOWS_PHONE)
+        # Windows Phone 8.1 SDK
+        if(WINDOWS_PHONE AND MSVC12)
+            find_path(DirectX11_INCLUDE_DIR NAMES d3d11.h HINTS "C:/Program Files (x86)/Windows Phone Kits/8.1/include" "C:/Program Files/Windows Phone Kits/8.1/include")
 
-if (WIN32)
+            # Windows Phone 8.0 SDK
+        elseif(WINDOWS_PHONE AND MSVC11)
+            find_path(DirectX11_INCLUDE_DIR NAMES d3d11.h HINTS "C:/Program Files (x86)/Windows Phone Kits/8.0/include" "C:/Program Files/Windows Phone Kits/8.0/include")
 
-    if (CMAKE_SIZEOF_VOID_P EQUAL 8)
-        set (DirectX_ARCHITECTURE x64)
-    else ()
-        set (DirectX_ARCHITECTURE x86)
-    endif ()
+        endif()
+    elseif( NOT MSVC90 )
+        # Windows 10.x SDK
+        get_filename_component(kit10_dir "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows Kits\\Installed Roots;KitsRoot10]" REALPATH)
+        file(GLOB W10SDK_VERSIONS RELATIVE ${kit10_dir}/Include ${kit10_dir}/Include/10.*) 			# enumerate pre-release and not yet known release versions
+        list(APPEND W10SDK_VERSIONS "10.0.10240.0" "10.0.14393.0" "10.0.15063.0" "10.0.16299.0")	# enumerate well known release versions
+        list(REMOVE_DUPLICATES W10SDK_VERSIONS)
+        list(SORT W10SDK_VERSIONS)
+        list(REVERSE W10SDK_VERSIONS)																# sort from high to low
+        if(CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION)
+            list(INSERT W10SDK_VERSIONS 0 ${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION})				# prefer version passed by CMake, if any
+        endif()
+        foreach(W10SDK_VER ${W10SDK_VERSIONS})
+            find_path(DirectX11_INCLUDE_DIR NAMES d3d11.h HINTS "${kit10_dir}/Include/${W10SDK_VER}/um" "C:/Program Files (x86)/Windows Kits/10/Include/${W10SDK_VER}/um" "C:/Program Files/Windows Kits/10/Include/${W10SDK_VER}/um")
+        endforeach()
+        # Windows 8.1 SDK
+        if(NOT DirectX11_INCLUDE_DIR)
+            find_path(DirectX11_INCLUDE_DIR NAMES d3d11.h HINTS "C:/Program Files (x86)/Windows Kits/8.1/include/um" "C:/Program Files/Windows Kits/8.1/include/um")
+        endif()
+        # Windows 8.0 SDK
+        if(NOT DirectX11_INCLUDE_DIR)
+            find_path(DirectX11_INCLUDE_DIR NAMES d3d11.h HINTS "C:/Program Files (x86)/Windows Kits/8.0/include/um" "C:/Program Files/Windows Kits/8.0/include/um")
+        endif()
+    endif()
 
-    # Can't use "$ENV{ProgramFiles(x86)}" to avoid violating CMP0053.  See
-    # http://public.kitware.com/pipermail/cmake-developers/2014-October/023190.html
-    set (ProgramFiles_x86 "ProgramFiles(x86)")
-    if ("$ENV{${ProgramFiles_x86}}")
-        set (ProgramFiles "$ENV{${ProgramFiles_x86}}")
-    else ()
-        set (ProgramFiles "$ENV{ProgramFiles}")
-    endif ()
+    if(DirectX11_INCLUDE_DIR)
+        # No need to specify full path to libraries, proper version would be found as part of SDK, in one of the following places
+        # "C:/Program Files (x86)/Windows Kits/10/lib/${W10SDK_VER}/um/${MSVC_CXX_ARCHITECTURE_ID}/"
+        # "C:/Program Files (x86)/Windows Kits/8.1/lib/winv6.3/um/${MSVC_CXX_ARCHITECTURE_ID}/"
+        # "C:/Program Files (x86)/Windows Kits/8.0/lib/win8/um/${MSVC_CXX_ARCHITECTURE_ID}/"
+        # "C:/Program Files (x86)/Windows Phone Kits/8.1/lib/${MSVC_CXX_ARCHITECTURE_ID}/"
+        # "C:/Program Files (x86)/Windows Phone Kits/8.0/lib/${MSVC_CXX_ARCHITECTURE_ID}/"
+        set(DirectX11_LIBRARY d3d11.lib dxgi.lib dxguid.lib)
+        # but it is usefull to output selected version to the log
+        message(STATUS "Found DirectX11 headers: ${DirectX11_INCLUDE_DIR}")
+    endif()
 
-    find_path (DirectX_ROOT_DIR
-            Include/d3d9.h
-            PATHS
-            "$ENV{DXSDK_DIR}"
-            "${ProgramFiles}/Microsoft DirectX SDK (June 2010)"
-            "${ProgramFiles}/Microsoft DirectX SDK (February 2010)"
-            "${ProgramFiles}/Microsoft DirectX SDK (March 2009)"
-            "${ProgramFiles}/Microsoft DirectX SDK (August 2008)"
-            "${ProgramFiles}/Microsoft DirectX SDK (June 2008)"
-            "${ProgramFiles}/Microsoft DirectX SDK (March 2008)"
-            "${ProgramFiles}/Microsoft DirectX SDK (November 2007)"
-            "${ProgramFiles}/Microsoft DirectX SDK (August 2007)"
-            "${ProgramFiles}/Microsoft DirectX SDK"
-            DOC "DirectX SDK root directory"
-            )
-    if (DirectX_ROOT_DIR)
-        set (DirectX_INC_SEARCH_PATH "${DirectX_ROOT_DIR}/Include")
-        set (DirectX_LIB_SEARCH_PATH "${DirectX_ROOT_DIR}/Lib/${DirectX_ARCHITECTURE}")
-        set (DirectX_BIN_SEARCH_PATH "${DirectX_ROOT_DIR}/Utilities/bin/x86")
-    endif ()
+    # Legacy Direct X SDK
+    if( NOT DirectX11_INCLUDE_DIR OR NOT DirectX11_LIBRARY )
+        # Get path, convert backslashes as ${ENV_DXSDK_DIR}
+        getenv_path(DXSDK_DIR)
+        getenv_path(DIRECTX_HOME)
+        getenv_path(DIRECTX_ROOT)
+        getenv_path(DIRECTX_BASE)
 
-    # With VS 2011 and Windows 8 SDK, the DirectX SDK is included as part of
-    # the Windows SDK.
-    #
-    # See also:
-    # - http://msdn.microsoft.com/en-us/library/windows/desktop/ee663275.aspx
-    if (MSVC)
-        set (USE_WINSDK_HEADERS TRUE)
-    endif ()
-
-    # Find a header in the DirectX SDK
-    macro (find_dxsdk_header var_name header)
-        set (include_dir_var "DirectX_${var_name}_INCLUDE_DIR")
-        set (include_found_var "DirectX_${var_name}_INCLUDE_FOUND")
-        find_path (${include_dir_var} ${header}
-                HINTS ${DirectX_INC_SEARCH_PATH}
-                DOC "The directory where ${header} resides"
-                CMAKE_FIND_ROOT_PATH_BOTH
+        # construct search paths
+        set(DirectX11_PREFIX_PATH
+                "${DXSDK_DIR}" "${ENV_DXSDK_DIR}"
+                "${DIRECTX_HOME}" "${ENV_DIRECTX_HOME}"
+                "${DIRECTX_ROOT}" "${ENV_DIRECTX_ROOT}"
+                "${DIRECTX_BASE}" "${ENV_DIRECTX_BASE}"
+                "C:/apps_x86/Microsoft DirectX SDK*"
+                "C:/Program Files (x86)/Microsoft DirectX SDK*"
+                "C:/apps/Microsoft DirectX SDK*"
+                "C:/Program Files/Microsoft DirectX SDK*"
+                "$ENV{ProgramFiles}/Microsoft DirectX SDK*"
                 )
-        if (${include_dir_var})
-            set (${include_found_var} TRUE)
-            find_package_message (${var_name}_INC "Found ${header} header: ${${include_dir_var}}/${header}" "[${${include_dir_var}}]")
+
+        create_search_paths(DirectX11)
+        # redo search if prefix path changed
+        clear_if_changed(DirectX11_PREFIX_PATH
+                DirectX11_LIBRARY
+                DirectX11_INCLUDE_DIR
+                )
+
+        # dlls are in DirectX11_ROOT_DIR/Developer Runtime/x64|x86
+        # lib files are in DirectX11_ROOT_DIR/Lib/x64|x86
+        if(CMAKE_CL_64)
+            set(DirectX11_LIBPATH_SUFFIX "x64")
+        else(CMAKE_CL_64)
+            set(DirectX11_LIBPATH_SUFFIX "x86")
+        endif(CMAKE_CL_64)
+
+        # look for D3D11 components
+        find_path(DirectX11_INCLUDE_DIR NAMES d3d11.h HINTS ${DirectX11_INC_SEARCH_PATH})
+        find_library(DirectX11_DXERR_LIBRARY NAMES DxErr HINTS ${DirectX11_LIB_SEARCH_PATH} PATH_SUFFIXES ${DirectX11_LIBPATH_SUFFIX})
+        find_library(DirectX11_DXGUID_LIBRARY NAMES dxguid HINTS ${DirectX11_LIB_SEARCH_PATH} PATH_SUFFIXES ${DirectX11_LIBPATH_SUFFIX})
+        find_library(DirectX11_DXGI_LIBRARY NAMES dxgi HINTS ${DirectX11_LIB_SEARCH_PATH} PATH_SUFFIXES ${DirectX11_LIBPATH_SUFFIX})
+        find_library(DirectX11_D3DCOMPILER_LIBRARY NAMES d3dcompiler HINTS ${DirectX11_LIB_SEARCH_PATH} PATH_SUFFIXES ${DirectX11_LIBPATH_SUFFIX})
+        find_library(DirectX11_D3D11_LIBRARY NAMES d3d11 HINTS ${DirectX11_LIB_SEARCH_PATH} PATH_SUFFIXES ${DirectX11_LIBPATH_SUFFIX})
+        find_library(DirectX11_D3DX11_LIBRARY NAMES d3dx11 HINTS ${DirectX11_LIB_SEARCH_PATH} PATH_SUFFIXES ${DirectX11_LIBPATH_SUFFIX})
+
+        if (DirectX11_INCLUDE_DIR AND DirectX11_D3D11_LIBRARY)
+            set(DirectX11_D3D11_LIBRARIES ${DirectX11_D3D11_LIBRARIES}
+                    ${DirectX11_D3D11_LIBRARY}
+                    ${DirectX11_DXGI_LIBRARY}
+                    ${DirectX11_DXGUID_LIBRARY}
+                    ${DirectX11_D3DCOMPILER_LIBRARY}
+                    )
         endif ()
-        mark_as_advanced (${include_found_var})
-    endmacro ()
-
-    # Find a header in the Windows SDK
-    macro (find_winsdk_header var_name header)
-        if (USE_WINSDK_HEADERS)
-            # Windows SDK
-            set (include_dir_var "DirectX_${var_name}_INCLUDE_DIR")
-            set (include_found_var "DirectX_${var_name}_INCLUDE_FOUND")
-            check_include_file_cxx (${header} ${include_found_var})
-            set (${include_dir_var})
-            mark_as_advanced (${include_found_var})
-        else ()
-            find_dxsdk_header (${var_name} ${header})
+        if (DirectX11_D3DX11_LIBRARY)
+            set(DirectX11_D3D11_LIBRARIES ${DirectX11_D3D11_LIBRARIES} ${DirectX11_D3DX11_LIBRARY})
         endif ()
-    endmacro ()
+        if (DirectX11_DXERR_LIBRARY)
+            set(DirectX11_D3D11_LIBRARIES ${DirectX11_D3D11_LIBRARIES} ${DirectX11_DXERR_LIBRARY})
+        endif ()
 
-    find_winsdk_header  (D3D     d3d.h)
+        set(DirectX11_LIBRARY
+                ${DirectX11_D3D11_LIBRARIES}
+                )
 
-    if (MSVC)
-        set (DirectX_D3D8_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/thirdparty/dxsdk_aug2007)
-        set (DirectX_D3D8_INCLUDE_FOUND TRUE)
-        mark_as_advanced (DirectX_D3D8_INCLUDE_FOUND)
-    else ()
-        find_dxsdk_header   (D3D8    d3d8.h)
-    endif ()
+        mark_as_advanced(DirectX11_D3D11_LIBRARY
+                DirectX11_D3DX11_LIBRARY
+                DirectX11_DXERR_LIBRARY
+                DirectX11_DXGUID_LIBRARY
+                DirectX11_DXGI_LIBRARY
+                DirectX11_D3DCOMPILER_LIBRARY)
+    endif () # Legacy Direct X SDK
 
-    find_winsdk_header  (D3D9    d3d9.h)
+    findpkg_finish(DirectX11)
 
-    find_winsdk_header  (D3D11_4 d3d11_4.h)
-
-    find_winsdk_header  (D2D1_1  d2d1_1.h)
-
-    find_program (DirectX_FXC_EXECUTABLE fxc
-            HINTS ${DirectX_BIN_SEARCH_PATH}
-            DOC "Path to fxc.exe executable."
-            )
-
-endif ()
+endif(WIN32)
