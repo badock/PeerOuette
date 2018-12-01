@@ -125,15 +125,16 @@ int gpu_frame_extractor_thread(void *arg) {
         usleep(16 * 1000);
 		auto start = std::chrono::high_resolution_clock::now();
 		int capture_result = capture_frame(&cc, frame_data);
-		get_pixel_map(&cc, frame_data, ffmpeg_frame_data);
+		get_pixels(&cc, ffmpeg_frame_data);
 		int frame_release_result = done_with_frame(&cc);
 
-		
+		/*
 		AVFrame* old_pframe = ffmpeg_frame_data->pFrame;
 		ffmpeg_frame_data->pFrame = av_frame_clone(ffmpeg_frame_data->pFrame);
 
 		simple_queue_push(se->frame_output_thread_queue, frame_data);
 		av_free(old_pframe);		
+		*/
 
 		auto elapsed = std::chrono::high_resolution_clock::now() - start;
 		long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
@@ -319,7 +320,7 @@ int main(int argc, char* argv[]){
     se->frame_extractor_thread = SDL_CreateThread(frame_extractor_thread, "frame_extractor_thread", se);
     se->frame_output_thread = SDL_CreateThread(frame_output_thread, "frame_output_thread", se);
     #if defined(WIN32)
-    //se->gpu_frame_extractor_thread = SDL_CreateThread(gpu_frame_extractor_thread, "gpu_frame_extractor_thread", se);
+    se->gpu_frame_extractor_thread = SDL_CreateThread(gpu_frame_extractor_thread, "gpu_frame_extractor_thread", se);
     #endif
     se->pCodecCtx = NULL;
     se->finishing = 0;

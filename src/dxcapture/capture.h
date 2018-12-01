@@ -56,8 +56,14 @@ typedef struct _CaptureContext {
 } CaptureContext;
 
 int init_directx(CaptureContext* cc);
+// RGB
 int init_capture(CaptureContext* cc);
 int capture_frame(CaptureContext* cc, D3D_FRAME_DATA* Data);
-int get_pixel_map(CaptureContext* cc, D3D_FRAME_DATA* Data, FrameData* ffmpeg_frame_data);
 int done_with_frame(CaptureContext* cc);
+int get_pixels(CaptureContext* cc, FrameData* ffmpeg_frame_data);
+// YUV420
+int init_capture_yuv420p(CaptureContext* cc);
+int capture_frame_yuv420p(CaptureContext* cc, D3D_FRAME_DATA* Data);
+int done_with_frame_yuv420p(CaptureContext* cc);
+int get_pixels_yuv420p(CaptureContext* cc, FrameData* ffmpeg_frame_data);
 #endif //GAMECLIENTSDL_CAPTURE_H

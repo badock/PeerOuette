@@ -16,7 +16,23 @@ if(WIN32)
             src/queue/queue.cpp
             src/queue/queue.h
             src/dxcapture/capture.cpp
-            src/dxcapture/capture.h)
+            src/dxcapture/capture.h
+            src/I420effect/I420effect.cpp
+            src/I420effect/I420effect.h
+			src/I420effect/I420Effect_PS.hlsl
+			src/I420effect/I420Effect_VS.hlsl)
+
+			set(PIXELSHADER_FILES
+			  src/I420effect/I420Effect_PS.hlsl
+			  )
+
+			set(VERTEXSHADER_FILES
+			  src/I420effect/I420Effect_VS.hlsl
+			  )
+
+			set(CONTENT_FILES ${PIXELSHADER_FILES} ${VERTEXSHADER_FILES})
+
+
 else()
     add_executable(GameClientSDL
             main.cpp
@@ -24,9 +40,9 @@ else()
             src/streaming/streaming.h
             src/video/ffmpeg.cpp
             src/video/ffmpeg.h
-            src/log/log.c
+            src/log/log.cpp
             src/log/log.h
-            src/queue/queue.c
+            src/queue/queue.cpp
             src/queue/queue.h)
 endif()
 INCLUDE(FindPkgConfig)
@@ -64,6 +80,38 @@ if(WIN32)
     endif()
     INCLUDE_DIRECTORIES(${DirectX11_INCLUDE_DIRS})
 endif()
+
+if(WIN32)
+
+	set(RESOURCE_FILES
+	  ${CONTENT_FILES} ${DEBUG_CONTENT_FILES} ${RELEASE_CONTENT_FILES}
+	#  Direct3DApp1/Direct3DApp1_TemporaryKey.pfx)
+	)
+	set_property(SOURCE ${CONTENT_FILES} PROPERTY VS_DEPLOYMENT_CONTENT 1)
+	set_property(SOURCE ${DEBUG_CONTENT_FILES} PROPERTY VS_DEPLOYMENT_CONTENT $<CONFIG:Debug>)
+	set_property(SOURCE ${RELEASE_CONTENT_FILES} PROPERTY
+	  VS_DEPLOYMENT_CONTENT $<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>)
+
+	set_property(SOURCE ${PIXELSHADER_FILES} PROPERTY VS_SHADER_TYPE Pixel)
+	set_property(SOURCE ${PIXELSHADER_FILES} PROPERTY VS_SHADER_ENTRYPOINT main)
+	set_property(SOURCE ${PIXELSHADER_FILES} PROPERTY VS_SHADER_VARIABLE_NAME PIXEL_SHADER_main)
+	set_property(SOURCE ${PIXELSHADER_FILES} PROPERTY VS_SHADER_MODEL 4.0_level_9_3)
+	set_property(SOURCE ${PIXELSHADER_FILES} PROPERTY VS_SHADER_OUTPUT_HEADER_FILE "$(OutDir)%(Filename).h")
+
+	set_property(SOURCE ${VERTEXSHADER_FILES} PROPERTY VS_SHADER_TYPE Vertex)
+	set_property(SOURCE ${VERTEXSHADER_FILES} PROPERTY VS_SHADER_ENTRYPOINT main)
+	set_property(SOURCE ${VERTEXSHADER_FILES} PROPERTY VS_SHADER_VARIABLE_NAME VERTEX_SHADER_main)
+	set_property(SOURCE ${VERTEXSHADER_FILES} PROPERTY VS_SHADER_MODEL 4.0_level_9_3)
+	set_property(SOURCE ${VERTEXSHADER_FILES} PROPERTY VS_SHADER_OUTPUT_HEADER_FILE "$(OutDir)%(Filename).h")
+
+
+	source_group("Source Files" FILES ${SOURCE_FILES})
+	source_group("Header Files" FILES ${HEADER_FILES})
+	source_group("Resource Files" FILES ${RESOURCE_FILES})
+    message(" HEADER: ${HEADER_FILES}")
+
+endif()
+
 
 if(WIN32)
     target_link_libraries(${PROJECT_NAME} ${FFMPEG_LIBRARIES} ${SDL2_LIBRARY} ${DirectX11_LIBRARIES})
