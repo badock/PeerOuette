@@ -20,15 +20,23 @@ if(WIN32)
             src/I420effect/I420effect.cpp
             src/I420effect/I420effect.h
 			src/I420effect/I420Effect_PS.hlsl
-			src/I420effect/I420Effect_VS.hlsl)
+			src/I420effect/I420Effect_VS.hlsl
+            src/texture_converter/TextureConverter.cpp
+            src/texture_converter/TextureConverter.h
+			src/texture_converter/shaders/Pixel.hlsl
+			src/texture_converter/shaders/Vertex.hlsl
+			src/texture_converter/shaders/RGBtoYUV.hlsl)
 
 			set(PIXELSHADER_FILES
 			  src/I420effect/I420Effect_PS.hlsl
-			  )
+			  src/texture_converter/shaders/Pixel.hlsl
+			  src/texture_converter/shaders/RGBtoYUV.hlsl
+			)
 
 			set(VERTEXSHADER_FILES
 			  src/I420effect/I420Effect_VS.hlsl
-			  )
+			  src/texture_converter/shaders/Vertex.hlsl
+			)
 
 			set(CONTENT_FILES ${PIXELSHADER_FILES} ${VERTEXSHADER_FILES})
 
@@ -94,16 +102,15 @@ if(WIN32)
 
 	set_property(SOURCE ${PIXELSHADER_FILES} PROPERTY VS_SHADER_TYPE Pixel)
 	set_property(SOURCE ${PIXELSHADER_FILES} PROPERTY VS_SHADER_ENTRYPOINT main)
-	set_property(SOURCE ${PIXELSHADER_FILES} PROPERTY VS_SHADER_VARIABLE_NAME PIXEL_SHADER_main)
+	set_property(SOURCE ${PIXELSHADER_FILES} PROPERTY VS_SHADER_VARIABLE_NAME "%(Filename)_PX_main")
 	set_property(SOURCE ${PIXELSHADER_FILES} PROPERTY VS_SHADER_MODEL 4.0_level_9_3)
 	set_property(SOURCE ${PIXELSHADER_FILES} PROPERTY VS_SHADER_OUTPUT_HEADER_FILE "$(OutDir)%(Filename).h")
 
 	set_property(SOURCE ${VERTEXSHADER_FILES} PROPERTY VS_SHADER_TYPE Vertex)
 	set_property(SOURCE ${VERTEXSHADER_FILES} PROPERTY VS_SHADER_ENTRYPOINT main)
-	set_property(SOURCE ${VERTEXSHADER_FILES} PROPERTY VS_SHADER_VARIABLE_NAME VERTEX_SHADER_main)
+	set_property(SOURCE ${VERTEXSHADER_FILES} PROPERTY VS_SHADER_VARIABLE_NAME "%(Filename)_VX_main")
 	set_property(SOURCE ${VERTEXSHADER_FILES} PROPERTY VS_SHADER_MODEL 4.0_level_9_3)
 	set_property(SOURCE ${VERTEXSHADER_FILES} PROPERTY VS_SHADER_OUTPUT_HEADER_FILE "$(OutDir)%(Filename).h")
-
 
 	source_group("Source Files" FILES ${SOURCE_FILES})
 	source_group("Header Files" FILES ${HEADER_FILES})

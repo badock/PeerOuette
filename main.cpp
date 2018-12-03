@@ -11,6 +11,7 @@
 #if defined(WIN32)
 #include <Windows.h>
 #include "src/dxcapture/capture.h"
+#include "src/texture_converter/TextureConverter.h"
 void usleep(unsigned int usec)
 {
 	Sleep(usec / 1000);
@@ -29,34 +30,52 @@ FrameData* frame_data_create(StreamingEnvironment* se) {
     FrameData* frame_data = (FrameData*) malloc(sizeof(FrameData));
 
     // [FFMPEG] Allocate an AVFrame structure
-    frame_data->pFrameRGB=av_frame_alloc();
-    if(frame_data->pFrameRGB==NULL)
+    frame_data->pFrame = av_frame_alloc();
+    if(frame_data->pFrame ==NULL)
         return NULL;
 
     // [FFMPEG] Determine required buffer size and allocate buffer
     int numBytes;
-    numBytes=avpicture_get_size(AV_PIX_FMT_RGB24,
-                                se->pCodecCtx->width,
-                                se->pCodecCtx->height);
-    frame_data->buffer=(uint8_t *)av_malloc(numBytes*sizeof(uint8_t));
+	int width = 1920;
+	int height = 1080;
+	//int width = se->pCodecCtx->width;
+	//int height = se->pCodecCtx->height;
+
+	numBytes = avpicture_get_size(AV_PIX_FMT_YUV420P,
+		width,
+		height);
+    frame_data->buffer=(uint8_t *)av_malloc(numBytes * sizeof(uint8_t));
+	frame_data->numBytes = numBytes;
 
     // [FFMPEG] Assign appropriate parts of buffer to image planes in pFrameRGB
     // Note that pFrameRGB is an AVFrame, but AVFrame is a superset
     // of AVPicture
-    avpicture_fill((AVPicture *) frame_data->pFrameRGB,
-                   frame_data->buffer,
-                   AV_PIX_FMT_RGB24,
-                   se->pCodecCtx->width,
-                   se->pCodecCtx->height);
+	avpicture_fill((AVPicture *)frame_data->pFrame,
+		           frame_data->buffer,
+		           AV_PIX_FMT_YUV420P,
+		           width,
+		           height);
 
     frame_data->pFrame = av_frame_alloc();
+
+	// Initialize the pFrame	
+	frame_data->pFrame->width = width;
+	frame_data->pFrame->height = height;
+
+	frame_data->pFrame->linesize[0] = width;
+	frame_data->pFrame->linesize[1] = width / 2;
+	frame_data->pFrame->linesize[2] = width / 2;
+
+	frame_data->pFrame->data[0] = frame_data->buffer;
+	frame_data->pFrame->data[1] = frame_data->buffer + frame_data->pFrame->linesize[0] * height;
+	frame_data->pFrame->data[2] = frame_data->buffer + frame_data->pFrame->linesize[0] * height + frame_data->pFrame->linesize[1] * height / 2;
+
     return frame_data;
 }
 
 int frame_data_destroy(FrameData* frame_data) {
     av_frame_free(&frame_data->pFrame);
     av_free(frame_data->buffer);
-    av_free(frame_data->pFrameRGB);
     free(frame_data);
 
 	return 0;
@@ -110,31 +129,31 @@ int gpu_frame_extractor_thread(void *arg) {
     CaptureContext cc;
 	cc.m_MetaDataBuffer = (BYTE*) malloc(sizeof(BYTE) * 16);
 	cc.m_MetaDataSize = 16;
+	cc.capture_mode = YUV420P;
 
     init_directx(&cc);
     init_capture(&cc);
-
-	D3D_FRAME_DATA* frame_data = (D3D_FRAME_DATA*) malloc(sizeof(D3D_FRAME_DATA));
+	init_video_mode(&cc);
+	
+	D3D_FRAME_DATA* d3d_frame_data = (D3D_FRAME_DATA*) malloc(sizeof(D3D_FRAME_DATA));
 	//FrameData* ffmpeg_frame_data = frame_data_create(se);
 
     int frameFinished;
 	ID3D11Texture2D* CopyBuffer = nullptr;
     while(1) {
 		FrameData* ffmpeg_frame_data = (FrameData *)simple_queue_pop(se->frame_extractor_pframe_pool);
+		//FrameData* ffmpeg_frame_data = (FrameData *) frame_data_create(se);
 
-        usleep(16 * 1000);
+	    //usleep(16 * 1000);
 		auto start = std::chrono::high_resolution_clock::now();
-		int capture_result = capture_frame(&cc, frame_data);
-		get_pixels(&cc, ffmpeg_frame_data);
+		int capture_result = capture_frame(&cc, d3d_frame_data);
+		int result;
+		////result = get_pixels(&cc, ffmpeg_frame_data);
+		result = get_pixels_yuv420p(&cc, ffmpeg_frame_data);
+
 		int frame_release_result = done_with_frame(&cc);
 
-		/*
-		AVFrame* old_pframe = ffmpeg_frame_data->pFrame;
-		ffmpeg_frame_data->pFrame = av_frame_clone(ffmpeg_frame_data->pFrame);
-
-		simple_queue_push(se->frame_output_thread_queue, frame_data);
-		av_free(old_pframe);		
-		*/
+		simple_queue_push(se->frame_output_thread_queue, ffmpeg_frame_data);		
 
 		auto elapsed = std::chrono::high_resolution_clock::now() - start;
 		long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
@@ -221,10 +240,10 @@ int frame_output_thread(void *arg) {
         sws_scale(sws_ctx, (uint8_t const * const *) frame_data->pFrame->data,
                   frame_data->pFrame->linesize, 0, se->pCodecCtx->height, pict.data,
                   pict.linesize);
-//        SaveFrame(frame_data->pFrame, se->pCodecCtx->width, se->pCodecCtx->height, i, 1);
+////        SaveFrame(frame_data->pFrame, se->pCodecCtx->width, se->pCodecCtx->height, i, 1);
 
         // Put back the pframe in its the pool of pframes
-        log_info("READ ====> %i (%i)", frame_data->id, i);
+        //log_info("READ ====> %i (%i)", frame_data->id, i);
         simple_queue_push(se->frame_extractor_pframe_pool, frame_data);
 
         // [SDL] update SDL overlay
@@ -241,9 +260,16 @@ int frame_output_thread(void *arg) {
         SDL_RenderClear(se->renderer);
         SDL_RenderCopy(se->renderer, texture, NULL, NULL);
         SDL_RenderPresent(se->renderer);
+		
+		//frame_data_destroy(frame_data);
 
-        usleep(33.333 * 1000);
         i++;
+
+		while (simple_queue_length(se->frame_output_thread_queue) > 0) {
+			log_info("frame_output_thread: %i elements in queue", simple_queue_length(se->frame_output_thread_queue));
+			FrameData* frame_data = (FrameData*)simple_queue_pop(se->frame_output_thread_queue);
+			simple_queue_push(se->frame_extractor_pframe_pool, frame_data);
+		}
     }
 
     // [SDL] Cleaning SDL data
@@ -298,6 +324,8 @@ int frame_extractor_thread(void *arg) {
                 simple_queue_push(se->frame_output_thread_queue, frame_data);
                 av_free(old_pframe);
                 i++;
+				
+				usleep(33.333 * 1000);
             }
         }
 
@@ -317,8 +345,8 @@ int main(int argc, char* argv[]){
     se = (StreamingEnvironment*) av_mallocz(sizeof(StreamingEnvironment));
     se->frame_extractor_pframe_pool = simple_queue_create();
     se->frame_output_thread_queue = simple_queue_create();
-    se->frame_extractor_thread = SDL_CreateThread(frame_extractor_thread, "frame_extractor_thread", se);
-    se->frame_output_thread = SDL_CreateThread(frame_output_thread, "frame_output_thread", se);
+	se->frame_output_thread = SDL_CreateThread(frame_output_thread, "frame_output_thread", se);
+    //se->frame_extractor_thread = SDL_CreateThread(frame_extractor_thread, "frame_extractor_thread", se);
     #if defined(WIN32)
     se->gpu_frame_extractor_thread = SDL_CreateThread(gpu_frame_extractor_thread, "gpu_frame_extractor_thread", se);
     #endif
@@ -427,7 +455,7 @@ int main(int argc, char* argv[]){
     se->initialized = 1;
 
 	// [FFMPEG] Initialize frame pool
-	for (int i = 0; i < 500; i++) {
+	for (int i = 0; i < 60; i++) {
 		FrameData* frame_data = frame_data_create(se);
 		frame_data->id = i;
 		simple_queue_push(se->frame_extractor_pframe_pool, frame_data);

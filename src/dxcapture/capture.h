@@ -10,8 +10,15 @@
 #include <wrl.h>
 #include <DirectXMath.h>
 #include "src/streaming/streaming.h"
+#include "src/I420effect/I420effect.h"
+#include "src/texture_converter/TextureConverter.h"
 
 #define NUMVERTICES 6
+
+enum CaptureMode {
+	RGBA,
+	YUV420P
+};
 
 //
 // FRAME_DATA holds information about an acquired frame
@@ -41,6 +48,8 @@ typedef struct _CaptureContext {
 	IDXGIOutputDuplication* m_dup;
 	ID3D11Texture2D* m_AcquiredDesktopImage;
 	//ID3D11Texture2D* m_SharedSurf;
+	
+	//ID3D11Texture2D* m_texture[3];
 
 	BYTE* m_MetaDataBuffer; // INPUT
 	UINT m_MetaDataSize; // INPUT
@@ -53,17 +62,22 @@ typedef struct _CaptureContext {
 
 	unsigned int m_width;
 	unsigned int m_height;
+
+	TextureConverter* texture_converter;
+
+
+	ID3D11Texture2D* m_ftexture_rgba;
+	ID3D11Texture2D* m_ftextures_yuv420p[3];
+	CaptureMode capture_mode;
 } CaptureContext;
 
 int init_directx(CaptureContext* cc);
 // RGB
 int init_capture(CaptureContext* cc);
 int capture_frame(CaptureContext* cc, D3D_FRAME_DATA* Data);
+int capture_frame_yuv420p(CaptureContext* cc, D3D_FRAME_DATA* Data);
 int done_with_frame(CaptureContext* cc);
 int get_pixels(CaptureContext* cc, FrameData* ffmpeg_frame_data);
-// YUV420
-int init_capture_yuv420p(CaptureContext* cc);
-int capture_frame_yuv420p(CaptureContext* cc, D3D_FRAME_DATA* Data);
-int done_with_frame_yuv420p(CaptureContext* cc);
 int get_pixels_yuv420p(CaptureContext* cc, FrameData* ffmpeg_frame_data);
+int init_video_mode(CaptureContext* cc);
 #endif //GAMECLIENTSDL_CAPTURE_H

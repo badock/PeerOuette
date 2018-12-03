@@ -40,8 +40,10 @@ typedef struct _StreamingEnvironment {
 
 typedef struct _FrameData {
 	AVFrame *pFrame;
-	AVFrame *pFrameRGB;
 	uint8_t *buffer;
+	int numBytes;
 	int id;
+	int pitch;
+	int stride;
 } FrameData;
 #endif
