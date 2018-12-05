@@ -474,6 +474,7 @@ int get_pixels_yuv420p(CaptureContext* cc, FrameData* ffmpeg_frame_data) {
 
 		cc->m_ftextures_yuv420p[i]->GetDesc(&desc);
 		status = cc->context->Map(cc->m_ftextures_yuv420p[i], 0, D3D11_MAP_READ, 0, &mapping);
+
 		if (FAILED(status))
 		{
 			log_error("Failed to map the texture %i", status);
@@ -483,7 +484,9 @@ int get_pixels_yuv420p(CaptureContext* cc, FrameData* ffmpeg_frame_data) {
 
 		const unsigned int size = desc.Height * desc.Width;
 
-		memcpy_sse(ffmpeg_frame_data->pFrame->data[i], (uint8_t *) mapping.pData, size);
+		//memcpy_sse(ffmpeg_frame_data->pFrame->data[i], (uint8_t *) mapping.pData, size);
+		//memcpy(ffmpeg_frame_data->pFrame->data[i], (uint8_t *)mapping.pData, size);
+		ffmpeg_frame_data->pFrame->data[i] = (uint8_t *)mapping.pData;
 
 		cc->context->Unmap(cc->m_ftextures_yuv420p[i], 0);
 	}

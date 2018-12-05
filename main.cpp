@@ -26,6 +26,36 @@ char *VIDEO_FILE_PATH = "misc/bigbunny.mp4";
 
 StreamingEnvironment *global_streaming_environment;
 
+void frame_data_reset_time_points(FrameData* frame_data) {
+	frame_data->life_started_time_point = std::chrono::high_resolution_clock::now();
+	frame_data->dxframe_acquired_time_point = std::chrono::high_resolution_clock::now();
+	frame_data->avframe_produced_time_point = std::chrono::high_resolution_clock::now();
+	frame_data->sdl_received_time_point = std::chrono::high_resolution_clock::now();
+	frame_data->sdl_avframe_rescale_time_point = std::chrono::high_resolution_clock::now();
+	frame_data->sdl_displayed_time_point = std::chrono::high_resolution_clock::now();
+}
+
+void frame_data_debug(FrameData* frame_data) {
+	//log_info("####### Debug a frame #######");
+	std::chrono::steady_clock::time_point start;
+	std::chrono::steady_clock::time_point end;
+
+	float dxframe_acquired_duration = std::chrono::duration_cast<std::chrono::microseconds>(frame_data->dxframe_acquired_time_point - frame_data->life_started_time_point).count() / 1000.0;
+	float avframe_produced_duration = std::chrono::duration_cast<std::chrono::microseconds>(frame_data->avframe_produced_time_point - frame_data->dxframe_acquired_time_point).count() / 1000.0;
+	float sdl_received_duration = std::chrono::duration_cast<std::chrono::microseconds>(frame_data->sdl_received_time_point - frame_data->avframe_produced_time_point).count() / 1000.0;
+	float sdl_avframe_duration = std::chrono::duration_cast<std::chrono::microseconds>(frame_data->sdl_avframe_rescale_time_point - frame_data->sdl_received_time_point).count() / 1000.0;
+	float sdl_displayed_duration = std::chrono::duration_cast<std::chrono::microseconds>(frame_data->sdl_displayed_time_point - frame_data->sdl_avframe_rescale_time_point).count() / 1000.0;
+	float total_duration = std::chrono::duration_cast<std::chrono::microseconds>(frame_data->sdl_displayed_time_point - frame_data->life_started_time_point).count() / 1000.0;
+
+	//log_info("# dxframe_acquired_duration = %f ms", dxframe_acquired_duration);
+	//log_info("# avframe_produced_duration = %f ms", avframe_produced_duration);
+	//log_info("# sdl_received_duration = %f ms", sdl_received_duration);
+	//log_info("# sdl_avframe_duration = %f ms", sdl_avframe_duration);
+	//log_info("# sdl_displayed_duration = %f ms", sdl_displayed_duration);
+	log_info("# total_duration = %f ms", (1.0 * total_duration));
+	//log_info("##############");
+}
+
 FrameData* frame_data_create(StreamingEnvironment* se) {
     FrameData* frame_data = (FrameData*) malloc(sizeof(FrameData));
 
@@ -141,24 +171,20 @@ int gpu_frame_extractor_thread(void *arg) {
     int frameFinished;
 	ID3D11Texture2D* CopyBuffer = nullptr;
     while(1) {
-		FrameData* ffmpeg_frame_data = (FrameData *)simple_queue_pop(se->frame_extractor_pframe_pool);
-		//FrameData* ffmpeg_frame_data = (FrameData *) frame_data_create(se);
-
-	    //usleep(16 * 1000);
-		auto start = std::chrono::high_resolution_clock::now();
+		FrameData* ffmpeg_frame_data = (FrameData *) simple_queue_pop(se->frame_extractor_pframe_pool);
+		frame_data_reset_time_points(ffmpeg_frame_data);
+	    
 		int capture_result = capture_frame(&cc, d3d_frame_data);
+		ffmpeg_frame_data->dxframe_acquired_time_point = std::chrono::high_resolution_clock::now();
+
 		int result;
 		////result = get_pixels(&cc, ffmpeg_frame_data);
 		result = get_pixels_yuv420p(&cc, ffmpeg_frame_data);
+		ffmpeg_frame_data->avframe_produced_time_point = std::chrono::high_resolution_clock::now();
 
 		int frame_release_result = done_with_frame(&cc);
 
 		simple_queue_push(se->frame_output_thread_queue, ffmpeg_frame_data);		
-
-		auto elapsed = std::chrono::high_resolution_clock::now() - start;
-		long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
-		float total_duration = (1.0 * microseconds) / 1000.0;
-		log_info("result -> %f", total_duration);
     }
 
     return 0;
@@ -224,8 +250,9 @@ int frame_output_thread(void *arg) {
 
     int i = 0;
     while(se->finishing != 1) {
-        log_info("frame_output_thread: %i elements in queue", simple_queue_length(se->frame_output_thread_queue));
+        //log_info("frame_output_thread: %i elements in queue", simple_queue_length(se->frame_output_thread_queue));
         FrameData* frame_data = (FrameData*) simple_queue_pop(se->frame_output_thread_queue);
+		frame_data->sdl_received_time_point = std::chrono::high_resolution_clock::now();
 
         // [SDL] Create an AV Picture
         AVPicture pict;
@@ -240,11 +267,7 @@ int frame_output_thread(void *arg) {
         sws_scale(sws_ctx, (uint8_t const * const *) frame_data->pFrame->data,
                   frame_data->pFrame->linesize, 0, se->pCodecCtx->height, pict.data,
                   pict.linesize);
-////        SaveFrame(frame_data->pFrame, se->pCodecCtx->width, se->pCodecCtx->height, i, 1);
-
-        // Put back the pframe in its the pool of pframes
-        //log_info("READ ====> %i (%i)", frame_data->id, i);
-        simple_queue_push(se->frame_extractor_pframe_pool, frame_data);
+		frame_data->sdl_avframe_rescale_time_point = std::chrono::high_resolution_clock::now();
 
         // [SDL] update SDL overlay
         SDL_UpdateYUVTexture(
@@ -260,13 +283,17 @@ int frame_output_thread(void *arg) {
         SDL_RenderClear(se->renderer);
         SDL_RenderCopy(se->renderer, texture, NULL, NULL);
         SDL_RenderPresent(se->renderer);
+		frame_data->sdl_displayed_time_point = std::chrono::high_resolution_clock::now();
 		
 		//frame_data_destroy(frame_data);
 
         i++;
 
+		frame_data_debug(frame_data);
+		simple_queue_push(se->frame_extractor_pframe_pool, frame_data);
+
 		while (simple_queue_length(se->frame_output_thread_queue) > 0) {
-			log_info("frame_output_thread: %i elements in queue", simple_queue_length(se->frame_output_thread_queue));
+			//log_info("frame_output_thread: %i elements in queue", simple_queue_length(se->frame_output_thread_queue));
 			FrameData* frame_data = (FrameData*)simple_queue_pop(se->frame_output_thread_queue);
 			simple_queue_push(se->frame_extractor_pframe_pool, frame_data);
 		}
