@@ -46,12 +46,12 @@ typedef struct _FrameData {
 	int pitch;
 	int stride;
 	// debug field
-	std::chrono::steady_clock::time_point life_started_time_point;
-	std::chrono::steady_clock::time_point dxframe_acquired_time_point;
-	std::chrono::steady_clock::time_point dxframe_processed_time_point;
-	std::chrono::steady_clock::time_point avframe_produced_time_point;
-	std::chrono::steady_clock::time_point sdl_received_time_point;
-	std::chrono::steady_clock::time_point sdl_avframe_rescale_time_point;
-	std::chrono::steady_clock::time_point sdl_displayed_time_point;
+	std::chrono::system_clock::time_point life_started_time_point;
+	std::chrono::system_clock::time_point dxframe_acquired_time_point;
+	std::chrono::system_clock::time_point dxframe_processed_time_point;
+	std::chrono::system_clock::time_point avframe_produced_time_point;
+	std::chrono::system_clock::time_point sdl_received_time_point;
+	std::chrono::system_clock::time_point sdl_avframe_rescale_time_point;
+	std::chrono::system_clock::time_point sdl_displayed_time_point;
 } FrameData;
 #endif
