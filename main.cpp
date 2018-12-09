@@ -29,6 +29,7 @@ StreamingEnvironment *global_streaming_environment;
 void frame_data_reset_time_points(FrameData* frame_data) {
 	frame_data->life_started_time_point = std::chrono::high_resolution_clock::now();
 	frame_data->dxframe_acquired_time_point = std::chrono::high_resolution_clock::now();
+	frame_data->dxframe_processed_time_point = std::chrono::high_resolution_clock::now();
 	frame_data->avframe_produced_time_point = std::chrono::high_resolution_clock::now();
 	frame_data->sdl_received_time_point = std::chrono::high_resolution_clock::now();
 	frame_data->sdl_avframe_rescale_time_point = std::chrono::high_resolution_clock::now();
@@ -41,18 +42,21 @@ void frame_data_debug(FrameData* frame_data) {
 	std::chrono::steady_clock::time_point end;
 
 	float dxframe_acquired_duration = std::chrono::duration_cast<std::chrono::microseconds>(frame_data->dxframe_acquired_time_point - frame_data->life_started_time_point).count() / 1000.0;
-	float avframe_produced_duration = std::chrono::duration_cast<std::chrono::microseconds>(frame_data->avframe_produced_time_point - frame_data->dxframe_acquired_time_point).count() / 1000.0;
+	float dxframe_processed_duration = std::chrono::duration_cast<std::chrono::microseconds>(frame_data->dxframe_processed_time_point - frame_data->dxframe_acquired_time_point).count() / 1000.0;
+	float avframe_produced_duration = std::chrono::duration_cast<std::chrono::microseconds>(frame_data->avframe_produced_time_point - frame_data->dxframe_processed_time_point).count() / 1000.0;
 	float sdl_received_duration = std::chrono::duration_cast<std::chrono::microseconds>(frame_data->sdl_received_time_point - frame_data->avframe_produced_time_point).count() / 1000.0;
 	float sdl_avframe_duration = std::chrono::duration_cast<std::chrono::microseconds>(frame_data->sdl_avframe_rescale_time_point - frame_data->sdl_received_time_point).count() / 1000.0;
 	float sdl_displayed_duration = std::chrono::duration_cast<std::chrono::microseconds>(frame_data->sdl_displayed_time_point - frame_data->sdl_avframe_rescale_time_point).count() / 1000.0;
 	float total_duration = std::chrono::duration_cast<std::chrono::microseconds>(frame_data->sdl_displayed_time_point - frame_data->life_started_time_point).count() / 1000.0;
+	float frame_delay = std::chrono::duration_cast<std::chrono::microseconds>(frame_data->sdl_displayed_time_point - frame_data->dxframe_acquired_time_point).count() / 1000.0;
 
 	//log_info("# dxframe_acquired_duration = %f ms", dxframe_acquired_duration);
 	//log_info("# avframe_produced_duration = %f ms", avframe_produced_duration);
 	//log_info("# sdl_received_duration = %f ms", sdl_received_duration);
 	//log_info("# sdl_avframe_duration = %f ms", sdl_avframe_duration);
 	//log_info("# sdl_displayed_duration = %f ms", sdl_displayed_duration);
-	log_info("# total_duration = %f ms", (1.0 * total_duration));
+	//log_info("# total_duration = %f ms", (1.0 * total_duration));
+	log_info("# frame_delay = %f ms", (1.0 * frame_delay));
 	//log_info("##############");
 }
 
@@ -174,8 +178,8 @@ int gpu_frame_extractor_thread(void *arg) {
 		FrameData* ffmpeg_frame_data = (FrameData *) simple_queue_pop(se->frame_extractor_pframe_pool);
 		frame_data_reset_time_points(ffmpeg_frame_data);
 	    
-		int capture_result = capture_frame(&cc, d3d_frame_data);
-		ffmpeg_frame_data->dxframe_acquired_time_point = std::chrono::high_resolution_clock::now();
+		int capture_result = capture_frame(&cc, d3d_frame_data, ffmpeg_frame_data);
+		ffmpeg_frame_data->dxframe_processed_time_point = std::chrono::high_resolution_clock::now();
 
 		int result;
 		////result = get_pixels(&cc, ffmpeg_frame_data);

@@ -143,6 +143,7 @@ int init_capture(CaptureContext* cc) {
 			break;
 		Sleep(200);
 	}
+
 	return 0;
 }
 
@@ -223,7 +224,7 @@ int init_video_mode(CaptureContext* cc) {
 	return 0;
 }
 
-int capture_frame(CaptureContext* cc, D3D_FRAME_DATA* Data) {
+int capture_frame(CaptureContext* cc, D3D_FRAME_DATA* Data, FrameData* ffmpeg_frame_data) {
 	IDXGIResource* DesktopResource = nullptr;
 	DXGI_OUTDUPL_FRAME_INFO FrameInfo;
 
@@ -231,6 +232,8 @@ int capture_frame(CaptureContext* cc, D3D_FRAME_DATA* Data) {
 
 	// Get new frame
 	HRESULT hr = cc->m_dup->AcquireNextFrame(500, &FrameInfo, &DesktopResource);
+	ffmpeg_frame_data->dxframe_acquired_time_point = std::chrono::high_resolution_clock::now();
+
 	if (hr == DXGI_ERROR_WAIT_TIMEOUT)
 	{
 		timeout = true;

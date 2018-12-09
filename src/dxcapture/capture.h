@@ -74,7 +74,7 @@ typedef struct _CaptureContext {
 int init_directx(CaptureContext* cc);
 // RGB
 int init_capture(CaptureContext* cc);
-int capture_frame(CaptureContext* cc, D3D_FRAME_DATA* Data);
+int capture_frame(CaptureContext* cc, D3D_FRAME_DATA* Data, FrameData* ffmpeg_frame_data);
 int capture_frame_yuv420p(CaptureContext* cc, D3D_FRAME_DATA* Data);
 int done_with_frame(CaptureContext* cc);
 int get_pixels(CaptureContext* cc, FrameData* ffmpeg_frame_data);

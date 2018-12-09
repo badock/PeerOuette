@@ -63,6 +63,8 @@ private:
   DXGI_FORMAT                 m_texFormats   [3];
   unsigned int                m_scaleFormats [3];
 
+  int initialised = 0;
+  ID3D11Texture2D*          m_destTexture[3];
   ID3D11Texture2D*          m_targetTexture[3];
   ID3D11RenderTargetView*   m_renderView   [3];
   ID3D11ShaderResourceView* m_shaderView   [3];
