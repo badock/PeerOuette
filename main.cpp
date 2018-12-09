@@ -27,13 +27,13 @@ char *VIDEO_FILE_PATH = "misc/bigbunny.mp4";
 StreamingEnvironment *global_streaming_environment;
 
 void frame_data_reset_time_points(FrameData* frame_data) {
-	frame_data->life_started_time_point = std::chrono::high_resolution_clock::now();
-	frame_data->dxframe_acquired_time_point = std::chrono::high_resolution_clock::now();
-	frame_data->dxframe_processed_time_point = std::chrono::high_resolution_clock::now();
-	frame_data->avframe_produced_time_point = std::chrono::high_resolution_clock::now();
-	frame_data->sdl_received_time_point = std::chrono::high_resolution_clock::now();
-	frame_data->sdl_avframe_rescale_time_point = std::chrono::high_resolution_clock::now();
-	frame_data->sdl_displayed_time_point = std::chrono::high_resolution_clock::now();
+	frame_data->life_started_time_point = std::chrono::system_clock::now();
+	frame_data->dxframe_acquired_time_point = std::chrono::system_clock::now();
+	frame_data->dxframe_processed_time_point = std::chrono::system_clock::now();
+	frame_data->avframe_produced_time_point = std::chrono::system_clock::now();
+	frame_data->sdl_received_time_point = std::chrono::system_clock::now();
+	frame_data->sdl_avframe_rescale_time_point = std::chrono::system_clock::now();
+	frame_data->sdl_displayed_time_point = std::chrono::system_clock::now();
 }
 
 void frame_data_debug(FrameData* frame_data) {
@@ -256,7 +256,7 @@ int frame_output_thread(void *arg) {
     while(se->finishing != 1) {
         //log_info("frame_output_thread: %i elements in queue", simple_queue_length(se->frame_output_thread_queue));
         FrameData* frame_data = (FrameData*) simple_queue_pop(se->frame_output_thread_queue);
-		frame_data->sdl_received_time_point = std::chrono::high_resolution_clock::now();
+		frame_data->sdl_received_time_point = std::chrono::system_clock::now();
 
         // [SDL] Create an AV Picture
         AVPicture pict;
@@ -271,7 +271,7 @@ int frame_output_thread(void *arg) {
         sws_scale(sws_ctx, (uint8_t const * const *) frame_data->pFrame->data,
                   frame_data->pFrame->linesize, 0, se->pCodecCtx->height, pict.data,
                   pict.linesize);
-		frame_data->sdl_avframe_rescale_time_point = std::chrono::high_resolution_clock::now();
+		frame_data->sdl_avframe_rescale_time_point = std::chrono::system_clock::now();
 
         // [SDL] update SDL overlay
         SDL_UpdateYUVTexture(
@@ -287,7 +287,7 @@ int frame_output_thread(void *arg) {
         SDL_RenderClear(se->renderer);
         SDL_RenderCopy(se->renderer, texture, NULL, NULL);
         SDL_RenderPresent(se->renderer);
-		frame_data->sdl_displayed_time_point = std::chrono::high_resolution_clock::now();
+		frame_data->sdl_displayed_time_point = std::chrono::system_clock::now();
 		
 		//frame_data_destroy(frame_data);
 

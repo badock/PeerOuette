@@ -232,7 +232,7 @@ int capture_frame(CaptureContext* cc, D3D_FRAME_DATA* Data, FrameData* ffmpeg_fr
 
 	// Get new frame
 	HRESULT hr = cc->m_dup->AcquireNextFrame(500, &FrameInfo, &DesktopResource);
-	ffmpeg_frame_data->dxframe_acquired_time_point = std::chrono::high_resolution_clock::now();
+	ffmpeg_frame_data->dxframe_acquired_time_point = std::chrono::system_clock::now();
 
 	if (hr == DXGI_ERROR_WAIT_TIMEOUT)
 	{
