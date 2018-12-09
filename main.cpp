@@ -179,12 +179,12 @@ int gpu_frame_extractor_thread(void *arg) {
 		frame_data_reset_time_points(ffmpeg_frame_data);
 	    
 		int capture_result = capture_frame(&cc, d3d_frame_data, ffmpeg_frame_data);
-		ffmpeg_frame_data->dxframe_processed_time_point = std::chrono::high_resolution_clock::now();
+		ffmpeg_frame_data->dxframe_processed_time_point = std::chrono::system_clock::now();
 
 		int result;
 		////result = get_pixels(&cc, ffmpeg_frame_data);
 		result = get_pixels_yuv420p(&cc, ffmpeg_frame_data);
-		ffmpeg_frame_data->avframe_produced_time_point = std::chrono::high_resolution_clock::now();
+		ffmpeg_frame_data->avframe_produced_time_point = std::chrono::system_clock::now();
 
 		int frame_release_result = done_with_frame(&cc);
 
