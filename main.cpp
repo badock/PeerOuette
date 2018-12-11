@@ -22,7 +22,8 @@ void usleep(unsigned int usec)
 
 #undef main
 
-char *VIDEO_FILE_PATH = "misc/bigbunny.mp4";
+int SDL_WINDOW_WIDTH = 1280;
+int SDL_WINDOW_HEIGHT = 720;
 
 StreamingEnvironment *global_streaming_environment;
 
@@ -115,42 +116,6 @@ int frame_data_destroy(FrameData* frame_data) {
 	return 0;
 }
 
-void SaveFrame(AVFrame *pFrame, int width, int height, int iFrame, int debug) {
-    FILE *pFile;
-    char szFilename[32];
-    int  y;
-
-    // Ensure tmp folder exists
-    struct stat st = {0};
-    if (stat("tmp", &st) == -1) {
-        #if defined(WIN32) && __MINGW32__
-        //mkdir("tmp");
-        # else
-        //mkdir("tmp", 0700);
-        #endif
-    }
-
-    // Open file
-    if (debug) {
-        sprintf(szFilename, "tmp/frame_%d_debug.ppm", iFrame);
-    } else {
-        sprintf(szFilename, "tmp/frame_%d.ppm", iFrame);
-    }
-    pFile=fopen(szFilename, "wb");
-    if(pFile==NULL)
-        return;
-
-    // Write header
-    fprintf(pFile, "P6\n%d %d\n255\n", width, height);
-
-    // Write pixel data
-    for(y=0; y<height; y++)
-        fwrite(pFrame->data[0]+y*pFrame->linesize[0], 1, width*3, pFile);
-
-    // Close file
-    fclose(pFile);
-}
-
 #if defined(WIN32)
 int gpu_frame_extractor_thread(void *arg) {
     StreamingEnvironment *se = (StreamingEnvironment*) arg;
@@ -211,8 +176,8 @@ int frame_output_thread(void *arg) {
             se->renderer,
             SDL_PIXELFORMAT_YV12,
             SDL_TEXTUREACCESS_STREAMING,
-            se->pCodecCtx->width,
-            se->pCodecCtx->height
+            se->pDecodingCtx->width,
+            se->pDecodingCtx->height
     );
     if (!texture) {
         fprintf(stderr, "SDL: could not create texture - exiting\n");
@@ -220,11 +185,11 @@ int frame_output_thread(void *arg) {
     }
 
     // initialize SWS context for software scaling
-    sws_ctx = sws_getContext(se->pCodecCtx->width,
-                             se->pCodecCtx->height,
-                             se->pCodecCtx->pix_fmt,
-                             se->pCodecCtx->width,
-                             se->pCodecCtx->height,
+    sws_ctx = sws_getContext(se->pDecodingCtx->width,
+                             se->pDecodingCtx->height,
+                             se->pDecodingCtx->pix_fmt,
+                             se->pDecodingCtx->width,
+                             se->pDecodingCtx->height,
                              AV_PIX_FMT_YUV420P,
                              SWS_BILINEAR,
                              NULL,
@@ -236,8 +201,8 @@ int frame_output_thread(void *arg) {
     Uint8 *yPlane, *uPlane, *vPlane;
     size_t yPlaneSz, uvPlaneSz;
     int uvPitch;
-    yPlaneSz = se->pCodecCtx->width * se->pCodecCtx->height;
-    uvPlaneSz = se->pCodecCtx->width * se->pCodecCtx->height / 4;
+    yPlaneSz = se->pDecodingCtx->width * se->pDecodingCtx->height;
+    uvPlaneSz = se->pDecodingCtx->width * se->pDecodingCtx->height / 4;
     yPlane = (Uint8*)malloc(yPlaneSz);
     uPlane = (Uint8*)malloc(uvPlaneSz);
     vPlane = (Uint8*)malloc(uvPlaneSz);
@@ -246,7 +211,7 @@ int frame_output_thread(void *arg) {
         exit(1);
     }
 
-    uvPitch = se->pCodecCtx->width / 2;
+    uvPitch = se->pDecodingCtx->width / 2;
 
     // Screen is ready
     log_info("[SDL] screen is ready");
@@ -263,13 +228,24 @@ int frame_output_thread(void *arg) {
         pict.data[0] = yPlane;
         pict.data[1] = uPlane;
         pict.data[2] = vPlane;
-        pict.linesize[0] = se->pCodecCtx->width;
+        pict.linesize[0] = se->pDecodingCtx->width;
         pict.linesize[1] = uvPitch;
         pict.linesize[2] = uvPitch;
 
+		AVPacket *pkt = av_packet_alloc();
+		int ret = avcodec_send_frame(se->pEncodingCtx, frame_data->pFrame);
+		if (ret < 0) {
+			fprintf(stderr, "Error sending a frame for encoding\n");
+			exit(1);
+		}
+		while (ret >= 0) {
+			ret = avcodec_receive_packet(se->pEncodingCtx, pkt);
+		}
+
+
         // Convert the image into YUV format that SDL uses
         sws_scale(sws_ctx, (uint8_t const * const *) frame_data->pFrame->data,
-                  frame_data->pFrame->linesize, 0, se->pCodecCtx->height, pict.data,
+                  frame_data->pFrame->linesize, 0, se->pDecodingCtx->height, pict.data,
                   pict.linesize);
 		frame_data->sdl_avframe_rescale_time_point = std::chrono::system_clock::now();
 
@@ -278,7 +254,7 @@ int frame_output_thread(void *arg) {
                 texture,
                 NULL,
                 yPlane,
-                se->pCodecCtx->width,
+                se->pDecodingCtx->width,
                 uPlane,
                 uvPitch,
                 vPlane,
@@ -289,15 +265,12 @@ int frame_output_thread(void *arg) {
         SDL_RenderPresent(se->renderer);
 		frame_data->sdl_displayed_time_point = std::chrono::system_clock::now();
 		
-		//frame_data_destroy(frame_data);
-
         i++;
 
 		frame_data_debug(frame_data);
 		simple_queue_push(se->frame_extractor_pframe_pool, frame_data);
 
 		while (simple_queue_length(se->frame_output_thread_queue) > 0) {
-			//log_info("frame_output_thread: %i elements in queue", simple_queue_length(se->frame_output_thread_queue));
 			FrameData* frame_data = (FrameData*)simple_queue_pop(se->frame_output_thread_queue);
 			simple_queue_push(se->frame_extractor_pframe_pool, frame_data);
 		}
@@ -318,53 +291,9 @@ int frame_output_thread(void *arg) {
     return 0;
 }
 
-int frame_extractor_thread(void *arg) {
-    StreamingEnvironment *se = (StreamingEnvironment*) arg;
-
-	while (!se->initialized) {
-		usleep(30 * 1000);
-	}
-
-    // [FFMPEG] Reading frames
-    log_info("Reading frames");
-    SDL_Event event;
-    AVPacket packet;
-    int i=0;
-
-    while(! se->screen_is_initialized) {
-        usleep(30 * 1000);
-    }
-
-    int frameFinished;
-    while(av_read_frame(se->pFormatCtx, &packet)>=0) {
-        // Is this a packet from the video stream?
-        if(packet.stream_index == se->videoStream) {
-            // [FFMPEG] Allocate video frame
-            log_info("frame_extractor_pframe_pool: %i elements in queue", simple_queue_length(se->frame_extractor_pframe_pool));
-            FrameData* frame_data = (FrameData *) simple_queue_pop(se->frame_extractor_pframe_pool);
-            log_info("WRITE ====> %i (%i)", frame_data->id, i);
-
-            // Decode video frame
-            avcodec_decode_video2(se->pCodecCtx, frame_data->pFrame, &frameFinished, &packet);
-
-            // Did we get a video frame?
-            if(frameFinished) {
-                // Push frame to the output_video thread
-                AVFrame* old_pframe = frame_data->pFrame;
-                frame_data->pFrame = av_frame_clone(frame_data->pFrame);
-                simple_queue_push(se->frame_output_thread_queue, frame_data);
-                av_free(old_pframe);
-                i++;
-				
-				usleep(33.333 * 1000);
-            }
-        }
-
-        // Free the packet that was allocated by av_read_frame
-        av_free_packet(&packet);
-    }
-
-    return 0;
+void my_log_callback(void *ptr, int level, const char *fmt, va_list vargs)
+{
+	//printf("\n%s", fmt);
 }
 
 int main(int argc, char* argv[]){
@@ -381,64 +310,76 @@ int main(int argc, char* argv[]){
     #if defined(WIN32)
     se->gpu_frame_extractor_thread = SDL_CreateThread(gpu_frame_extractor_thread, "gpu_frame_extractor_thread", se);
     #endif
-    se->pCodecCtx = NULL;
+    se->pDecodingCtx = NULL;
+	se->pEncodingCtx = NULL;
     se->finishing = 0;
     se->initialized = 0;
-    se->screen_is_initialized = 0;
+    se->screen_is_initialized = 0;	
 
+	av_log_set_callback(my_log_callback);
+	av_log_set_level(AV_LOG_VERBOSE);
+	
     // [FFMPEG] Registering file formats and codecs
     log_info("Registering file formats and codecs");
     av_register_all();
-//    AVFormatContext *pFormatCtx = NULL;
 
-    // [FFMPEG] Open video file
-    log_info("Open video file: %s", VIDEO_FILE_PATH);
-    if (avformat_open_input(&se->pFormatCtx, VIDEO_FILE_PATH, NULL, NULL) != 0 ) {
-        log_error("Could not open video file: %s", VIDEO_FILE_PATH);
-        return -1;
-    }
+	/* find the mpeg1video encoder */
+	se->decoder = avcodec_find_decoder(AV_CODEC_ID_H264);
+	if (!se->decoder) {
+		fprintf(stderr, "Codec '%s' not found\n", "h264");
+		exit(1);
+	}
+	se->pDecodingCtx = avcodec_alloc_context3(se->decoder);
+	if (!se->pDecodingCtx) {
+		fprintf(stderr, "Could not allocate video codec context\n");
+		exit(1);
+	}
+	/* resolution must be a multiple of two */
+	se->pDecodingCtx->width = SDL_WINDOW_WIDTH;
+	se->pDecodingCtx->height = SDL_WINDOW_HEIGHT;
 
-    // [FFMPEG] Retrieve stream information
-    log_info("Retrieve stream information");
-    if(avformat_find_stream_info(se->pFormatCtx, NULL) < 0){
-        log_error("Couldn't find stream information");
-        return -1;
-    }
+	/* emit one intra frame every ten frames
+	 * check frame pict_type before passing frame
+	 * to encoder, if frame->pict_type is AV_PICTURE_TYPE_I
+	 * then gop_size is ignored and the output of encoder
+	 * will always be I frame irrespective to gop_size
+	 */
+	se->pDecodingCtx->gop_size = 10;
+	se->pDecodingCtx->max_b_frames = 1;
+	se->pDecodingCtx->pix_fmt = AV_PIX_FMT_YUV420P;
 
-    // [FFMPEG] Dump information about file onto standard error
-    log_info("Dump information about file");
-    av_dump_format(se->pFormatCtx, 0, VIDEO_FILE_PATH, 0);
+	//se->pCodecCtx = pCodecCtxOrig;
 
-    int i;
-    AVCodecContext *pCodecCtxOrig = NULL;
-    se->pCodecCtx = NULL;
+	////////////////////////////////////////////////////////////////
 
-    // [FFMPEG] Find the first video stream
-    log_info("Find the first video stream");
-    se->videoStream=-1;
-    for(i=0; i<se->pFormatCtx->nb_streams; i++)
-        if(se->pFormatCtx->streams[i]->codec->codec_type==AVMEDIA_TYPE_VIDEO) {
-            se->videoStream=i;
-            break;
-        }
-    if(se->videoStream==-1){
-        log_error("Didn't find a video stream");
-        return -1;
-    }
+	se->encoder = avcodec_find_encoder(AV_CODEC_ID_H264);
+	if (!se->encoder) {
+		fprintf(stderr, "Codec '%s' not found\n", "h264");
+		exit(1);
+	}
+	se->pEncodingCtx = avcodec_alloc_context3(se->encoder);
+	if (!se->pEncodingCtx) {
+		fprintf(stderr, "Could not allocate video codec context\n");
+		exit(1);
+	}
+	/* resolution must be a multiple of two */
+	se->pEncodingCtx->width = SDL_WINDOW_WIDTH;
+	se->pEncodingCtx->height = SDL_WINDOW_HEIGHT;
 
-    // [FFMPEG] Get a pointer to the codec context for the video stream
-    se->pCodecCtx = se->pFormatCtx->streams[se->videoStream]->codec;
+	/* emit one intra frame every ten frames
+	 * check frame pict_type before passing frame
+	 * to encoder, if frame->pict_type is AV_PICTURE_TYPE_I
+	 * then gop_size is ignored and the output of encoder
+	 * will always be I frame irrespective to gop_size
+	 */
+	se->pEncodingCtx->bit_rate = 64000;
+	se->pEncodingCtx->gop_size = 10;
+	se->pEncodingCtx->max_b_frames = 1;
+	se->pEncodingCtx->pix_fmt = AV_PIX_FMT_YUV420P;
+	se->pEncodingCtx->time_base.den = 60;
+	se->pEncodingCtx->time_base.num = 1;
 
-    AVCodec *pCodec = NULL;
-
-    // [FFMPEG] Find the decoder for the video stream
-    log_info("Find the decoder for the video stream");
-
-    pCodec=avcodec_find_decoder(se->pCodecCtx->codec_id);
-    if (pCodec==NULL) {
-        log_error("Unsupported codec!\n");
-        return -1; // Codec not found
-    }
+	//////////////////////////////////////////////////////////////
 
     // [SDL] Initializing SDL library
     log_info("Initializing SDL library");
@@ -457,8 +398,8 @@ int main(int argc, char* argv[]){
             "FFmpeg Tutorial",
             SDL_WINDOWPOS_UNDEFINED,
             SDL_WINDOWPOS_UNDEFINED,
-            se->pCodecCtx->width,
-            se->pCodecCtx->height,
+			SDL_WINDOW_WIDTH,
+			SDL_WINDOW_HEIGHT,
             screen_flags
     );
     SDL_ShowWindow(screen);
@@ -477,10 +418,15 @@ int main(int argc, char* argv[]){
 
     // Open codec
     log_info("Open codec");
-    if (avcodec_open2(se->pCodecCtx, pCodec, NULL) < 0) {
-        log_error("Could not open codec");
-        return -1;
-    }
+	int result = avcodec_open2(se->pEncodingCtx, se->encoder, NULL);
+	if (result < 0) {
+		log_error("Could not open codec");
+		return -1;
+	}
+	if (avcodec_open2(se->pDecodingCtx, se->decoder, NULL) < 0) {
+		log_error("Could not open codec");
+		return -1;
+	}
 
     // Application is ready to read frame and display frames
     se->initialized = 1;
@@ -520,8 +466,8 @@ int main(int argc, char* argv[]){
 
     // [FFMPEG] Close the codecs
     log_info("Close the codecs");
-    avcodec_close(se->pCodecCtx);
-    avcodec_close(pCodecCtxOrig);
+    avcodec_close(se->pDecodingCtx);
+	avcodec_close(se->pEncodingCtx);
 
     // [FFMPEG] Close the video file
     log_info("Close the video file");

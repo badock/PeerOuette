@@ -8,6 +8,8 @@ extern "C" {
 #include <libavformat/avformat.h>
 #include <libswscale/swscale.h>
 #include <libavcodec/avcodec.h>
+#include <libavutil/opt.h>
+#include <libavutil/imgutils.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <SDL.h>
@@ -28,7 +30,10 @@ typedef struct _StreamingEnvironment {
 #endif
 	SimpleQueue * frame_extractor_pframe_pool;
 	SimpleQueue *frame_output_thread_queue;
-	AVCodecContext* pCodecCtx;
+	AVCodec* encoder;
+	AVCodec* decoder;
+	AVCodecContext* pDecodingCtx;
+	AVCodecContext* pEncodingCtx;
 	AVFormatContext *pFormatCtx;
 	SDL_Window *screen;
 	SDL_Renderer *renderer;
