@@ -11,7 +11,6 @@ https://github.com/gnif/LookingGlass/blob/master/host/TextureConverter.h
 #include <wrl.h>
 #include <DirectXMath.h>
 #include "src/streaming/streaming.h"
-#include "src/I420effect/I420effect.h"
 
 #include <DirectXMath.h>
 #include <vector>

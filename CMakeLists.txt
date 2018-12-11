@@ -1,26 +1,46 @@
 cmake_minimum_required(VERSION 3.9)
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/CMakeModules)
 
+
+include("HunterGate")
+#HunterGate(
+#        URL "https://github.com/ruslo/hunter/archive/v0.23.31.tar.gz"
+#        SHA1 "3d94b8522541c4c8eaac606f4c47d09322a8019c"
+#)
+HunterGate(
+		URL "https://github.com/ruslo/hunter/archive/v0.23.114.tar.gz"
+		SHA1 "712b3f5ea467fbddd4769a7800a060fbd6a31ab5"
+)
+
 project(GameClientSDL)
 set(CMAKE_CXX_STANDARD 11)
+
+#hunter_add_package(Beast)
+#find_package(Beast CONFIG REQUIRED)
+
+hunter_add_package(Boost)
+find_package(Boost CONFIG REQUIRED)
+
+hunter_add_package(nlohmann_fifo_map)
+find_package(nlohmann_fifo_map CONFIG REQUIRED)
 
 if(WIN32)
     add_executable(GameClientSDL
             main.cpp
             src/streaming/streaming.cpp
             src/streaming/streaming.h
-            src/video/ffmpeg.cpp
-            src/video/ffmpeg.h
+            #src/video/ffmpeg.cpp
+            #src/video/ffmpeg.h
             src/log/log.cpp
             src/log/log.h
             src/queue/queue.cpp
             src/queue/queue.h
             src/dxcapture/capture.cpp
             src/dxcapture/capture.h
-            src/I420effect/I420effect.cpp
-            src/I420effect/I420effect.h
-			src/I420effect/I420Effect_PS.hlsl
-			src/I420effect/I420Effect_VS.hlsl
+			src/network/network_win.cpp
+			src/network/network_win.h
+            src/codec/codec.cpp
+            src/codec/codec.h
             src/texture_converter/TextureConverter.cpp
             src/texture_converter/TextureConverter.h
 			src/texture_converter/shaders/Pixel.hlsl
@@ -28,7 +48,6 @@ if(WIN32)
 			src/texture_converter/shaders/RGBtoYUV.hlsl)
 
 			set(PIXELSHADER_FILES
-			  src/I420effect/I420Effect_PS.hlsl
 			  src/texture_converter/shaders/Pixel.hlsl
 			  src/texture_converter/shaders/RGBtoYUV.hlsl
 			)
@@ -46,15 +65,18 @@ else()
             main.cpp
             src/streaming/streaming.cpp
             src/streaming/streaming.h
-            src/video/ffmpeg.cpp
-            src/video/ffmpeg.h
+            #src/video/ffmpeg.cpp
+            #src/video/ffmpeg.h
             src/log/log.cpp
             src/log/log.h
+			src/network/network_win.cpp
+			src/network/network_win.h
+            src/codec/codec.cpp
+            src/codec/codec.h
             src/queue/queue.cpp
             src/queue/queue.h)
 endif()
 INCLUDE(FindPkgConfig)
-
 
 if(WIN32)
   set(SDL2_DIR deps/sdl2/build/native)
@@ -121,9 +143,9 @@ endif()
 
 
 if(WIN32)
-    target_link_libraries(${PROJECT_NAME} ${FFMPEG_LIBRARIES} ${SDL2_LIBRARY} ${DirectX11_LIBRARIES})
+    target_link_libraries(${PROJECT_NAME} ${FFMPEG_LIBRARIES} ${SDL2_LIBRARY} ${DirectX11_LIBRARIES} Boost::boost nlohmann_fifo_map::fifo_map)
 else()
-    target_link_libraries(${PROJECT_NAME} ${FFMPEG_LIBRARIES} ${SDL2_LIBRARY})
+    target_link_libraries(${PROJECT_NAME} ${FFMPEG_LIBRARIES} ${SDL2_LIBRARY} Boost::boost nlohmann_fifo_map::fifo_map)
 endif()
 
 if(WIN32)
@@ -140,4 +162,3 @@ if(WIN32)
     )
     add_dependencies(GameClientSDL DLLCopyBinaries)
 endif()
-

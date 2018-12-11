@@ -24,8 +24,6 @@ matrix:
 
 install:
   - git submodule update --init --recursive
-#  - choco install ffmpeg
-#  - dotnet add package FFmpeg.Nightly
   - nuget install SDL2 -OutputDirectory deps -ExcludeVersion -NoCache
   - nuget install FFmpeg.Nightly -OutputDirectory deps -ExcludeVersion -NoCache
 
