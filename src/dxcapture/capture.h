@@ -10,7 +10,6 @@
 #include <wrl.h>
 #include <DirectXMath.h>
 #include "src/streaming/streaming.h"
-#include "src/I420effect/I420effect.h"
 #include "src/texture_converter/TextureConverter.h"
 
 #define NUMVERTICES 6

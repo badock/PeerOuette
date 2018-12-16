@@ -17,10 +17,8 @@ if(WIN32)
             src/queue/queue.h
             src/dxcapture/capture.cpp
             src/dxcapture/capture.h
-            src/I420effect/I420effect.cpp
-            src/I420effect/I420effect.h
-			src/I420effect/I420Effect_PS.hlsl
-			src/I420effect/I420Effect_VS.hlsl
+            src/network/network_win.cpp
+            src/network/network_win.h
             src/texture_converter/TextureConverter.cpp
             src/texture_converter/TextureConverter.h
 			src/texture_converter/shaders/Pixel.hlsl
@@ -28,7 +26,6 @@ if(WIN32)
 			src/texture_converter/shaders/RGBtoYUV.hlsl)
 
 			set(PIXELSHADER_FILES
-			  src/I420effect/I420Effect_PS.hlsl
 			  src/texture_converter/shaders/Pixel.hlsl
 			  src/texture_converter/shaders/RGBtoYUV.hlsl
 			)
@@ -54,7 +51,6 @@ else()
             src/queue/queue.h)
 endif()
 INCLUDE(FindPkgConfig)
-
 
 if(WIN32)
   set(SDL2_DIR deps/sdl2/build/native)
@@ -140,4 +136,3 @@ if(WIN32)
     )
     add_dependencies(GameClientSDL DLLCopyBinaries)
 endif()
-
