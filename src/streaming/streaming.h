@@ -20,6 +20,7 @@ extern "C" {
 #include <chrono>
 #include "src/queue/queue.h"
 #include "src/log/log.h"
+#include <queue>
 
 typedef struct _StreamingEnvironment {
 	SDL_Thread *frame_extractor_thread;
@@ -31,7 +32,7 @@ typedef struct _StreamingEnvironment {
 	SDL_Thread *frame_sender_thread;
 	SDL_Thread *gpu_frame_extractor_thread;
 #endif
-	SimpleQueue * network_simulated_queue;
+	std::queue<AVPacket*> *network_simulated_queue;
 	SimpleQueue * frame_extractor_pframe_pool;
 	SimpleQueue *frame_sender_thread_queue;
 	SimpleQueue *frame_receiver_thread_queue;

@@ -343,7 +343,9 @@ int main(int argc, char* argv[]){
     se->frame_output_thread_queue = simple_queue_create();
 	se->frame_sender_thread_queue = simple_queue_create();
 	se->frame_receiver_thread_queue = simple_queue_create();
-	se->network_simulated_queue = simple_queue_create();
+	//se->network_simulated_queue = simple_queue_create();
+	std::queue<AVPacket*> queue_;
+	se->network_simulated_queue = &queue_;
 	se->frame_output_thread = SDL_CreateThread(frame_output_thread, "frame_output_thread", se);
     se->frame_extractor_thread = SDL_CreateThread(frame_extractor_thread, "frame_extractor_thread", se);
     #if defined(WIN32)
@@ -366,6 +368,13 @@ int main(int argc, char* argv[]){
 	//av_dict_set(&param, "level", "32", 0);
 	//av_dict_set(&param, "intra - refresh", "1", 0);
 	av_dict_set(&param, "crf", "0", 0);
+	av_dict_set(&param, "look_ahead", "0", 0);
+	//av_dict_set(&param, "refs", "1", 0);
+	//av_dict_set(&param, "g", "48", 0);
+	//av_dict_set(&param, "slices", "4", 0);
+	//av_dict_set(&param, "threads", "4", 0);
+	//av_dict_set(&param, "me_range", "16", 0);
+	//av_dict_set(&param, "me_method", "dia", 0);
 
 	av_log_set_callback(my_log_callback);
 	av_log_set_level(AV_LOG_VERBOSE);
@@ -376,6 +385,7 @@ int main(int argc, char* argv[]){
 
 	/* find the mpeg1video encoder */
 	se->decoder = avcodec_find_decoder(CODEC_ID);
+	//se->encoder = avcodec_find_encoder_by_name("h264_amf");
 	if (!se->decoder) {
 		fprintf(stderr, "Codec '%s' not found\n", "h264");
 		exit(1);
@@ -396,7 +406,7 @@ int main(int argc, char* argv[]){
 	 * will always be I frame irrespective to gop_size
 	 */
 	se->pDecodingCtx->bit_rate = BITRATE;
-	//se->pEncodingCtx->gop_size = 5;
+	//se->pEncodingCtx->gop_size = 5 * FRAMERATE;
 	//se->pEncodingCtx->max_b_frames = 1;
 	se->pDecodingCtx->time_base.num = 1;
 	se->pDecodingCtx->time_base.den = FRAMERATE;
@@ -407,6 +417,7 @@ int main(int argc, char* argv[]){
 	////////////////////////////////////////////////////////////////
 
 	se->encoder = avcodec_find_encoder(CODEC_ID);
+	//se->encoder = avcodec_find_encoder_by_name("h264_amf");
 	if (!se->encoder) {
 		fprintf(stderr, "Codec '%s' not found\n", "h264");
 		exit(1);
@@ -427,7 +438,7 @@ int main(int argc, char* argv[]){
 	 * will always be I frame irrespective to gop_size
 	 */
 	se->pEncodingCtx->bit_rate = BITRATE;
-	//se->pEncodingCtx->gop_size = 5;
+	se->pEncodingCtx->gop_size = 5 * FRAMERATE;
 	//se->pEncodingCtx->max_b_frames = 1;
 	se->pEncodingCtx->time_base.num = 1;
 	se->pEncodingCtx->time_base.den = FRAMERATE;

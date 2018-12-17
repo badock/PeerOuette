@@ -116,7 +116,15 @@ int win_client_thread(void *arg) {
 			pkt->size = iResult;
 		}
 		else {
-			pkt = (AVPacket*) simple_queue_pop(se->network_simulated_queue);
+			//pkt = (AVPacket*) simple_queue_pop(se->network_simulated_queue);
+			//void* ptr = se->network_simulated_queue->pop();
+			if (se->network_simulated_queue->size() > 0) {
+				pkt = se->network_simulated_queue->front();
+				se->network_simulated_queue->pop();
+			}
+			else {
+				continue;
+			}
 		}
 
 		int size = pkt->size;
@@ -131,8 +139,11 @@ int win_client_thread(void *arg) {
 
 		while (ret >= 0) {
 			ret = avcodec_receive_frame(se->pDecodingCtx, frame_data->pFrame);
-			if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
+			if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
+				char* msg = get_ffmpeg_error_msg(ret);
+				log_error("error: %s", msg);
 				break;
+			}
 			else if (ret < 0) {
 				fprintf(stderr, "Error during decoding\n");
 				return -1;
@@ -142,7 +153,7 @@ int win_client_thread(void *arg) {
 				simple_queue_push(se->frame_output_thread_queue, frame_data);
 				av_packet_unref(pkt);
 				av_frame_unref(frame_data->pFrame);
-				FrameData* frame_data = (FrameData*)simple_queue_pop(se->frame_extractor_pframe_pool);
+				FrameData* frame_data = (FrameData*) simple_queue_pop(se->frame_extractor_pframe_pool);
 			}
 		}	
 	}
@@ -297,10 +308,11 @@ int win_server_thread(void *arg) {
 			}
 			else {
 				//simple_queue_push(se->network_simulated_queue, pkt);
+				se->network_simulated_queue->push(pkt);
 			}
 		}
 		simple_queue_push(se->frame_extractor_pframe_pool, frame_data);
-		simple_queue_push(se->frame_output_thread_queue, frame_data);
+		//simple_queue_push(se->frame_output_thread_queue, frame_data);
 	}
 
 	//////////////////////////////////////////////////////
