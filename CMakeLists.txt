@@ -47,6 +47,8 @@ else()
             src/video/ffmpeg.h
             src/log/log.cpp
             src/log/log.h
+			src/network/network_win.cpp
+			src/network/network_win.h
             src/queue/queue.cpp
             src/queue/queue.h)
 endif()

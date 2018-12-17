@@ -1,5 +1,6 @@
 #include "network_win.h"
 
+#if WIN32
 // Need to link with Ws2_32.lib
 #pragma comment (lib, "Ws2_32.lib")
 // #pragma comment (lib, "Mswsock.lib")
@@ -7,6 +8,8 @@
 #define DEFAULT_BUFLEN 9000
 #define DEFAULT_PORT "9000"
 #define SERVER_URL "127.0.0.1"
+#endif
+
 #define USE_NETWORK false
 
 char* get_ffmpeg_error_msg(int error_code) {
@@ -25,6 +28,8 @@ typedef struct serialized_packet_ {
 
 int win_client_thread(void *arg) {
 	StreamingEnvironment *se = (StreamingEnvironment*)arg;
+
+#if WIN32
 
 	WSADATA wsaData;
 	SOCKET ConnectSocket = INVALID_SOCKET;
@@ -97,9 +102,8 @@ int win_client_thread(void *arg) {
 
 	printf("Bytes Sent: %ld\n", iResult);
 	iResult = recv(ConnectSocket, recvbuf, recvbuflen, 0);
-	
-	
-	//FrameData* frame_data = frame_data_create(se);
+#endif
+
 	FrameData* frame_data = (FrameData*)simple_queue_pop(se->frame_extractor_pframe_pool);
 
 	while (se->finishing != 1) {
@@ -108,66 +112,47 @@ int win_client_thread(void *arg) {
 		AVPacket* pkt;
 
 		if (USE_NETWORK) {
+#if WIN32
 			pkt = (AVPacket*) malloc(sizeof(AVPacket));
 			av_init_packet(pkt);
 			iResult = recv(ConnectSocket, recvbuf, recvbuflen, 0);
 
 			pkt->data = (uint8_t*)recvbuf;
 			pkt->size = iResult;
+#endif
 		}
 		else {
-			//pkt = (AVPacket*) simple_queue_pop(se->network_simulated_queue);
-			//void* ptr = se->network_simulated_queue->pop();
-			if (se->network_simulated_queue->size() > 0) {
-				pkt = se->network_simulated_queue->front();
-				se->network_simulated_queue->pop();
-			}
-			else {
+			pkt = (AVPacket*) simple_queue_pop(se->network_simulated_queue);
+		}
+		int ret;
+		if (pkt) {
+			ret = avcodec_send_packet(se->pDecodingCtx, pkt);
+			if (ret < 0) {
 				continue;
 			}
 		}
 
-		int size = pkt->size;
-
-		int ret = avcodec_send_packet(se->pDecodingCtx, pkt);
-
-		if (ret < 0) {
-			char* msg = get_ffmpeg_error_msg(ret);
-			log_error("error during processing of packet: '%s'", msg);
+		ret = avcodec_receive_frame(se->pDecodingCtx, frame_data->pFrame);
+		if (ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF) {
 			continue;
+		} else if (ret >= 0) {
+			simple_queue_push(se->frame_output_thread_queue, frame_data);
+			frame_data = (FrameData*)simple_queue_pop(se->frame_extractor_pframe_pool);
 		}
-
-		while (ret >= 0) {
-			ret = avcodec_receive_frame(se->pDecodingCtx, frame_data->pFrame);
-			if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
-				char* msg = get_ffmpeg_error_msg(ret);
-				log_error("error: %s", msg);
-				break;
-			}
-			else if (ret < 0) {
-				fprintf(stderr, "Error during decoding\n");
-				return -1;
-			}
-
-			if (ret >= 0) {
-				simple_queue_push(se->frame_output_thread_queue, frame_data);
-				av_packet_unref(pkt);
-				av_frame_unref(frame_data->pFrame);
-				FrameData* frame_data = (FrameData*) simple_queue_pop(se->frame_extractor_pframe_pool);
-			}
-		}	
 	}
 
+#if WIN32
 	// cleanup
 	closesocket(ConnectSocket);
 	WSACleanup();
-
+#endif
 	return 0;
 }
 
 int win_server_thread(void *arg) {
 	StreamingEnvironment *se = (StreamingEnvironment*)arg;
 
+#if WIN32
 	WSADATA wsaData;
 	int iResult;
 
@@ -271,6 +256,7 @@ int win_server_thread(void *arg) {
 		}
 
 	} while (!client_connected);
+#endif
 
 	//////////////////////////////////////////////////////
 	// <custom> BADOCK: READS AVFRAME AND SENDS PACKETS
@@ -304,11 +290,13 @@ int win_server_thread(void *arg) {
 			//printf("Write packet (size=%d)\n", size);
 
 			if (USE_NETWORK) {
+#if WIN32
 				iSendResult = send(ClientSocket, (char*) pkt->data, pkt->size, 0);
+#endif
 			}
 			else {
-				//simple_queue_push(se->network_simulated_queue, pkt);
-				se->network_simulated_queue->push(pkt);
+				simple_queue_push(se->network_simulated_queue, pkt);
+//				se->network_simulated_queue->push(pkt);
 			}
 		}
 		simple_queue_push(se->frame_extractor_pframe_pool, frame_data);
@@ -319,6 +307,7 @@ int win_server_thread(void *arg) {
 	// </custom>
 	//////////////////////////////////////////////////////
 
+#if WIN32
 	// shutdown the connection since we're done
 	iResult = shutdown(ClientSocket, SD_SEND);
 	if (iResult == SOCKET_ERROR) {
@@ -331,6 +320,6 @@ int win_server_thread(void *arg) {
 	// cleanup
 	closesocket(ClientSocket);
 	WSACleanup();
-
+#endif
 	return 0;
 }

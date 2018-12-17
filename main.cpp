@@ -6,12 +6,12 @@
 #define av_frame_free avcodec_free_frame
 #endif
 
+#include "src/network/network_win.h"
 #if defined(WIN32)
 #include <winsock2.h>
 #include <Windows.h>
 #include "src/dxcapture/capture.h"
 #include "src/texture_converter/TextureConverter.h"
-#include "src/network/network_win.h"
 void usleep(unsigned int usec)
 {
 	Sleep(usec / 1000);
@@ -299,9 +299,9 @@ int frame_extractor_thread(void *arg) {
 		// Is this a packet from the video stream?
 		if (packet.stream_index == se->videoStream) {
 			// [FFMPEG] Allocate video frame
-			log_info("frame_extractor_pframe_pool: %i elements in queue", simple_queue_length(se->frame_extractor_pframe_pool));
+//			log_info("frame_extractor_pframe_pool: %i elements in queue", simple_queue_length(se->frame_extractor_pframe_pool));
 			FrameData* frame_data = (FrameData *)simple_queue_pop(se->frame_extractor_pframe_pool);
-			log_info("WRITE ====> %i (%i)", frame_data->id, i);
+//			log_info("WRITE ====> %i (%i)", frame_data->id, i);
 
 			// Decode video frame
 			avcodec_decode_video2(se->pCodecCtx, frame_data->pFrame, &frameFinished, &packet);
@@ -343,16 +343,16 @@ int main(int argc, char* argv[]){
     se->frame_output_thread_queue = simple_queue_create();
 	se->frame_sender_thread_queue = simple_queue_create();
 	se->frame_receiver_thread_queue = simple_queue_create();
-	//se->network_simulated_queue = simple_queue_create();
-	std::queue<AVPacket*> queue_;
-	se->network_simulated_queue = &queue_;
+	se->network_simulated_queue = simple_queue_create();
+//	std::queue<AVPacket*> queue_;
+//	se->network_simulated_queue = &queue_;
 	se->frame_output_thread = SDL_CreateThread(frame_output_thread, "frame_output_thread", se);
     se->frame_extractor_thread = SDL_CreateThread(frame_extractor_thread, "frame_extractor_thread", se);
     #if defined(WIN32)
     //se->gpu_frame_extractor_thread = SDL_CreateThread(gpu_frame_extractor_thread, "gpu_frame_extractor_thread", se);
-	se->frame_receiver_thread = SDL_CreateThread(win_client_thread, "frame_receiver_thread", se);
-	se->frame_sender_thread = SDL_CreateThread(win_server_thread, "frame_sender_thread", se);
     #endif
+    se->frame_receiver_thread = SDL_CreateThread(win_client_thread, "frame_receiver_thread", se);
+    se->frame_sender_thread = SDL_CreateThread(win_server_thread, "frame_sender_thread", se);
     se->pDecodingCtx = NULL;
 	se->pEncodingCtx = NULL;
     se->finishing = 0;
@@ -372,7 +372,7 @@ int main(int argc, char* argv[]){
 	//av_dict_set(&param, "refs", "1", 0);
 	//av_dict_set(&param, "g", "48", 0);
 	//av_dict_set(&param, "slices", "4", 0);
-	//av_dict_set(&param, "threads", "4", 0);
+	av_dict_set(&param, "threads", "1", 0);
 	//av_dict_set(&param, "me_range", "16", 0);
 	//av_dict_set(&param, "me_method", "dia", 0);
 
