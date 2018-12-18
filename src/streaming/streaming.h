@@ -43,6 +43,9 @@ typedef struct _StreamingEnvironment {
 	AVFormatContext *pFormatCtx2;
 	AVCodec* codec;
 
+	int width;
+	int height;
+
 	AVCodec* encoder;
 	AVCodec* decoder;
 	AVCodecContext* pDecodingCtx;

@@ -25,12 +25,13 @@ void usleep(unsigned int usec)
 int SDL_WINDOW_WIDTH = 1280;
 int SDL_WINDOW_HEIGHT = 720;
 int CAPTURE_WINDOW_WIDTH = 1920;
-int CAPTURE_WINDOW_HEIGHT = 816;
+int CAPTURE_WINDOW_HEIGHT = 1080;
 int BITRATE = CAPTURE_WINDOW_WIDTH * CAPTURE_WINDOW_HEIGHT * 3;
 int FRAMERATE = 60;
 char* VIDEO_FILE_PATH = "misc/rogue.mp4";
-//#define CODEC_ID AV_CODEC_ID_MPEG2VIDEO
-#define CODEC_ID AV_CODEC_ID_H264
+#define CODEC_ID AV_CODEC_ID_MPEG2VIDEO
+//#define CODEC_ID AV_CODEC_ID_H264
+//#define CODEC_ID AV_CODEC_ID_VP9
 
 StreamingEnvironment *global_streaming_environment;
 
@@ -347,9 +348,9 @@ int main(int argc, char* argv[]){
 //	std::queue<AVPacket*> queue_;
 //	se->network_simulated_queue = &queue_;
 	se->frame_output_thread = SDL_CreateThread(frame_output_thread, "frame_output_thread", se);
-    se->frame_extractor_thread = SDL_CreateThread(frame_extractor_thread, "frame_extractor_thread", se);
+    //se->frame_extractor_thread = SDL_CreateThread(frame_extractor_thread, "frame_extractor_thread", se);
     #if defined(WIN32)
-    //se->gpu_frame_extractor_thread = SDL_CreateThread(gpu_frame_extractor_thread, "gpu_frame_extractor_thread", se);
+    se->gpu_frame_extractor_thread = SDL_CreateThread(gpu_frame_extractor_thread, "gpu_frame_extractor_thread", se);
     #endif
     se->frame_receiver_thread = SDL_CreateThread(win_client_thread, "frame_receiver_thread", se);
     se->frame_sender_thread = SDL_CreateThread(win_server_thread, "frame_sender_thread", se);
@@ -385,7 +386,7 @@ int main(int argc, char* argv[]){
 
 	/* find the mpeg1video encoder */
 	se->decoder = avcodec_find_decoder(CODEC_ID);
-	//se->encoder = avcodec_find_encoder_by_name("h264_amf");
+	//se->decoder = avcodec_find_encoder_by_name("h264");
 	if (!se->decoder) {
 		fprintf(stderr, "Codec '%s' not found\n", "h264");
 		exit(1);

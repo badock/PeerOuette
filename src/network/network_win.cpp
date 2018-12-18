@@ -5,12 +5,12 @@
 #pragma comment (lib, "Ws2_32.lib")
 // #pragma comment (lib, "Mswsock.lib")
 
-#define DEFAULT_BUFLEN 9000
+#define DEFAULT_BUFLEN 900000
 #define DEFAULT_PORT "9000"
 #define SERVER_URL "127.0.0.1"
 #endif
 
-#define USE_NETWORK false
+#define USE_NETWORK true
 
 char* get_ffmpeg_error_msg(int error_code) {
 	char myArray[AV_ERROR_MAX_STRING_SIZE] = { 0 }; // all elements 0
