@@ -7,10 +7,11 @@
 
 #define DEFAULT_BUFLEN 900000
 #define DEFAULT_PORT "9000"
-#define SERVER_URL "127.0.0.1"
+#define SERVER_URL "192.168.1.23"
+//#define SERVER_URL "127.0.0.1"
 #endif
 
-#define USE_NETWORK true
+#define USE_NETWORK false
 
 char* get_ffmpeg_error_msg(int error_code) {
 	char myArray[AV_ERROR_MAX_STRING_SIZE] = { 0 }; // all elements 0
@@ -50,8 +51,8 @@ int win_client_thread(void *arg) {
 
 	ZeroMemory(&hints, sizeof(hints));
 	hints.ai_family = AF_UNSPEC;
-	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_protocol = IPPROTO_TCP;
+	hints.ai_socktype = SOCK_DGRAM;
+	hints.ai_protocol = IPPROTO_UDP;
 
 	// Resolve the server address and port
 	iResult = getaddrinfo(SERVER_URL, DEFAULT_PORT, &hints, &result);
@@ -101,7 +102,7 @@ int win_client_thread(void *arg) {
 	}
 
 	printf("Bytes Sent: %ld\n", iResult);
-	iResult = recv(ConnectSocket, recvbuf, recvbuflen, 0);
+	//iResult = recv(ConnectSocket, recvbuf, recvbuflen, 0);
 #endif
 
 	FrameData* frame_data = (FrameData*)simple_queue_pop(se->frame_extractor_pframe_pool);
@@ -125,8 +126,14 @@ int win_client_thread(void *arg) {
 			pkt = (AVPacket*) simple_queue_pop(se->network_simulated_queue);
 		}
 		int ret;
+
 		if (pkt) {
 			ret = avcodec_send_packet(se->pDecodingCtx, pkt);
+			if (USE_NETWORK) {
+#if WIN32
+				free(pkt);
+#endif
+			}
 			if (ret < 0) {
 				continue;
 			}
@@ -175,12 +182,12 @@ int win_server_thread(void *arg) {
 
 	ZeroMemory(&hints, sizeof(hints));
 	hints.ai_family = AF_INET;
-	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_protocol = IPPROTO_TCP;
+	hints.ai_socktype = SOCK_DGRAM;
+	hints.ai_protocol = IPPROTO_UDP;
 	hints.ai_flags = AI_PASSIVE;
 
 	// Resolve the server address and port
-	iResult = getaddrinfo(NULL, DEFAULT_PORT, &hints, &result);
+	iResult = getaddrinfo(SERVER_URL, DEFAULT_PORT, &hints, &result);
 	if (iResult != 0) {
 		printf("getaddrinfo failed with error: %d\n", iResult);
 		WSACleanup();
@@ -207,55 +214,16 @@ int win_server_thread(void *arg) {
 	}
 
 	freeaddrinfo(result);
+	struct sockaddr_in servaddr, cliaddr;
+	int len;
 
-	iResult = listen(ListenSocket, SOMAXCONN);
-	if (iResult == SOCKET_ERROR) {
-		printf("listen failed with error: %d\n", WSAGetLastError());
-		closesocket(ListenSocket);
-		WSACleanup();
-		return 1;
+	sockaddr_in client;
+	len = sizeof(client);
+	iResult = recvfrom(ListenSocket, recvbuf, recvbuflen, 0, (struct sockaddr *)&client, (socklen_t *)&len);
+	int port = ntohs(client.sin_port);
+	if (iResult != -1) {
+		log_info("recv()'d %d bytes of data in buf\n", iResult);
 	}
-
-	// Accept a client socket
-	ClientSocket = accept(ListenSocket, NULL, NULL);
-	if (ClientSocket == INVALID_SOCKET) {
-		printf("accept failed with error: %d\n", WSAGetLastError());
-		closesocket(ListenSocket);
-		WSACleanup();
-		return 1;
-	}
-
-	// No longer need server socket
-	closesocket(ListenSocket);
-
-	// Receive until the peer shuts down the connection
-	bool client_connected = false;
-	do {
-
-		iResult = recv(ClientSocket, recvbuf, recvbuflen, 0);
-		if (iResult > 0) {
-			printf("Bytes received: %d\n", iResult);
-
-			// Echo the buffer back to the sender
-			iSendResult = send(ClientSocket, recvbuf, iResult, 0);
-			if (iSendResult == SOCKET_ERROR) {
-				printf("send failed with error: %d\n", WSAGetLastError());
-				closesocket(ClientSocket);
-				WSACleanup();
-				return 1;
-			}
-			client_connected = true;
-		}
-		else if (iResult == 0)
-			printf("Connection closing...\n");
-		else {
-			printf("recv failed with error: %d\n", WSAGetLastError());
-			closesocket(ClientSocket);
-			WSACleanup();
-			return 1;
-		}
-
-	} while (!client_connected);
 #endif
 
 	//////////////////////////////////////////////////////
@@ -273,7 +241,6 @@ int win_server_thread(void *arg) {
 			char * msg = av_make_error_string(myArray, AV_ERROR_MAX_STRING_SIZE, ret);
 			fprintf(stderr, "Error sending a frame for encoding %s\n", msg);
 			continue;
-			//exit(1);
 		}
 		while (ret >= 0) {
 			pkt = av_packet_alloc();
@@ -291,16 +258,19 @@ int win_server_thread(void *arg) {
 
 			if (USE_NETWORK) {
 #if WIN32
-				iSendResult = send(ClientSocket, (char*) pkt->data, pkt->size, 0);
+				//iSendResult = send(ClientSocket, (char*) pkt->data, pkt->size, 0);
+
+				iSendResult = sendto(ListenSocket, (char*)pkt->data, pkt->size,
+					0, (const struct sockaddr *) &client,
+					len);
 #endif
 			}
 			else {
-				simple_queue_push(se->network_simulated_queue, pkt);
-//				se->network_simulated_queue->push(pkt);
+				//simple_queue_push(se->network_simulated_queue, pkt);
 			}
 		}
-		simple_queue_push(se->frame_extractor_pframe_pool, frame_data);
-		//simple_queue_push(se->frame_output_thread_queue, frame_data);
+		//simple_queue_push(se->frame_extractor_pframe_pool, frame_data);
+		simple_queue_push(se->frame_output_thread_queue, frame_data);
 	}
 
 	//////////////////////////////////////////////////////

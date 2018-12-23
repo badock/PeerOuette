@@ -262,79 +262,79 @@ int capture_frame(CaptureContext* cc, D3D_FRAME_DATA* Data, FrameData* ffmpeg_fr
 	hr = DesktopResource->QueryInterface(__uuidof(ID3D11Texture2D), reinterpret_cast<void **>(&cc->m_AcquiredDesktopImage));
 	DesktopResource->Release();
 	
-	DesktopResource = nullptr;
-	if (FAILED(hr))
-	{
-		log_error("Failed to QI for ID3D11Texture2D from acquired IDXGIResource in DUPLICATIONMANAGER");
-		return -1;
-	}
+	//DesktopResource = nullptr;
+	//if (FAILED(hr))
+	//{
+	//	log_error("Failed to QI for ID3D11Texture2D from acquired IDXGIResource in DUPLICATIONMANAGER");
+	//	return -1;
+	//}
 
-	// Get metadata
-    if (FrameInfo.TotalMetadataBufferSize)
-    {
-        // Old buffer too small
-        if (FrameInfo.TotalMetadataBufferSize > cc->m_MetaDataSize)
-        {
-            if (cc->m_MetaDataBuffer)
-            {
-                delete [] cc->m_MetaDataBuffer;
-                cc->m_MetaDataBuffer = nullptr;
-            }
-            cc->m_MetaDataBuffer = new BYTE[FrameInfo.TotalMetadataBufferSize];
-            if (!cc->m_MetaDataBuffer)
-            {
-                cc->m_MetaDataSize = 0;
-                Data->MoveCount = 0;
-                Data->DirtyCount = 0;
-				log_error("Failed to allocate memory for metadata in DUPLICATIONMANAGER");
-                return -1;
-            }
-            cc->m_MetaDataSize = FrameInfo.TotalMetadataBufferSize;
-        }
+	//// Get metadata
+ //   if (FrameInfo.TotalMetadataBufferSize)
+ //   {
+ //       // Old buffer too small
+ //       if (FrameInfo.TotalMetadataBufferSize > cc->m_MetaDataSize)
+ //       {
+ //           if (cc->m_MetaDataBuffer)
+ //           {
+ //               delete [] cc->m_MetaDataBuffer;
+ //               cc->m_MetaDataBuffer = nullptr;
+ //           }
+ //           cc->m_MetaDataBuffer = new BYTE[FrameInfo.TotalMetadataBufferSize];
+ //           if (!cc->m_MetaDataBuffer)
+ //           {
+ //               cc->m_MetaDataSize = 0;
+ //               Data->MoveCount = 0;
+ //               Data->DirtyCount = 0;
+	//			log_error("Failed to allocate memory for metadata in DUPLICATIONMANAGER");
+ //               return -1;
+ //           }
+ //           cc->m_MetaDataSize = FrameInfo.TotalMetadataBufferSize;
+ //       }
 
-        UINT BufSize = FrameInfo.TotalMetadataBufferSize;
+ //       UINT BufSize = FrameInfo.TotalMetadataBufferSize;
 
-        // Get move rectangles
-        hr = cc->m_dup->GetFrameMoveRects(BufSize, reinterpret_cast<DXGI_OUTDUPL_MOVE_RECT*>(cc->m_MetaDataBuffer), &BufSize);
-        if (FAILED(hr))
-        {
-            Data->MoveCount = 0;
-            Data->DirtyCount = 0;
-			log_error("Failed to get frame move rects in DUPLICATIONMANAGER");
-            return -1;
-        }
-        Data->MoveCount = BufSize / sizeof(DXGI_OUTDUPL_MOVE_RECT);
+ //       // Get move rectangles
+ //       hr = cc->m_dup->GetFrameMoveRects(BufSize, reinterpret_cast<DXGI_OUTDUPL_MOVE_RECT*>(cc->m_MetaDataBuffer), &BufSize);
+ //       if (FAILED(hr))
+ //       {
+ //           Data->MoveCount = 0;
+ //           Data->DirtyCount = 0;
+	//		log_error("Failed to get frame move rects in DUPLICATIONMANAGER");
+ //           return -1;
+ //       }
+ //       Data->MoveCount = BufSize / sizeof(DXGI_OUTDUPL_MOVE_RECT);
 
-        BYTE* DirtyRects = cc->m_MetaDataBuffer + BufSize;
-        BufSize = FrameInfo.TotalMetadataBufferSize - BufSize;
+ //       BYTE* DirtyRects = cc->m_MetaDataBuffer + BufSize;
+ //       BufSize = FrameInfo.TotalMetadataBufferSize - BufSize;
 
-        // Get dirty rectangles
-        hr = cc->m_dup->GetFrameDirtyRects(BufSize, reinterpret_cast<RECT*>(DirtyRects), &BufSize);
-        if (FAILED(hr))
-        {
-            Data->MoveCount = 0;
-            Data->DirtyCount = 0;
+ //       // Get dirty rectangles
+ //       hr = cc->m_dup->GetFrameDirtyRects(BufSize, reinterpret_cast<RECT*>(DirtyRects), &BufSize);
+ //       if (FAILED(hr))
+ //       {
+ //           Data->MoveCount = 0;
+ //           Data->DirtyCount = 0;
 
-			if (hr == DXGI_ERROR_ACCESS_LOST) {
-				log_error("Failed to get frame dirty rects in DUPLICATIONMANAGER (DXGI_ERROR_ACCESS_LOST)");
-			}
-			if (hr == DXGI_ERROR_MORE_DATA) {
-				log_error("Failed to get frame dirty rects in DUPLICATIONMANAGER (DXGI_ERROR_MORE_DATA)");
-			}
-			if (hr == DXGI_ERROR_INVALID_CALL) {
-				log_error("Failed to get frame dirty rects in DUPLICATIONMANAGER (DXGI_ERROR_INVALID_CALL)");
-			}
-			if (hr == E_INVALIDARG) {
-				log_error("Failed to get frame dirty rects in DUPLICATIONMANAGER (E_INVALIDARG)");
-			}
+	//		if (hr == DXGI_ERROR_ACCESS_LOST) {
+	//			log_error("Failed to get frame dirty rects in DUPLICATIONMANAGER (DXGI_ERROR_ACCESS_LOST)");
+	//		}
+	//		if (hr == DXGI_ERROR_MORE_DATA) {
+	//			log_error("Failed to get frame dirty rects in DUPLICATIONMANAGER (DXGI_ERROR_MORE_DATA)");
+	//		}
+	//		if (hr == DXGI_ERROR_INVALID_CALL) {
+	//			log_error("Failed to get frame dirty rects in DUPLICATIONMANAGER (DXGI_ERROR_INVALID_CALL)");
+	//		}
+	//		if (hr == E_INVALIDARG) {
+	//			log_error("Failed to get frame dirty rects in DUPLICATIONMANAGER (E_INVALIDARG)");
+	//		}
 
-			log_error("Failed to get frame dirty rects in DUPLICATIONMANAGER");
-            return -1;
-        }
-        Data->DirtyCount = BufSize / sizeof(RECT);
+	//		log_error("Failed to get frame dirty rects in DUPLICATIONMANAGER");
+ //           return -1;
+ //       }
+ //       Data->DirtyCount = BufSize / sizeof(RECT);
 
-        Data->MetaData = cc->m_MetaDataBuffer;
-    }
+ //       Data->MetaData = cc->m_MetaDataBuffer;
+ //   }
 
     Data->Frame = cc->m_AcquiredDesktopImage;
     Data->FrameInfo = FrameInfo;
@@ -489,7 +489,7 @@ int get_pixels_yuv420p(CaptureContext* cc, FrameData* ffmpeg_frame_data) {
 
 		//memcpy_sse(ffmpeg_frame_data->pFrame->data[i], (uint8_t *) mapping.pData, size);
 		//memcpy(ffmpeg_frame_data->pFrame->data[i], (uint8_t *)mapping.pData, size);
-		ffmpeg_frame_data->pFrame->data[i] = (uint8_t *)mapping.pData;
+		ffmpeg_frame_data->pFrame->data[i] = (uint8_t *) mapping.pData;
 
 		cc->context->Unmap(cc->m_ftextures_yuv420p[i], 0);
 	}

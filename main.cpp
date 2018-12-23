@@ -8,6 +8,9 @@
 
 #include "src/network/network_win.h"
 #if defined(WIN32)
+#define _CRTDBG_MAP_ALLOC  
+#include <stdlib.h>  
+#include <crtdbg.h>  
 #include <winsock2.h>
 #include <Windows.h>
 #include "src/dxcapture/capture.h"
@@ -28,8 +31,9 @@ int CAPTURE_WINDOW_WIDTH = 1920;
 int CAPTURE_WINDOW_HEIGHT = 1080;
 int BITRATE = CAPTURE_WINDOW_WIDTH * CAPTURE_WINDOW_HEIGHT * 3;
 int FRAMERATE = 60;
-char* VIDEO_FILE_PATH = "misc/rogue.mp4";
+char* VIDEO_FILE_PATH = "misc/sample.mkv";
 #define CODEC_ID AV_CODEC_ID_MPEG2VIDEO
+//#define CODEC_ID AV_CODEC_ID_MPEG4
 //#define CODEC_ID AV_CODEC_ID_H264
 //#define CODEC_ID AV_CODEC_ID_VP9
 
@@ -69,7 +73,28 @@ int gpu_frame_extractor_thread(void *arg) {
 		int result;
 		////result = get_pixels(&cc, ffmpeg_frame_data);
 		result = get_pixels_yuv420p(&cc, ffmpeg_frame_data);
+		//// set metadata
+		//ffmpeg_frame_data->pFrame->pict_type = AV_PICTURE_TYPE_I;
+		////ffmpeg_frame_data->pFrame->pts = 1080*1920;
+		//ffmpeg_frame_data->pFrame->pts = 0;
+		//ffmpeg_frame_data->pFrame->pkt_pts = 0;
+		//ffmpeg_frame_data->pFrame->pkt_dts = 0;
+		//ffmpeg_frame_data->pFrame->sample_aspect_ratio.num = 1;
+		//ffmpeg_frame_data->pFrame->color_range = AVCOL_RANGE_MPEG;
+
+		//// Push frame to the output_video thread
+		//AVFrame* old_pframe = ffmpeg_frame_data->pFrame;
+		//ffmpeg_frame_data->pFrame = av_frame_alloc();
+		//int buffer_size = avpicture_get_size(AV_PIX_FMT_YUV420P, CAPTURE_WINDOW_WIDTH, CAPTURE_WINDOW_WIDTH);
+		//unsigned char* pic_buffer_in = (unsigned char*) malloc(buffer_size * sizeof(unsigned char*));
+		//memcpy(pic_buffer_in, old_pframe->data, buffer_size);
+		
+		//ffmpeg_frame_data->pFrame = av_frame_clone(frame_data->pFrame);
+		//simple_queue_push(se->frame_sender_thread_queue, frame_data);
+
+
 		ffmpeg_frame_data->avframe_produced_time_point = std::chrono::system_clock::now();
+
 
 		int frame_release_result = done_with_frame(&cc);
 
@@ -313,6 +338,7 @@ int frame_extractor_thread(void *arg) {
 				AVFrame* old_pframe = frame_data->pFrame;
 				frame_data->pFrame = av_frame_clone(frame_data->pFrame);
 				simple_queue_push(se->frame_sender_thread_queue, frame_data);
+
 				//simple_queue_push(se->frame_output_thread_queue, frame_data);
 				av_free(old_pframe);
 				i++;
@@ -463,6 +489,7 @@ int main(int argc, char* argv[]){
     if (0) {
         screen_flags = SDL_WINDOW_FULLSCREEN | SDL_WINDOW_OPENGL;
     }
+	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "best");
     SDL_Window *screen = screen = SDL_CreateWindow(
             "FFmpeg Tutorial",
             SDL_WINDOWPOS_UNDEFINED,
@@ -501,7 +528,7 @@ int main(int argc, char* argv[]){
     se->initialized = 1;
 
 	// [FFMPEG] Initialize frame pool
-	for (int i = 0; i < 60; i++) {
+	for (int i = 0; i < 120; i++) {
 		FrameData* frame_data = frame_data_create(se);
 		frame_data->id = i;
 		simple_queue_push(se->frame_extractor_pframe_pool, frame_data);
@@ -544,5 +571,7 @@ int main(int argc, char* argv[]){
 
     log_info("Simple GameClient is exiting");
 
-    return 0;
+	_CrtDumpMemoryLeaks();
+    
+	return 0;
 }
