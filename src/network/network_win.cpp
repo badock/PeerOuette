@@ -29,8 +29,9 @@ typedef struct serialized_packet_ {
 
 int win_client_thread(void *arg) {
 	StreamingEnvironment *se = (StreamingEnvironment*)arg;
+    std::chrono::system_clock::time_point before = std::chrono::system_clock::now();
 
-#if WIN32
+#if WIN323
 
 	WSADATA wsaData;
 	SOCKET ConnectSocket = INVALID_SOCKET;
@@ -113,7 +114,7 @@ int win_client_thread(void *arg) {
 		AVPacket* pkt;
 
 		if (USE_NETWORK) {
-#if WIN32
+#if WIN323
 			pkt = (AVPacket*) malloc(sizeof(AVPacket));
 			av_init_packet(pkt);
 			iResult = recv(ConnectSocket, recvbuf, recvbuflen, 0);
@@ -130,7 +131,7 @@ int win_client_thread(void *arg) {
 		if (pkt) {
 			ret = avcodec_send_packet(se->pDecodingCtx, pkt);
 			if (USE_NETWORK) {
-#if WIN32
+#if WIN323
 				free(pkt);
 #endif
 			}
@@ -143,12 +144,16 @@ int win_client_thread(void *arg) {
 		if (ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF) {
 			continue;
 		} else if (ret >= 0) {
+            std::chrono::system_clock::time_point after = frame_data->sdl_displayed_time_point = std::chrono::system_clock::now();
+            float frame_encode_duration = std::chrono::duration_cast<std::chrono::microseconds>(after - before).count() / 1000.0;
+            log_info(" decoding duration: %f", frame_encode_duration);
 			simple_queue_push(se->frame_output_thread_queue, frame_data);
 			frame_data = (FrameData*)simple_queue_pop(se->frame_extractor_pframe_pool);
+            before = std::chrono::system_clock::now();
 		}
 	}
 
-#if WIN32
+#if WIN323
 	// cleanup
 	closesocket(ConnectSocket);
 	WSACleanup();
@@ -159,7 +164,7 @@ int win_client_thread(void *arg) {
 int win_server_thread(void *arg) {
 	StreamingEnvironment *se = (StreamingEnvironment*)arg;
 
-#if WIN32
+#if WIN323
 	WSADATA wsaData;
 	int iResult;
 
@@ -235,6 +240,7 @@ int win_server_thread(void *arg) {
 	while (se->finishing != 1) {
 		FrameData* frame_data = (FrameData*) simple_queue_pop(se->frame_sender_thread_queue);
 
+        std::chrono::system_clock::time_point before = frame_data->sdl_displayed_time_point = std::chrono::system_clock::now();
 		int ret = avcodec_send_frame(se->pEncodingCtx, frame_data->pFrame);
 		if (ret < 0) {
 			char myArray[AV_ERROR_MAX_STRING_SIZE] = { 0 }; // all elements 0
@@ -257,7 +263,7 @@ int win_server_thread(void *arg) {
 			//printf("Write packet (size=%d)\n", size);
 
 			if (USE_NETWORK) {
-#if WIN32
+#if WIN323
 				//iSendResult = send(ClientSocket, (char*) pkt->data, pkt->size, 0);
 
 				iSendResult = sendto(ListenSocket, (char*)pkt->data, pkt->size,
@@ -266,18 +272,22 @@ int win_server_thread(void *arg) {
 #endif
 			}
 			else {
-				//simple_queue_push(se->network_simulated_queue, pkt);
+				simple_queue_push(se->network_simulated_queue, pkt);
 			}
 		}
-		//simple_queue_push(se->frame_extractor_pframe_pool, frame_data);
-		simple_queue_push(se->frame_output_thread_queue, frame_data);
+        std::chrono::system_clock::time_point after = frame_data->sdl_displayed_time_point = std::chrono::system_clock::now();
+        float frame_encode_duration = std::chrono::duration_cast<std::chrono::microseconds>(after - before).count() / 1000.0;
+
+        log_info(" encoding duration: %f", frame_encode_duration);
+		simple_queue_push(se->frame_extractor_pframe_pool, frame_data);
+		//simple_queue_push(se->frame_output_thread_queue, frame_data);
 	}
 
 	//////////////////////////////////////////////////////
 	// </custom>
 	//////////////////////////////////////////////////////
 
-#if WIN32
+#if WIN323
 	// shutdown the connection since we're done
 	iResult = shutdown(ClientSocket, SD_SEND);
 	if (iResult == SOCKET_ERROR) {

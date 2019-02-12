@@ -28,13 +28,13 @@ void usleep(unsigned int usec)
 int SDL_WINDOW_WIDTH = 1280;
 int SDL_WINDOW_HEIGHT = 720;
 int CAPTURE_WINDOW_WIDTH = 1920;
-int CAPTURE_WINDOW_HEIGHT = 1080;
+int CAPTURE_WINDOW_HEIGHT = 816;
 int BITRATE = CAPTURE_WINDOW_WIDTH * CAPTURE_WINDOW_HEIGHT * 3;
 int FRAMERATE = 60;
-char* VIDEO_FILE_PATH = "misc/sample.mkv";
-#define CODEC_ID AV_CODEC_ID_MPEG2VIDEO
+char* VIDEO_FILE_PATH = "misc/rogue.mp4";
+//#define CODEC_ID AV_CODEC_ID_MPEG2VIDEO
 //#define CODEC_ID AV_CODEC_ID_MPEG4
-//#define CODEC_ID AV_CODEC_ID_H264
+#define CODEC_ID AV_CODEC_ID_H264
 //#define CODEC_ID AV_CODEC_ID_VP9
 
 StreamingEnvironment *global_streaming_environment;
@@ -98,7 +98,7 @@ int gpu_frame_extractor_thread(void *arg) {
 
 		int frame_release_result = done_with_frame(&cc);
 
-		if (se->network_initialized) {
+		if (true || se->network_initialized) {
 			simple_queue_push(se->frame_sender_thread_queue, ffmpeg_frame_data);
 		}
 		else {
@@ -374,9 +374,9 @@ int main(int argc, char* argv[]){
 //	std::queue<AVPacket*> queue_;
 //	se->network_simulated_queue = &queue_;
 	se->frame_output_thread = SDL_CreateThread(frame_output_thread, "frame_output_thread", se);
-    //se->frame_extractor_thread = SDL_CreateThread(frame_extractor_thread, "frame_extractor_thread", se);
+    se->frame_extractor_thread = SDL_CreateThread(frame_extractor_thread, "frame_extractor_thread", se);
     #if defined(WIN32)
-    se->gpu_frame_extractor_thread = SDL_CreateThread(gpu_frame_extractor_thread, "gpu_frame_extractor_thread", se);
+    //se->gpu_frame_extractor_thread = SDL_CreateThread(gpu_frame_extractor_thread, "gpu_frame_extractor_thread", se);
     #endif
     se->frame_receiver_thread = SDL_CreateThread(win_client_thread, "frame_receiver_thread", se);
     se->frame_sender_thread = SDL_CreateThread(win_server_thread, "frame_sender_thread", se);
@@ -388,18 +388,18 @@ int main(int argc, char* argv[]){
     se->screen_is_initialized = 0;	
 
 	AVDictionary *param = NULL;
-	av_dict_set(&param, "preset", "ultrafast", 0);
-	av_dict_set(&param, "tune", "zerolatency", 0);
+	//av_dict_set(&param, "preset", "ultrafast", 0);
+	//av_dict_set(&param, "tune", "zerolatency", 0);
 
 	//av_dict_set(&param, "profile", "baseline", 0);
 	//av_dict_set(&param, "level", "32", 0);
 	//av_dict_set(&param, "intra - refresh", "1", 0);
-	av_dict_set(&param, "crf", "0", 0);
-	av_dict_set(&param, "look_ahead", "0", 0);
+	//av_dict_set(&param, "crf", "0", 0);
+	//av_dict_set(&param, "look_ahead", "0", 0);
 	//av_dict_set(&param, "refs", "1", 0);
 	//av_dict_set(&param, "g", "48", 0);
 	//av_dict_set(&param, "slices", "4", 0);
-	av_dict_set(&param, "threads", "1", 0);
+	//av_dict_set(&param, "threads", "1", 0);
 	//av_dict_set(&param, "me_range", "16", 0);
 	//av_dict_set(&param, "me_method", "dia", 0);
 
@@ -412,7 +412,7 @@ int main(int argc, char* argv[]){
 
 	/* find the mpeg1video encoder */
 	se->decoder = avcodec_find_decoder(CODEC_ID);
-	//se->decoder = avcodec_find_encoder_by_name("h264");
+	//se->decoder = avcodec_find_encoder_by_name("h264_nvenc");
 	if (!se->decoder) {
 		fprintf(stderr, "Codec '%s' not found\n", "h264");
 		exit(1);
@@ -444,7 +444,8 @@ int main(int argc, char* argv[]){
 	////////////////////////////////////////////////////////////////
 
 	se->encoder = avcodec_find_encoder(CODEC_ID);
-	//se->encoder = avcodec_find_encoder_by_name("h264_amf");
+	se->encoder = avcodec_find_encoder_by_name("h264_nvenc");
+	//se->encoder = se->decoder;
 	if (!se->encoder) {
 		fprintf(stderr, "Codec '%s' not found\n", "h264");
 		exit(1);
@@ -516,11 +517,12 @@ int main(int argc, char* argv[]){
     log_info("Open codec");
 	int result = avcodec_open2(se->pEncodingCtx, se->encoder, &param);
 	if (result < 0) {
-		log_error("Could not open codec");
+		log_error("[encoder] Could not open codec");
 		return -1;
 	}
-	if (avcodec_open2(se->pDecodingCtx, se->decoder, &param) < 0) {
-		log_error("Could not open codec");
+	result = avcodec_open2(se->pDecodingCtx, se->decoder, &param); 
+	if (result < 0) {
+		log_error("[decoder] Could not open codec");
 		return -1;
 	}
 
@@ -571,7 +573,7 @@ int main(int argc, char* argv[]){
 
     log_info("Simple GameClient is exiting");
 
-	_CrtDumpMemoryLeaks();
+	//_CrtDumpMemoryLeaks();
     
 	return 0;
 }

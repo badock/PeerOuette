@@ -6,6 +6,8 @@ CMakeSettings.json
 cmake-build-debug-visual-studio
 cmake-build-release-mingw/
 enc_temp_folder
+.vscode
+misc
 
 ## CMAKE
 
