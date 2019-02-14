@@ -22,6 +22,22 @@ extern "C" {
 #include "src/log/log.h"
 #include <queue>
 
+#if defined(WIN32)
+#define _CRTDBG_MAP_ALLOC
+#include <stdlib.h>
+#include <crtdbg.h>
+#include <winsock2.h>
+#include <Windows.h>
+#include "src/dxcapture/capture.h"
+#include "src/texture_converter/TextureConverter.h"
+void usleep(unsigned int usec)
+{
+	Sleep(usec / 1000);
+}
+#else
+#include <unistd.h>
+#endif
+
 typedef struct _StreamingEnvironment {
 	SDL_Thread *frame_extractor_thread;
 	SDL_Thread *frame_encoder_thread;
@@ -50,12 +66,15 @@ typedef struct _StreamingEnvironment {
 	AVCodec* decoder;
 	AVCodecContext* pDecodingCtx;
 	AVCodecContext* pEncodingCtx;
+    AVCodecContext* pDecodingCtxCodecThread;
+    AVCodecContext* pEncodingCtxCodecThread;
 	AVFormatContext *pFormatCtx;
 	AVCodecParserContext* pParserContext;
 	SDL_Window *screen;
 	SDL_Renderer *renderer;
 	int videoStream;
 	int initialized;
+    int decoding_context_initialized;
 	int network_initialized;
 	int screen_is_initialized;
 	int finishing;

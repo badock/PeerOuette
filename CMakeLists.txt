@@ -1,24 +1,37 @@
 cmake_minimum_required(VERSION 3.9)
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/CMakeModules)
 
+
+include("HunterGate")
+HunterGate(
+        URL "https://github.com/ruslo/hunter/archive/v0.23.31.tar.gz"
+        SHA1 "3d94b8522541c4c8eaac606f4c47d09322a8019c"
+)
+
+
 project(GameClientSDL)
 set(CMAKE_CXX_STANDARD 11)
+
+hunter_add_package(Beast)
+find_package(Beast CONFIG REQUIRED)
 
 if(WIN32)
     add_executable(GameClientSDL
             main.cpp
             src/streaming/streaming.cpp
             src/streaming/streaming.h
-            src/video/ffmpeg.cpp
-            src/video/ffmpeg.h
+            #src/video/ffmpeg.cpp
+            #src/video/ffmpeg.h
             src/log/log.cpp
             src/log/log.h
             src/queue/queue.cpp
             src/queue/queue.h
             src/dxcapture/capture.cpp
             src/dxcapture/capture.h
-            src/network/network_win.cpp
-            src/network/network_win.h
+#            src/network/network_win.cpp
+#            src/network/network_win.h
+            src/codec/codec.cpp
+            src/codec/codec.h
             src/texture_converter/TextureConverter.cpp
             src/texture_converter/TextureConverter.h
 			src/texture_converter/shaders/Pixel.hlsl
@@ -43,12 +56,14 @@ else()
             main.cpp
             src/streaming/streaming.cpp
             src/streaming/streaming.h
-            src/video/ffmpeg.cpp
-            src/video/ffmpeg.h
+            #src/video/ffmpeg.cpp
+            #src/video/ffmpeg.h
             src/log/log.cpp
             src/log/log.h
-			src/network/network_win.cpp
-			src/network/network_win.h
+#			src/network/network_win.cpp
+#			src/network/network_win.h
+            src/codec/codec.cpp
+            src/codec/codec.h
             src/queue/queue.cpp
             src/queue/queue.h)
 endif()
@@ -119,9 +134,9 @@ endif()
 
 
 if(WIN32)
-    target_link_libraries(${PROJECT_NAME} ${FFMPEG_LIBRARIES} ${SDL2_LIBRARY} ${DirectX11_LIBRARIES})
+    target_link_libraries(${PROJECT_NAME} ${FFMPEG_LIBRARIES} ${SDL2_LIBRARY} ${DirectX11_LIBRARIES} Beast::Beast)
 else()
-    target_link_libraries(${PROJECT_NAME} ${FFMPEG_LIBRARIES} ${SDL2_LIBRARY})
+    target_link_libraries(${PROJECT_NAME} ${FFMPEG_LIBRARIES} ${SDL2_LIBRARY} Beast::Beast)
 endif()
 
 if(WIN32)
