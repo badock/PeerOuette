@@ -127,8 +127,8 @@ int frame_output_thread(void *arg) {
             se->renderer,
             SDL_PIXELFORMAT_YV12,
             SDL_TEXTUREACCESS_STREAMING,
-            se->pDecodingCtx->width,
-            se->pDecodingCtx->height
+            se->width,
+            se->height
     );
     if (!texture) {
         fprintf(stderr, "SDL: could not create texture - exiting\n");
@@ -136,11 +136,11 @@ int frame_output_thread(void *arg) {
     }
 
     // initialize SWS context for software scaling
-    sws_ctx = sws_getContext(se->pDecodingCtx->width,
-                             se->pDecodingCtx->height,
-                             se->pDecodingCtx->pix_fmt,
-                             se->pDecodingCtx->width,
-                             se->pDecodingCtx->height,
+    sws_ctx = sws_getContext(se->width,
+                             se->height,
+                             se->format,
+                             se->width,
+                             se->height,
                              AV_PIX_FMT_YUV420P,
                              SWS_BILINEAR,
                              NULL,
@@ -152,8 +152,8 @@ int frame_output_thread(void *arg) {
     Uint8 *yPlane, *uPlane, *vPlane;
     size_t yPlaneSz, uvPlaneSz;
     int uvPitch;
-    yPlaneSz = se->pDecodingCtx->width * se->pDecodingCtx->height;
-    uvPlaneSz = se->pDecodingCtx->width * se->pDecodingCtx->height / 4;
+    yPlaneSz = se->width * se->height;
+    uvPlaneSz = se->width * se->height / 4;
     yPlane = (Uint8*)malloc(yPlaneSz);
     uPlane = (Uint8*)malloc(uvPlaneSz);
     vPlane = (Uint8*)malloc(uvPlaneSz);
@@ -162,7 +162,7 @@ int frame_output_thread(void *arg) {
         exit(1);
     }
 
-    uvPitch = se->pDecodingCtx->width / 2;
+    uvPitch = se->width / 2;
 
     // Screen is ready
     log_info("[SDL] screen is ready");
@@ -372,8 +372,6 @@ int main(int argc, char* argv[]){
 	se->frame_sender_thread_queue = simple_queue_create();
 	se->frame_receiver_thread_queue = simple_queue_create();
 	se->network_simulated_queue = simple_queue_create();
-//	std::queue<AVPacket*> queue_;
-//	se->network_simulated_queue = &queue_;
 	se->frame_output_thread = SDL_CreateThread(frame_output_thread, "frame_output_thread", se);
     se->frame_extractor_thread = SDL_CreateThread(frame_extractor_thread, "frame_extractor_thread", se);
     #if defined(WIN32)
@@ -385,29 +383,16 @@ int main(int argc, char* argv[]){
     se->frame_receiver_thread = SDL_CreateThread(video_encode_thread, "frame_receiver_thread", se);
     se->frame_sender_thread = SDL_CreateThread(video_decode_thread, "frame_sender_thread", se);
 
-    se->pDecodingCtx = NULL;
 	se->pEncodingCtx = NULL;
     se->finishing = 0;
     se->initialized = 0;
 	se->network_initialized = 0;
-    se->screen_is_initialized = 0;	
+    se->screen_is_initialized = 0;
+    se->width = CAPTURE_WINDOW_WIDTH;
+    se->height = CAPTURE_WINDOW_HEIGHT;
+    se->format = AV_PIX_FMT_YUV420P;
 
 	AVDictionary *param = NULL;
-//	av_dict_set(&param, "preset", "ultrafast", 0);
-//	av_dict_set(&param, "tune", "zerolatency", 0);
-
-	//av_dict_set(&param, "profile", "baseline", 0);
-	//av_dict_set(&param, "level", "32", 0);
-	//av_dict_set(&param, "intra - refresh", "1", 0);
-//	av_dict_set(&param, "crf", "0", 0);
-//	av_dict_set(&param, "look_ahead", "0", 0);
-	//av_dict_set(&param, "refs", "1", 0);
-	//av_dict_set(&param, "g", "48", 0);
-	//av_dict_set(&param, "slices", "4", 0);
-//	av_dict_set(&param, "threads", "1", 0);
-	//av_dict_set(&param, "me_range", "16", 0);
-	//av_dict_set(&param, "me_method", "dia", 0);
-    // VIDEOTOOLBOX
     av_dict_set(&param, "me_method", "dia", 0);
 
 	av_log_set_callback(my_log_callback);
@@ -416,37 +401,6 @@ int main(int argc, char* argv[]){
     // [FFMPEG] Registering file formats and codecs
     log_info("Registering file formats and codecs");
     av_register_all();
-
-	/* find the mpeg1video encoder */
-	se->decoder = avcodec_find_decoder(CODEC_ID);
-//	se->decoder = avcodec_find_encoder_by_name("h264_videotoolbox");
-	if (!se->decoder) {
-		fprintf(stderr, "Codec '%s' not found\n", "h264");
-		exit(1);
-	}
-	se->pDecodingCtx = avcodec_alloc_context3(se->decoder);
-	if (!se->pDecodingCtx) {
-		fprintf(stderr, "Could not allocate video codec context\n");
-		exit(1);
-	}
-	/* resolution must be a multiple of two */
-	se->pDecodingCtx->width = CAPTURE_WINDOW_WIDTH;
-	se->pDecodingCtx->height = CAPTURE_WINDOW_HEIGHT;
-
-	/* emit one intra frame every ten frames
-	 * check frame pict_type before passing frame
-	 * to encoder, if frame->pict_type is AV_PICTURE_TYPE_I
-	 * then gop_size is ignored and the output of encoder
-	 * will always be I frame irrespective to gop_size
-	 */
-	se->pDecodingCtx->bit_rate = BITRATE;
-	se->pDecodingCtx->gop_size = 5 * FRAMERATE;
-	se->pDecodingCtx->max_b_frames = 1;
-	se->pDecodingCtx->time_base.num = 1;
-	se->pDecodingCtx->time_base.den = FRAMERATE;
-	se->pDecodingCtx->pix_fmt = AV_PIX_FMT_YUV420P;
-
-	//se->pCodecCtx = pCodecCtxOrig;
 
 	////////////////////////////////////////////////////////////////
 
@@ -526,10 +480,6 @@ int main(int argc, char* argv[]){
 		log_error("Could not open codec");
 		return -1;
 	}
-	if (avcodec_open2(se->pDecodingCtx, se->decoder, &param) < 0) {
-		log_error("Could not open codec");
-		return -1;
-	}
 
     // Application is ready to read frame and display frames
     se->initialized = 1;
@@ -569,7 +519,6 @@ int main(int argc, char* argv[]){
 
     // [FFMPEG] Close the codecs
     log_info("Close the codecs");
-    avcodec_close(se->pDecodingCtx);
 	avcodec_close(se->pEncodingCtx);
 
     // [FFMPEG] Close the video file

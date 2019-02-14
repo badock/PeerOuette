@@ -10,17 +10,17 @@
 
 #define INBUF_SIZE 4096
 
-//// H264 (videotoolbox)
-//#define ENCODER_NAME "h264_videotoolbox"
-//#define DECODER_NAME "h264"
+// H264 (videotoolbox)
+#define ENCODER_NAME "h264_videotoolbox"
+#define DECODER_NAME "h264"
 
 //// H264 (software)
 //#define ENCODER_NAME "libx264"
 //#define DECODER_NAME "h264"
 
-// H265 (videotoolbox)
-#define ENCODER_NAME "hevc_videotoolbox"
-#define DECODER_NAME "hevc"
+//// H265 (videotoolbox)
+//#define ENCODER_NAME "hevc_videotoolbox"
+//#define DECODER_NAME "hevc"
 
 typedef struct packet_data {
     int size;
