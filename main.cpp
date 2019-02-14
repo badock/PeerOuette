@@ -235,20 +235,32 @@ int frame_output_thread(void *arg) {
     return 0;
 }
 
+void my_log_callback(void *ptr, int level, const char *fmt, va_list vargs)
+{
+//    printf("[ffmpeg] %s\n", fmt);
+}
+
 int frame_extractor_thread(void *arg) {
 	StreamingEnvironment *se = (StreamingEnvironment*)arg;
 
 	// Initialize streaming environment and threads
-	se->pCodecCtx = NULL;
+//	se->pCodecCtx = NULL;
+    AVFormatContext *pFormatCtx;
 
 	// [FFMPEG] Registering file formats and codecs
 	log_info("Registering file formats and codecs");
 	av_register_all();
-	//    AVFormatContext *pFormatCtx = NULL;
 
-		// [FFMPEG] Open video file
+    av_log_set_callback(my_log_callback);
+    av_log_set_level(AV_LOG_VERBOSE);
+
+    // [FFMPEG] Registering file formats and codecs
+    log_info("Registering file formats and codecs");
+    av_register_all();
+
+    // [FFMPEG] Open video file
 	log_info("Open video file: %s", VIDEO_FILE_PATH);
-	int result = avformat_open_input(&se->pFormatCtx, VIDEO_FILE_PATH, NULL, NULL);
+	int result = avformat_open_input(&pFormatCtx, VIDEO_FILE_PATH, NULL, NULL);
 	if (result != 0) {
 		char myArray[AV_ERROR_MAX_STRING_SIZE] = { 0 }; // all elements 0
 		char * plouf = av_make_error_string(myArray, AV_ERROR_MAX_STRING_SIZE, result);
@@ -259,24 +271,23 @@ int frame_extractor_thread(void *arg) {
 
 	// [FFMPEG] Retrieve stream information
 	log_info("Retrieve stream information");
-	if (avformat_find_stream_info(se->pFormatCtx, NULL) < 0) {
+	if (avformat_find_stream_info(pFormatCtx, NULL) < 0) {
 		log_error("Couldn't find stream information");
 		return -1;
 	}
 
 	// [FFMPEG] Dump information about file onto standard error
 	log_info("Dump information about file");
-	av_dump_format(se->pFormatCtx, 0, VIDEO_FILE_PATH, 0);
+	av_dump_format(pFormatCtx, 0, VIDEO_FILE_PATH, 0);
 
 	int i;
-	AVCodecContext *pCodecCtxOrig = NULL;
 	se->pCodecCtx = NULL;
 
 	// [FFMPEG] Find the first video stream
 	log_info("Find the first video stream");
 	se->videoStream = -1;
-	for (i = 0; i < se->pFormatCtx->nb_streams; i++)
-		if (se->pFormatCtx->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO) {
+	for (i = 0; i < pFormatCtx->nb_streams; i++)
+		if (pFormatCtx->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO) {
 			se->videoStream = i;
 			break;
 		}
@@ -286,7 +297,7 @@ int frame_extractor_thread(void *arg) {
 	}
 
 	// [FFMPEG] Get a pointer to the codec context for the video stream
-	se->pCodecCtx = se->pFormatCtx->streams[se->videoStream]->codec;
+	se->pCodecCtx = pFormatCtx->streams[se->videoStream]->codec;
 
 	AVCodec *pCodec = NULL;
 
@@ -322,7 +333,7 @@ int frame_extractor_thread(void *arg) {
 	}
 
 	int frameFinished;
-	while (av_read_frame(se->pFormatCtx, &packet) >= 0) {
+	while (av_read_frame(pFormatCtx, &packet) >= 0) {
 		// Is this a packet from the video stream?
 		if (packet.stream_index == se->videoStream) {
 			// [FFMPEG] Allocate video frame
@@ -355,11 +366,6 @@ int frame_extractor_thread(void *arg) {
 	return 0;
 }
 
-void my_log_callback(void *ptr, int level, const char *fmt, va_list vargs)
-{
-	//printf("\n%s", fmt);
-}
-
 int main(int argc, char* argv[]){
     log_info("Simple GameClient has started");
 
@@ -383,7 +389,7 @@ int main(int argc, char* argv[]){
     se->frame_receiver_thread = SDL_CreateThread(video_encode_thread, "frame_receiver_thread", se);
     se->frame_sender_thread = SDL_CreateThread(video_decode_thread, "frame_sender_thread", se);
 
-	se->pEncodingCtx = NULL;
+//	se->pEncodingCtx = NULL;
     se->finishing = 0;
     se->initialized = 0;
 	se->network_initialized = 0;
@@ -392,49 +398,6 @@ int main(int argc, char* argv[]){
     se->height = CAPTURE_WINDOW_HEIGHT;
     se->format = AV_PIX_FMT_YUV420P;
 
-	AVDictionary *param = NULL;
-    av_dict_set(&param, "me_method", "dia", 0);
-
-	av_log_set_callback(my_log_callback);
-	av_log_set_level(AV_LOG_VERBOSE);
-	
-    // [FFMPEG] Registering file formats and codecs
-    log_info("Registering file formats and codecs");
-    av_register_all();
-
-	////////////////////////////////////////////////////////////////
-
-//	se->encoder = avcodec_find_encoder(CODEC_ID);
-	se->encoder = avcodec_find_encoder_by_name("h264_videotoolbox");
-	if (!se->encoder) {
-		fprintf(stderr, "Codec '%s' not found\n", "h264");
-		exit(1);
-	}
-	se->pEncodingCtx = avcodec_alloc_context3(se->encoder);
-	if (!se->pEncodingCtx) {
-		fprintf(stderr, "Could not allocate video codec context\n");
-		exit(1);
-	}
-	/* resolution must be a multiple of two */
-	se->pEncodingCtx->width = CAPTURE_WINDOW_WIDTH;
-	se->pEncodingCtx->height = CAPTURE_WINDOW_HEIGHT;
-
-	/* emit one intra frame every ten frames
-	 * check frame pict_type before passing frame
-	 * to encoder, if frame->pict_type is AV_PICTURE_TYPE_I
-	 * then gop_size is ignored and the output of encoder
-	 * will always be I frame irrespective to gop_size
-	 */
-	se->pEncodingCtx->bit_rate = BITRATE;
-	se->pEncodingCtx->gop_size = 5 * FRAMERATE;
-	se->pEncodingCtx->max_b_frames = 1;
-	se->pEncodingCtx->time_base.num = 1;
-	se->pEncodingCtx->time_base.den = FRAMERATE;
-	se->pEncodingCtx->pix_fmt = AV_PIX_FMT_YUV420P;
-
-	//////////////////////////////////////////////////////////////
-
-	se->pParserContext = av_parser_init(CODEC_ID);
 	//////////////////////////////////////////////////////////////
 
     // [SDL] Initializing SDL library
@@ -473,14 +436,6 @@ int main(int argc, char* argv[]){
         exit(1);
     }
 
-    // Open codec
-    log_info("Open codec");
-	int result = avcodec_open2(se->pEncodingCtx, se->encoder, &param);
-	if (result < 0) {
-		log_error("Could not open codec");
-		return -1;
-	}
-
     // Application is ready to read frame and display frames
     se->initialized = 1;
 
@@ -511,23 +466,14 @@ int main(int argc, char* argv[]){
         }
     }
 
-    // [FFMPEG] Free the RGB image
+    // [FFMPEG] Free the RGB images
     while (! simple_queue_is_empty(se->frame_extractor_pframe_pool)) {
         FrameData* frame_data = (FrameData *) simple_queue_pop(se->frame_extractor_pframe_pool);
         frame_data_destroy(frame_data);
     }
 
-    // [FFMPEG] Close the codecs
-    log_info("Close the codecs");
-	avcodec_close(se->pEncodingCtx);
-
-    // [FFMPEG] Close the video file
-    log_info("Close the video file");
-    avformat_close_input(&se->pFormatCtx);
-
     log_info("Simple GameClient is exiting");
 
-	//_CrtDumpMemoryLeaks();
     
 	return 0;
 }

@@ -86,7 +86,6 @@ int video_encode_thread(void *arg) {
         log_error("Could not allocate video codec context\n");
         exit(1);
     }
-    se->pEncodingCtxCodecThread = encodingContext;
 
     pkt = av_packet_alloc();
     if (!pkt)
@@ -192,7 +191,6 @@ int video_decode_thread(void *arg) {
         log_error("Could not allocate video codec context\n");
         exit(1);
     }
-    se->pDecodingCtxCodecThread = decodingContext;
 
     if (codec->capabilities & AV_CODEC_CAP_TRUNCATED)
         decodingContext->flags |= AV_CODEC_CAP_TRUNCATED; /* we do not send complete frames */
