@@ -244,8 +244,9 @@ int frame_extractor_thread(void *arg) {
 	StreamingEnvironment *se = (StreamingEnvironment*)arg;
 
 	// Initialize streaming environment and threads
-//	se->pCodecCtx = NULL;
     AVFormatContext *pFormatCtx;
+    AVCodecContext* pCodecCtx;
+    AVPacket packet;
 
 	// [FFMPEG] Registering file formats and codecs
 	log_info("Registering file formats and codecs");
@@ -281,7 +282,6 @@ int frame_extractor_thread(void *arg) {
 	av_dump_format(pFormatCtx, 0, VIDEO_FILE_PATH, 0);
 
 	int i;
-	se->pCodecCtx = NULL;
 
 	// [FFMPEG] Find the first video stream
 	log_info("Find the first video stream");
@@ -297,14 +297,14 @@ int frame_extractor_thread(void *arg) {
 	}
 
 	// [FFMPEG] Get a pointer to the codec context for the video stream
-	se->pCodecCtx = pFormatCtx->streams[se->videoStream]->codec;
+	pCodecCtx = pFormatCtx->streams[se->videoStream]->codec;
 
 	AVCodec *pCodec = NULL;
 
 	// [FFMPEG] Find the decoder for the video stream
 	log_info("Find the decoder for the video stream");
 
-	pCodec = avcodec_find_decoder(se->pCodecCtx->codec_id);
+	pCodec = avcodec_find_decoder(pCodecCtx->codec_id);
 	if (pCodec == NULL) {
 		log_error("Unsupported codec!\n");
 		return -1; // Codec not found
@@ -312,7 +312,7 @@ int frame_extractor_thread(void *arg) {
 
 	// Open codec
 	log_info("Open codec");
-	if (avcodec_open2(se->pCodecCtx, pCodec, NULL) < 0) {
+	if (avcodec_open2(pCodecCtx, pCodec, NULL) < 0) {
 		log_error("Could not open codec");
 		return -1;
 	}
@@ -325,7 +325,6 @@ int frame_extractor_thread(void *arg) {
 	// [FFMPEG] Reading frames
 	log_info("Reading frames");
 	SDL_Event event;
-	AVPacket packet;
 	i = 0;
 
 	while (!se->screen_is_initialized) {
@@ -336,13 +335,10 @@ int frame_extractor_thread(void *arg) {
 	while (av_read_frame(pFormatCtx, &packet) >= 0) {
 		// Is this a packet from the video stream?
 		if (packet.stream_index == se->videoStream) {
-			// [FFMPEG] Allocate video frame
-//			log_info("frame_extractor_pframe_pool: %i elements in queue", simple_queue_length(se->frame_extractor_pframe_pool));
 			FrameData* frame_data = (FrameData *)simple_queue_pop(se->frame_extractor_pframe_pool);
-//			log_info("WRITE ====> %i (%i)", frame_data->id, i);
 
 			// Decode video frame
-			avcodec_decode_video2(se->pCodecCtx, frame_data->pFrame, &frameFinished, &packet);
+			avcodec_decode_video2(pCodecCtx, frame_data->pFrame, &frameFinished, &packet);
 
 			// Did we get a video frame?
 			if (frameFinished) {
@@ -389,7 +385,6 @@ int main(int argc, char* argv[]){
     se->frame_receiver_thread = SDL_CreateThread(video_encode_thread, "frame_receiver_thread", se);
     se->frame_sender_thread = SDL_CreateThread(video_decode_thread, "frame_sender_thread", se);
 
-//	se->pEncodingCtx = NULL;
     se->finishing = 0;
     se->initialized = 0;
 	se->network_initialized = 0;

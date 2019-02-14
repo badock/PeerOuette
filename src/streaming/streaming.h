@@ -55,8 +55,6 @@ typedef struct _StreamingEnvironment {
 	SimpleQueue *frame_receiver_thread_queue;
 	SimpleQueue *frame_output_thread_queue;
 
-	AVCodecContext* pCodecCtx;
-
 	int width;
 	int height;
     AVPixelFormat format;
@@ -64,7 +62,6 @@ typedef struct _StreamingEnvironment {
 	SDL_Renderer *renderer;
 	int videoStream;
 	int initialized;
-    int decoding_context_initialized;
 	int network_initialized;
 	int screen_is_initialized;
 	int finishing;
