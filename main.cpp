@@ -6,19 +6,11 @@
 #define av_frame_free avcodec_free_frame
 #endif
 
-#include "src/network/network_win.h"
+//#include "src/network/network_win.h"
+#include "src/codec/codec.h"
 #if defined(WIN32)
-#define _CRTDBG_MAP_ALLOC  
-#include <stdlib.h>  
-#include <crtdbg.h>  
-#include <winsock2.h>
-#include <Windows.h>
 #include "src/dxcapture/capture.h"
 #include "src/texture_converter/TextureConverter.h"
-void usleep(unsigned int usec)
-{
-	Sleep(usec / 1000);
-}
 #else
 #include <unistd.h>
 #endif
@@ -378,8 +370,12 @@ int main(int argc, char* argv[]){
     #if defined(WIN32)
     //se->gpu_frame_extractor_thread = SDL_CreateThread(gpu_frame_extractor_thread, "gpu_frame_extractor_thread", se);
     #endif
-    se->frame_receiver_thread = SDL_CreateThread(win_client_thread, "frame_receiver_thread", se);
-    se->frame_sender_thread = SDL_CreateThread(win_server_thread, "frame_sender_thread", se);
+    //se->frame_receiver_thread = SDL_CreateThread(win_client_thread, "frame_receiver_thread", se);
+    //se->frame_sender_thread = SDL_CreateThread(win_server_thread, "frame_sender_thread", se);
+
+ 	se->frame_receiver_thread = SDL_CreateThread(video_encode_thread, "frame_receiver_thread", se);
+	se->frame_sender_thread = SDL_CreateThread(video_decode_thread, "frame_sender_thread", se);
+
     se->pDecodingCtx = NULL;
 	se->pEncodingCtx = NULL;
     se->finishing = 0;

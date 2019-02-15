@@ -1,6 +1,15 @@
 #include <SDL.h>
 #include <SDL_thread.h>
 
+#if defined(WIN32)
+#define _CRTDBG_MAP_ALLOC  
+#include <stdlib.h>  
+#include <crtdbg.h>
+#include <Windows.h>
+#else
+#include <unistd.h>
+#endif
+
 #ifndef GAMECLIENTSDL_STREAMING_H
 #define GAMECLIENTSDL_STREAMING_H
 
@@ -21,6 +30,12 @@ extern "C" {
 #include "src/queue/queue.h"
 #include "src/log/log.h"
 #include <queue>
+
+#if defined(WIN32)
+void usleep(unsigned int usec);
+#else
+#include <unistd.h>
+#endif
 
 typedef struct _StreamingEnvironment {
 	SDL_Thread *frame_extractor_thread;

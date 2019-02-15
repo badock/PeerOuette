@@ -1,5 +1,13 @@
 #include "streaming.h"
 
+#if defined(WIN32)
+#include <Windows.h>
+void usleep(unsigned int usec)
+{
+	Sleep(usec / 1000);
+}
+#endif
+
 void frame_data_reset_time_points(FrameData* frame_data) {
 	frame_data->life_started_time_point = std::chrono::system_clock::now();
 	frame_data->dxframe_acquired_time_point = std::chrono::system_clock::now();
