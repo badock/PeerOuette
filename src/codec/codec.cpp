@@ -10,7 +10,7 @@
 
 #define INBUF_SIZE 4096
 
-// H264 (videotoolbox)
+// H264 (nvenc)
 #define ENCODER_NAME "h264_nvenc"
 #define DECODER_NAME "h264"
 
@@ -26,6 +26,7 @@
 //#define ENCODER_NAME "hevc_videotoolbox"
 //#define DECODER_NAME "hevc"
 
+#define BITRATE 3 * 1024 * 1024
 
 #if defined(WIN32)
 char* make_av_error_string(int errnum) {
@@ -36,7 +37,6 @@ char* make_av_error_string(int errnum) {
 #define make_av_error_string av_err2str
 #endif
 
-#define BITRATE 3 * 1024 * 1024
 
 typedef struct packet_data {
     int size;
@@ -116,8 +116,8 @@ int video_encode_thread(void *arg) {
     encodingContext->time_base.den = 60;
     encodingContext->pix_fmt = AV_PIX_FMT_YUV420P;
 
-    if (codec->id == AV_CODEC_ID_H264)
-        av_opt_set(encodingContext->priv_data, "preset", "ultrafast", 0);
+    // if (codec->id == AV_CODEC_ID_H264)
+    //     av_opt_set(encodingContext->priv_data, "preset", "ultrafast", 0);
 
     /* open it */
     ret = avcodec_open2(encodingContext, codec, NULL);
@@ -221,8 +221,8 @@ int video_decode_thread(void *arg) {
     decodingContext->time_base.den = 60;
     decodingContext->pix_fmt = AV_PIX_FMT_YUV420P;
 
-    if (codec->id == AV_CODEC_ID_H264)
-        av_opt_set(decodingContext->priv_data, "preset", "ultrafast", 0);
+    // if (codec->id == AV_CODEC_ID_H264)
+    //     av_opt_set(decodingContext->priv_data, "preset", "ultrafast", 0);
 
     /* For some codecs, such as msmpeg4 and mpeg4, width and height
        MUST be initialized there because this information is not

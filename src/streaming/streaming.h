@@ -47,26 +47,22 @@ typedef struct _StreamingEnvironment {
 #if defined(WIN32)
 	SDL_Thread *gpu_frame_extractor_thread;
 #endif
-//	std::queue<AVPacket*> *network_simulated_queue;
     SimpleQueue *network_simulated_queue;
 	SimpleQueue *frame_extractor_pframe_pool;
 	SimpleQueue *frame_sender_thread_queue;
 	SimpleQueue *frame_receiver_thread_queue;
 	SimpleQueue *frame_output_thread_queue;
+	AVPixelFormat format;
 
-	AVCodecContext* pCodecCtx;
-	AVFormatContext *pFormatCtx2;
-	AVCodec* codec;
+	AVCodecContext* frameExtractorEncodingContext;
+	AVFormatContext* frameExtractorEncodingFormatContext;
 
 	int width;
 	int height;
 
 	AVCodec* encoder;
 	AVCodec* decoder;
-	AVCodecContext* pDecodingCtx;
-	AVCodecContext* pEncodingCtx;
-	AVFormatContext *pFormatCtx;
-	AVCodecParserContext* pParserContext;
+	
 	SDL_Window *screen;
 	SDL_Renderer *renderer;
 	int videoStream;
