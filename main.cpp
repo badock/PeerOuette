@@ -414,7 +414,7 @@ int main(int argc, char* argv[]){
 	se->decoder = avcodec_find_decoder(CODEC_ID);
 	//se->decoder = avcodec_find_encoder_by_name("h264_nvenc");
 	if (!se->decoder) {
-		fprintf(stderr, "Codec '%s' not found\n", "h264");
+		fprintf(stderr, "Codec '%s' not found\n", "h264_cuvid");
 		exit(1);
 	}
 	se->pDecodingCtx = avcodec_alloc_context3(se->decoder);
