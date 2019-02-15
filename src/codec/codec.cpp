@@ -22,6 +22,8 @@
 //#define ENCODER_NAME "hevc_videotoolbox"
 //#define DECODER_NAME "hevc"
 
+#define BITRATE 3 * 1024 * 1024
+
 typedef struct packet_data {
     int size;
     uint8_t* data;
@@ -93,7 +95,7 @@ int video_encode_thread(void *arg) {
 
     encodingContext->width = 1920;
     encodingContext->height = 816;
-    encodingContext->bit_rate = 1920 * 816 * 5;
+    encodingContext->bit_rate = BITRATE;
     encodingContext->gop_size = 5 * 60;
     encodingContext->max_b_frames = 1;
     encodingContext->time_base.num = 1;
@@ -198,7 +200,7 @@ int video_decode_thread(void *arg) {
     /* put sample parameters */
     decodingContext->width = 1920;
     decodingContext->height = 816;
-    decodingContext->bit_rate = 1920 * 816 * 5;
+    decodingContext->bit_rate = BITRATE;
     decodingContext->gop_size = 5 * 60;
     decodingContext->max_b_frames = 1;
     decodingContext->time_base.num = 1;
@@ -231,10 +233,21 @@ int video_decode_thread(void *arg) {
 
     std::chrono::system_clock::time_point before = std::chrono::system_clock::now();
 
+    int max_packet_size = -1;
+    long avg_packet_size = 0;
+    long nb_packet = 0;
     while (se->finishing != 1) {
         packet_data* network_packet_data = (packet_data*) simple_queue_pop(se->network_simulated_queue);
         pkt->data = network_packet_data->data;
         pkt->size = network_packet_data->size;
+
+        if (pkt->size > max_packet_size) {
+            max_packet_size = pkt->size;
+        }
+
+        avg_packet_size = (avg_packet_size * nb_packet + pkt->size) / ++nb_packet;
+
+        log_info("avg_packet_size: %d (max: %d)\n", avg_packet_size, max_packet_size);
 
         int ret;
 
