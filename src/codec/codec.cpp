@@ -26,7 +26,7 @@
 //#define ENCODER_NAME "hevc_videotoolbox"
 //#define DECODER_NAME "hevc"
 
-#define BITRATE 3 * 1024 * 1024
+#define BITRATE 1 * 1024 * 1024
 
 #if defined(WIN32)
 char* make_av_error_string(int errnum) {
@@ -108,7 +108,7 @@ int video_encode_thread(void *arg) {
         exit(1);
 
     encodingContext->width = 1920;
-    encodingContext->height = 1080;
+    encodingContext->height = 816;
     encodingContext->bit_rate = BITRATE;
     encodingContext->gop_size = 5 * 60;
     encodingContext->max_b_frames = 1;
@@ -143,13 +143,22 @@ int video_encode_thread(void *arg) {
 
     /* encode video frames */
     long image_count = 0;
+    
     while (se->finishing != 1) {
 
         FrameData* frame_data = (FrameData*) simple_queue_pop(se->frame_sender_thread_queue);
         frame_data->pFrame->pts = image_count;
 
+        
+        std::chrono::system_clock::time_point before = std::chrono::system_clock::now();
+
         /* encode the image */
         encode(encodingContext, frame_data->pFrame, pkt, se);
+        
+        std::chrono::system_clock::time_point after = std::chrono::system_clock::now();
+        float frame_encode_duration = std::chrono::duration_cast<std::chrono::microseconds>(after - before).count() / 1000.0;
+        log_info(" encoding duration: %f", frame_encode_duration);
+        simple_queue_push(se->frame_extractor_pframe_pool, frame_data);
         image_count++;
     }
 
@@ -213,7 +222,7 @@ int video_decode_thread(void *arg) {
 
     /* put sample parameters */
     decodingContext->width = 1920;
-    decodingContext->height = 1080;
+    decodingContext->height = 816;
     decodingContext->bit_rate = BITRATE;
     decodingContext->gop_size = 5 * 60;
     decodingContext->max_b_frames = 1;
@@ -282,7 +291,7 @@ int video_decode_thread(void *arg) {
 
             simple_queue_push(se->frame_output_thread_queue, frame_data);
 
-//            frame_data = (FrameData*)simple_queue_pop(se->frame_extractor_pframe_pool);
+            frame_data = (FrameData*)simple_queue_pop(se->frame_extractor_pframe_pool);
             before = std::chrono::system_clock::now();
         }
 

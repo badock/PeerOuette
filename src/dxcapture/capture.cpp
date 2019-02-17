@@ -474,7 +474,6 @@ int get_pixels_yuv420p(CaptureContext* cc, FrameData* ffmpeg_frame_data) {
 		HRESULT                  status;
 		D3D11_MAPPED_SUBRESOURCE mapping;
 		D3D11_TEXTURE2D_DESC     desc;
-
 		cc->m_ftextures_yuv420p[i]->GetDesc(&desc);
 		status = cc->context->Map(cc->m_ftextures_yuv420p[i], 0, D3D11_MAP_READ, 0, &mapping);
 
@@ -487,9 +486,8 @@ int get_pixels_yuv420p(CaptureContext* cc, FrameData* ffmpeg_frame_data) {
 
 		const unsigned int size = desc.Height * desc.Width;
 
-		//memcpy_sse(ffmpeg_frame_data->pFrame->data[i], (uint8_t *) mapping.pData, size);
-		//memcpy(ffmpeg_frame_data->pFrame->data[i], (uint8_t *)mapping.pData, size);
 		ffmpeg_frame_data->pFrame->data[i] = (uint8_t *) mapping.pData;
+		ffmpeg_frame_data->pFrame->linesize[i] = mapping.RowPitch;
 
 		cc->context->Unmap(cc->m_ftextures_yuv420p[i], 0);
 	}

@@ -20,7 +20,7 @@
 int SDL_WINDOW_WIDTH = 1280;
 int SDL_WINDOW_HEIGHT = 720;
 int CAPTURE_WINDOW_WIDTH = 1920;
-int CAPTURE_WINDOW_HEIGHT = 1080;
+int CAPTURE_WINDOW_HEIGHT = 816;
 int BITRATE = CAPTURE_WINDOW_WIDTH * CAPTURE_WINDOW_HEIGHT * 3;
 int FRAMERATE = 60;
 char* VIDEO_FILE_PATH = "misc/rogue.mp4";
@@ -63,16 +63,16 @@ int gpu_frame_extractor_thread(void *arg) {
 		ffmpeg_frame_data->dxframe_processed_time_point = std::chrono::system_clock::now();
 
 		int result;
-		////result = get_pixels(&cc, ffmpeg_frame_data);
+		// result = get_pixels(&cc, ffmpeg_frame_data);
 		result = get_pixels_yuv420p(&cc, ffmpeg_frame_data);
 		//// set metadata
-		//ffmpeg_frame_data->pFrame->pict_type = AV_PICTURE_TYPE_I;
-		////ffmpeg_frame_data->pFrame->pts = 1080*1920;
-		//ffmpeg_frame_data->pFrame->pts = 0;
-		//ffmpeg_frame_data->pFrame->pkt_pts = 0;
-		//ffmpeg_frame_data->pFrame->pkt_dts = 0;
-		//ffmpeg_frame_data->pFrame->sample_aspect_ratio.num = 1;
-		//ffmpeg_frame_data->pFrame->color_range = AVCOL_RANGE_MPEG;
+		// ffmpeg_frame_data->pFrame->pict_type = AV_PICTURE_TYPE_I;
+		// //ffmpeg_frame_data->pFrame->pts = 1080*1920;
+		// ffmpeg_frame_data->pFrame->pts = 0;
+		// ffmpeg_frame_data->pFrame->pkt_pts = 0;
+		// ffmpeg_frame_data->pFrame->pkt_dts = 0;
+		// ffmpeg_frame_data->pFrame->sample_aspect_ratio.num = 1;
+		// ffmpeg_frame_data->pFrame->color_range = AVCOL_RANGE_MPEG;
 
 		//// Push frame to the output_video thread
 		//AVFrame* old_pframe = ffmpeg_frame_data->pFrame;
@@ -83,14 +83,13 @@ int gpu_frame_extractor_thread(void *arg) {
 		
 		//ffmpeg_frame_data->pFrame = av_frame_clone(frame_data->pFrame);
 		//simple_queue_push(se->frame_sender_thread_queue, frame_data);
-
-
+        
+		ffmpeg_frame_data->pFrame->format = AV_PIX_FMT_YUV420P;
 		ffmpeg_frame_data->avframe_produced_time_point = std::chrono::system_clock::now();
-
 
 		int frame_release_result = done_with_frame(&cc);
 
-		if (false) {
+		if (true) {
 			simple_queue_push(se->frame_sender_thread_queue, ffmpeg_frame_data);
 		}
 		else {
@@ -360,6 +359,14 @@ void my_log_callback(void *ptr, int level, const char *fmt, va_list vargs)
 int main(int argc, char* argv[]){
     log_info("Simple GameClient has started");
 
+
+	// [FFMPEG] Registering file formats and codecs
+	log_info("Registering file formats and codecs");
+	av_register_all();
+
+    // av_log_set_callback(my_log_callback);
+    // av_log_set_level(AV_LOG_VERBOSE);
+
     // Initialize streaming environment and threads
     log_info("Initializing streaming environment");
     StreamingEnvironment *se;
@@ -372,9 +379,9 @@ int main(int argc, char* argv[]){
 //	std::queue<AVPacket*> queue_;
 //	se->network_simulated_queue = &queue_;
 	se->frame_output_thread = SDL_CreateThread(frame_output_thread, "frame_output_thread", se);
-    //se->frame_extractor_thread = SDL_CreateThread(frame_extractor_thread, "frame_extractor_thread", se);
+    se->frame_extractor_thread = SDL_CreateThread(frame_extractor_thread, "frame_extractor_thread", se);
     #if defined(WIN32)
-    se->gpu_frame_extractor_thread = SDL_CreateThread(gpu_frame_extractor_thread, "gpu_frame_extractor_thread", se);
+    // se->gpu_frame_extractor_thread = SDL_CreateThread(gpu_frame_extractor_thread, "gpu_frame_extractor_thread", se);
     #endif
 
  	se->frame_receiver_thread = SDL_CreateThread(video_encode_thread, "frame_receiver_thread", se);

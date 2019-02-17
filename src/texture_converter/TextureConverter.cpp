@@ -351,7 +351,7 @@ bool TextureConverter::Convert(ID3D11Texture2D* texture, TextureList & output)
       continue;
 
     ID3D11Texture2D*            src = m_targetTexture[i];
-	ID3D11Texture2D*			dest;
+	  ID3D11Texture2D*			dest;
     ID3D11RenderTargetView*     view;
     D3D11_TEXTURE2D_DESC        srcDesc;
 
@@ -367,7 +367,7 @@ bool TextureConverter::Convert(ID3D11Texture2D* texture, TextureList & output)
     viewPorts[0].Height = srcDesc.Height / m_scaleFormats[i];
     srcDesc.Width       = (UINT)viewPorts[0].Width;
     srcDesc.Height      = (UINT)viewPorts[0].Height;
-	dest = texture;
+	  dest = texture;
 	
 	if (!initialised) {
 	  result = m_device->CreateTexture2D(&srcDesc, NULL, &m_destTexture[i]);
