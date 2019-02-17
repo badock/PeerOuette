@@ -20,7 +20,7 @@
 int SDL_WINDOW_WIDTH = 1280;
 int SDL_WINDOW_HEIGHT = 720;
 int CAPTURE_WINDOW_WIDTH = 1920;
-int CAPTURE_WINDOW_HEIGHT = 816;
+int CAPTURE_WINDOW_HEIGHT = 1080;
 int BITRATE = CAPTURE_WINDOW_WIDTH * CAPTURE_WINDOW_HEIGHT * 3;
 int FRAMERATE = 60;
 char* VIDEO_FILE_PATH = "misc/rogue.mp4";
@@ -90,7 +90,7 @@ int gpu_frame_extractor_thread(void *arg) {
 
 		int frame_release_result = done_with_frame(&cc);
 
-		if (true || se->network_initialized) {
+		if (false) {
 			simple_queue_push(se->frame_sender_thread_queue, ffmpeg_frame_data);
 		}
 		else {
@@ -372,9 +372,9 @@ int main(int argc, char* argv[]){
 //	std::queue<AVPacket*> queue_;
 //	se->network_simulated_queue = &queue_;
 	se->frame_output_thread = SDL_CreateThread(frame_output_thread, "frame_output_thread", se);
-    se->frame_extractor_thread = SDL_CreateThread(frame_extractor_thread, "frame_extractor_thread", se);
+    //se->frame_extractor_thread = SDL_CreateThread(frame_extractor_thread, "frame_extractor_thread", se);
     #if defined(WIN32)
-    //se->gpu_frame_extractor_thread = SDL_CreateThread(gpu_frame_extractor_thread, "gpu_frame_extractor_thread", se);
+    se->gpu_frame_extractor_thread = SDL_CreateThread(gpu_frame_extractor_thread, "gpu_frame_extractor_thread", se);
     #endif
 
  	se->frame_receiver_thread = SDL_CreateThread(video_encode_thread, "frame_receiver_thread", se);
