@@ -10,23 +10,23 @@
 
 #define INBUF_SIZE 4096
 
-// H264 (nvenc)
-#define ENCODER_NAME "h264_nvenc"
-#define DECODER_NAME "h264"
+// // H264 (nvenc)
+// #define ENCODER_NAME "h264_nvenc"
+// #define DECODER_NAME "h264"
 
 // // H264 (videotoolbox)
 // #define ENCODER_NAME "h264_videotoolbox"
 // #define DECODER_NAME "h264"
 
-// // H264 (software)
-// #define ENCODER_NAME "libx264"
-// #define DECODER_NAME "h264"
+// H264 (software)
+#define ENCODER_NAME "libx264"
+#define DECODER_NAME "h264"
 
 //// H265 (videotoolbox)
 //#define ENCODER_NAME "hevc_videotoolbox"
 //#define DECODER_NAME "hevc"
 
-#define BITRATE 1 * 1024 * 1024
+#define BITRATE 3 * 1024 * 1024
 
 #if defined(WIN32)
 char* make_av_error_string(int errnum) {
@@ -111,16 +111,21 @@ int video_encode_thread(void *arg) {
     encodingContext->height = 816;
     encodingContext->bit_rate = BITRATE;
     encodingContext->gop_size = 5 * 60;
-    encodingContext->max_b_frames = 1;
+    // encodingContext->max_b_frames = 1;
     encodingContext->time_base.num = 1;
     encodingContext->time_base.den = 60;
     encodingContext->pix_fmt = AV_PIX_FMT_YUV420P;
+
+    AVDictionary *param = NULL;
+	av_dict_set(&param, "preset", "ultrafast", 0);
+	av_dict_set(&param, "crf", "21", 0);
+    av_dict_set(&param, "tune", "zerolatency", 0);
 
     // if (codec->id == AV_CODEC_ID_H264)
     //     av_opt_set(encodingContext->priv_data, "preset", "ultrafast", 0);
 
     /* open it */
-    ret = avcodec_open2(encodingContext, codec, NULL);
+    ret = avcodec_open2(encodingContext, codec, &param);
     if (ret < 0) {
         log_error("Could not open codec: %s\n", make_av_error_string(ret));
         exit(1);
@@ -157,9 +162,21 @@ int video_encode_thread(void *arg) {
         
         std::chrono::system_clock::time_point after = std::chrono::system_clock::now();
         float frame_encode_duration = std::chrono::duration_cast<std::chrono::microseconds>(after - before).count() / 1000.0;
-        log_info(" encoding duration: %f", frame_encode_duration);
+        log_info(" encoding duration (frame: %d): %f", image_count, frame_encode_duration);
+        
         simple_queue_push(se->frame_extractor_pframe_pool, frame_data);
         image_count++;
+
+        int clean_frames = 1;
+        while (clean_frames && simple_queue_length(se->frame_sender_thread_queue) > 0) {
+			FrameData* frame_data = (FrameData*)simple_queue_pop(se->frame_sender_thread_queue);
+			simple_queue_push(se->frame_extractor_pframe_pool, frame_data);
+            std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+            float time_since_last_encoded_frame = std::chrono::duration_cast<std::chrono::microseconds>(now - after).count() / 1000.0;
+            if (time_since_last_encoded_frame > 13.0) {
+                clean_frames = 0;
+            }
+		}
     }
 
     /* flush the encoder */
@@ -225,19 +242,24 @@ int video_decode_thread(void *arg) {
     decodingContext->height = 816;
     decodingContext->bit_rate = BITRATE;
     decodingContext->gop_size = 5 * 60;
-    decodingContext->max_b_frames = 1;
+    // decodingContext->max_b_frames = 1;
     decodingContext->time_base.num = 1;
     decodingContext->time_base.den = 60;
     decodingContext->pix_fmt = AV_PIX_FMT_YUV420P;
 
-    // if (codec->id == AV_CODEC_ID_H264)
-    //     av_opt_set(decodingContext->priv_data, "preset", "ultrafast", 0);
+    AVDictionary *param = NULL;
+	av_dict_set(&param, "preset", "ultrafast", 0);
+	av_dict_set(&param, "crf", "21", 0);
+    av_dict_set(&param, "tune", "zerolatency", 0);
+
+    if (codec->id == AV_CODEC_ID_H264)
+        av_opt_set(decodingContext->priv_data, "preset", "ultrafast", 0);
 
     /* For some codecs, such as msmpeg4 and mpeg4, width and height
        MUST be initialized there because this information is not
        available in the bitstream. */
     /* open it */
-    if (avcodec_open2(decodingContext, codec, NULL) < 0) {
+    if (avcodec_open2(decodingContext, codec, &param) < 0) {
         log_error("Could not open codec\n");
         exit(1);
     }
@@ -259,6 +281,7 @@ int video_decode_thread(void *arg) {
     int max_packet_size = -1;
     long avg_packet_size = 0;
     long nb_packet = 0;
+    long nb_img = 0;
     while (se->finishing != 1) {
         packet_data* network_packet_data = (packet_data*) simple_queue_pop(se->network_simulated_queue);
         pkt->data = network_packet_data->data;
@@ -287,7 +310,8 @@ int video_decode_thread(void *arg) {
         } else if (ret >= 0) {
             std::chrono::system_clock::time_point after = frame_data->sdl_displayed_time_point = std::chrono::system_clock::now();
             float frame_encode_duration = std::chrono::duration_cast<std::chrono::microseconds>(after - before).count() / 1000.0;
-            log_info(" decoding duration: %f", frame_encode_duration);
+            log_info(" decoding duration (frame:%d): %f", nb_img, frame_encode_duration);
+            nb_img++;
 
             simple_queue_push(se->frame_output_thread_queue, frame_data);
 

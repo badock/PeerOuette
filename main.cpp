@@ -24,10 +24,6 @@ int CAPTURE_WINDOW_HEIGHT = 816;
 int BITRATE = CAPTURE_WINDOW_WIDTH * CAPTURE_WINDOW_HEIGHT * 3;
 int FRAMERATE = 60;
 char* VIDEO_FILE_PATH = "misc/rogue.mp4";
-//#define CODEC_ID AV_CODEC_ID_MPEG2VIDEO
-//#define CODEC_ID AV_CODEC_ID_MPEG4
-#define CODEC_ID AV_CODEC_ID_H264
-//#define CODEC_ID AV_CODEC_ID_VP9
 
 StreamingEnvironment *global_streaming_environment;
 
@@ -51,10 +47,10 @@ int gpu_frame_extractor_thread(void *arg) {
 	init_video_mode(&cc);
 	
 	D3D_FRAME_DATA* d3d_frame_data = (D3D_FRAME_DATA*) malloc(sizeof(D3D_FRAME_DATA));
-	//FrameData* ffmpeg_frame_data = frame_data_create(se);
 
     int frameFinished;
 	ID3D11Texture2D* CopyBuffer = nullptr;
+    int64_t framecount = 0;
     while(1) {
 		FrameData* ffmpeg_frame_data = (FrameData *) simple_queue_pop(se->frame_extractor_pframe_pool);
 		frame_data_reset_time_points(ffmpeg_frame_data);
@@ -62,27 +58,7 @@ int gpu_frame_extractor_thread(void *arg) {
 		int capture_result = capture_frame(&cc, d3d_frame_data, ffmpeg_frame_data);
 		ffmpeg_frame_data->dxframe_processed_time_point = std::chrono::system_clock::now();
 
-		int result;
-		// result = get_pixels(&cc, ffmpeg_frame_data);
-		result = get_pixels_yuv420p(&cc, ffmpeg_frame_data);
-		//// set metadata
-		// ffmpeg_frame_data->pFrame->pict_type = AV_PICTURE_TYPE_I;
-		// //ffmpeg_frame_data->pFrame->pts = 1080*1920;
-		// ffmpeg_frame_data->pFrame->pts = 0;
-		// ffmpeg_frame_data->pFrame->pkt_pts = 0;
-		// ffmpeg_frame_data->pFrame->pkt_dts = 0;
-		// ffmpeg_frame_data->pFrame->sample_aspect_ratio.num = 1;
-		// ffmpeg_frame_data->pFrame->color_range = AVCOL_RANGE_MPEG;
-
-		//// Push frame to the output_video thread
-		//AVFrame* old_pframe = ffmpeg_frame_data->pFrame;
-		//ffmpeg_frame_data->pFrame = av_frame_alloc();
-		//int buffer_size = avpicture_get_size(AV_PIX_FMT_YUV420P, CAPTURE_WINDOW_WIDTH, CAPTURE_WINDOW_WIDTH);
-		//unsigned char* pic_buffer_in = (unsigned char*) malloc(buffer_size * sizeof(unsigned char*));
-		//memcpy(pic_buffer_in, old_pframe->data, buffer_size);
-		
-		//ffmpeg_frame_data->pFrame = av_frame_clone(frame_data->pFrame);
-		//simple_queue_push(se->frame_sender_thread_queue, frame_data);
+		int result = get_pixels_yuv420p(&cc, ffmpeg_frame_data);
         
 		ffmpeg_frame_data->pFrame->format = AV_PIX_FMT_YUV420P;
 		ffmpeg_frame_data->avframe_produced_time_point = std::chrono::system_clock::now();
@@ -94,7 +70,9 @@ int gpu_frame_extractor_thread(void *arg) {
 		}
 		else {
 			simple_queue_push(se->frame_output_thread_queue, ffmpeg_frame_data);
-		}	
+		}
+
+        // usleep(16.666 * 1000);
     }
 
     return 0;
@@ -340,7 +318,7 @@ int frame_extractor_thread(void *arg) {
 				av_free(old_pframe);
 				i++;
 
-				usleep(16.666 * 1000);
+				// usleep(16.666 * 1000);
 			}
 		}
 
@@ -379,16 +357,14 @@ int main(int argc, char* argv[]){
 //	std::queue<AVPacket*> queue_;
 //	se->network_simulated_queue = &queue_;
 	se->frame_output_thread = SDL_CreateThread(frame_output_thread, "frame_output_thread", se);
-    se->frame_extractor_thread = SDL_CreateThread(frame_extractor_thread, "frame_extractor_thread", se);
+    // se->frame_extractor_thread = SDL_CreateThread(frame_extractor_thread, "frame_extractor_thread", se);
     #if defined(WIN32)
-    // se->gpu_frame_extractor_thread = SDL_CreateThread(gpu_frame_extractor_thread, "gpu_frame_extractor_thread", se);
+    se->gpu_frame_extractor_thread = SDL_CreateThread(gpu_frame_extractor_thread, "gpu_frame_extractor_thread", se);
     #endif
 
  	se->frame_receiver_thread = SDL_CreateThread(video_encode_thread, "frame_receiver_thread", se);
 	se->frame_sender_thread = SDL_CreateThread(video_decode_thread, "frame_sender_thread", se);
 
-    // se->pDecodingCtx = NULL;
-	// se->pEncodingCtx = NULL;
     se->finishing = 0;
     se->initialized = 0;
 	se->network_initialized = 0;
@@ -437,7 +413,7 @@ int main(int argc, char* argv[]){
     se->initialized = 1;
 
 	// [FFMPEG] Initialize frame pool
-	for (int i = 0; i < 30; i++) {
+	for (int i = 0; i < 100; i++) {
 		FrameData* frame_data = frame_data_create(se);
 		frame_data->id = i;
 		simple_queue_push(se->frame_extractor_pframe_pool, frame_data);
