@@ -18,7 +18,7 @@ set(CMAKE_CXX_STANDARD 11)
 hunter_add_package(Beast)
 find_package(Beast CONFIG REQUIRED)
 
-#hunter_add_package(Boost COMPONENTS beast)
+hunter_add_package(Boost COMPONENTS system)
 
 
 if(WIN32)
