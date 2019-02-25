@@ -1,26 +1,18 @@
 #include "codec.h"
-#include <math.h>
-#include <libavutil/opt.h>
-#include <libavcodec/avcodec.h>
-#include <libavutil/channel_layout.h>
-#include <libavutil/common.h>
-#include <libavutil/imgutils.h>
-#include <libavutil/mathematics.h>
-#include <libavutil/samplefmt.h>
 
-#define INBUF_SIZE 4096
+#define USE_NETWORK true
 
 // // H264 (nvenc)
 // #define ENCODER_NAME "h264_nvenc"
 // #define DECODER_NAME "h264"
 
-// // H264 (videotoolbox)
-// #define ENCODER_NAME "h264_videotoolbox"
-// #define DECODER_NAME "h264"
-
-// H264 (software)
-#define ENCODER_NAME "libx264"
+// H264 (videotoolbox)
+#define ENCODER_NAME "h264_videotoolbox"
 #define DECODER_NAME "h264"
+
+//// H264 (software)
+//#define ENCODER_NAME "libx264"
+//#define DECODER_NAME "h264"
 
 //// H265 (videotoolbox)
 //#define ENCODER_NAME "hevc_videotoolbox"
@@ -37,14 +29,6 @@ char* make_av_error_string(int errnum) {
 #define make_av_error_string av_err2str
 #endif
 
-
-typedef struct packet_data {
-    int size;
-    uint8_t* data;
-    int64_t pts;
-    int64_t dts;
-    int flags;
-} packet_data;
 
 static void encode(AVCodecContext *enc_ctx, AVFrame *frame, AVPacket *pkt, StreamingEnvironment *se) {
     int ret;
@@ -69,7 +53,11 @@ static void encode(AVCodecContext *enc_ctx, AVFrame *frame, AVPacket *pkt, Strea
         network_packet_data->data = (uint8_t*) malloc(sizeof(uint8_t) * pkt->size);
         memcpy(network_packet_data->data, pkt->data, sizeof(uint8_t) * pkt->size);
 
-        simple_queue_push(se->network_simulated_queue, network_packet_data);
+        if (!USE_NETWORK) {
+            simple_queue_push(se->network_simulated_queue, network_packet_data);
+        } else {
+            simple_queue_push(se->packet_sender_thread_queue, network_packet_data);
+        }
         av_packet_unref(pkt);
     }
 }
@@ -108,7 +96,7 @@ int video_encode_thread(void *arg) {
         exit(1);
 
     encodingContext->width = 1920;
-    encodingContext->height = 1080;
+    encodingContext->height = 816;
     encodingContext->bit_rate = BITRATE;
     encodingContext->gop_size = 5 * 60;
     // encodingContext->max_b_frames = 1;
@@ -150,11 +138,9 @@ int video_encode_thread(void *arg) {
     long image_count = 0;
     
     while (se->finishing != 1) {
-
         FrameData* frame_data = (FrameData*) simple_queue_pop(se->frame_sender_thread_queue);
         frame_data->pFrame->pts = image_count;
 
-        
         std::chrono::system_clock::time_point before = std::chrono::system_clock::now();
 
         /* encode the image */
@@ -239,7 +225,7 @@ int video_decode_thread(void *arg) {
 
     /* put sample parameters */
     decodingContext->width = 1920;
-    decodingContext->height = 1080;
+    decodingContext->height = 816;
     decodingContext->bit_rate = BITRATE;
     decodingContext->gop_size = 5 * 60;
     // decodingContext->max_b_frames = 1;
@@ -283,7 +269,9 @@ int video_decode_thread(void *arg) {
     long nb_packet = 0;
     long nb_img = 0;
     while (se->finishing != 1) {
+
         packet_data* network_packet_data = (packet_data*) simple_queue_pop(se->network_simulated_queue);
+
         pkt->data = network_packet_data->data;
         pkt->size = network_packet_data->size;
 

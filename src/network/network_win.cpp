@@ -1,305 +1,159 @@
 #include "network_win.h"
 
-#if WIN32
-// Need to link with Ws2_32.lib
-#pragma comment (lib, "Ws2_32.lib")
-// #pragma comment (lib, "Mswsock.lib")
-
-#define DEFAULT_BUFLEN 900000
-#define DEFAULT_PORT "9000"
-#define SERVER_URL "192.168.1.23"
-//#define SERVER_URL "127.0.0.1"
-#endif
-
 #define USE_NETWORK false
 
-char* get_ffmpeg_error_msg(int error_code) {
-	char myArray[AV_ERROR_MAX_STRING_SIZE] = { 0 }; // all elements 0
-	char * msg = av_make_error_string(myArray, AV_ERROR_MAX_STRING_SIZE, error_code);
-	int len = strlen(msg);
-	char* result = (char*) malloc(len * sizeof(char));
-	strcpy(result, msg);
-	return result;
+#define LISTENING_ADDRESS "0.0.0.0"
+#define WEBSOCKET_PORT 8000
+#define SERVER_ADDRESS "127.0.0.1"
+#define BUFFER_SIZE 900000
+
+
+int serialize_packet_data(packet_data* src, int8_t* dst) {
+    memcpy(dst, src, sizeof(packet_data));
+    memcpy(dst + sizeof(packet_data), src->data, src->size);
+    return sizeof(packet_data) + src->size;
 }
 
-typedef struct serialized_packet_ {
-	uint8_t* data;
-	int size;
-} serialized_packet;
+void deserialize_packet_data(const int8_t* src, packet_data* dst) {
+    memcpy(dst, src, sizeof(packet_data));
+    memcpy(dst->data , src + sizeof(packet_data), dst->size);
+}
 
-int win_client_thread(void *arg) {
+void do_session(tcp::socket& socket, StreamingEnvironment* se)
+{
+    try
+    {
+        // Construct the stream by moving in the socket
+        websocket::stream<tcp::socket> ws{std::move(socket)};
+
+        // Accept the websocket handshake
+        ws.accept();
+
+        // This buffer will hold the incoming message
+        boost::beast::multi_buffer buffer;
+
+        // Read a message
+        ws.read(buffer);
+        ws.binary(true);
+
+        // Allocate a buffer
+        int8_t* c_buffer = (int8_t*) malloc(BUFFER_SIZE * sizeof(int8_t));
+
+        while (! se->finishing) {
+            packet_data* pkt_d = (packet_data*) simple_queue_pop(se->packet_sender_thread_queue);
+            int data_length = serialize_packet_data(pkt_d, c_buffer);
+            std::vector<int8_t> data(c_buffer, c_buffer + data_length);
+            auto buffer = boost::asio::buffer(data, data_length);
+            int n_bytes_sent = ws.write(buffer);
+            log_info("[Websocket] sent %d bytes", n_bytes_sent);
+        }
+    }
+    catch(boost::system::system_error const& se)
+    {
+        // This indicates that the session was closed
+        if(se.code() != websocket::error::closed)
+            std::cerr << "Error: " << se.code().message() << std::endl;
+    }
+    catch(std::exception const& e)
+    {
+        std::cerr << "Error: " << e.what() << std::endl;
+    }
+}
+
+int packet_sender_thread(void *arg) {
 	StreamingEnvironment *se = (StreamingEnvironment*)arg;
-    std::chrono::system_clock::time_point before = std::chrono::system_clock::now();
 
-#if WIN323
+    try
+    {
+        auto const address = boost::asio::ip::make_address(LISTENING_ADDRESS);
+        auto const port = static_cast<unsigned short>(WEBSOCKET_PORT);
 
-	WSADATA wsaData;
-	SOCKET ConnectSocket = INVALID_SOCKET;
-	struct addrinfo *result = NULL,
-		*ptr = NULL,
-		hints;
-	char *sendbuf = "this is a test";
-	char recvbuf[DEFAULT_BUFLEN];
-	int iResult;
-	int recvbuflen = DEFAULT_BUFLEN;
+        // The io_context is required for all I/O
+        boost::asio::io_context ioc{1};
 
-	// Initialize Winsock
-	iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
-	if (iResult != 0) {
-		printf("WSAStartup failed with error: %d\n", iResult);
-		return 1;
-	}
+        // The acceptor receives incoming connections
+        tcp::acceptor acceptor{ioc, {address, port}};
+        for(;;)
+        {
+            // This will receive the new connection
+            tcp::socket socket{ioc};
 
-	ZeroMemory(&hints, sizeof(hints));
-	hints.ai_family = AF_UNSPEC;
-	hints.ai_socktype = SOCK_DGRAM;
-	hints.ai_protocol = IPPROTO_UDP;
+            // Block until we get a connection
+            acceptor.accept(socket);
 
-	// Resolve the server address and port
-	iResult = getaddrinfo(SERVER_URL, DEFAULT_PORT, &hints, &result);
-	if (iResult != 0) {
-		printf("getaddrinfo failed with error: %d\n", iResult);
-		WSACleanup();
-		return 1;
-	}
+            // Launch the session, transferring ownership of the socket
+            std::thread{std::bind(
+                    &do_session,
+                    std::move(socket),
+                    se)}.detach();
+        }
+    }
+    catch (const std::exception& e)
+    {
+        std::cerr << "Error: " << e.what() << std::endl;
+        return EXIT_FAILURE;
+    }
 
-	// Attempt to connect to an address until one succeeds
-	for (ptr = result; ptr != NULL; ptr = ptr->ai_next) {
-
-		// Create a SOCKET for connecting to server
-		ConnectSocket = socket(ptr->ai_family, ptr->ai_socktype,
-			ptr->ai_protocol);
-		if (ConnectSocket == INVALID_SOCKET) {
-			printf("socket failed with error: %ld\n", WSAGetLastError());
-			WSACleanup();
-			return 1;
-		}
-
-		// Connect to server.
-		iResult = connect(ConnectSocket, ptr->ai_addr, (int)ptr->ai_addrlen);
-		if (iResult == SOCKET_ERROR) {
-			closesocket(ConnectSocket);
-			ConnectSocket = INVALID_SOCKET;
-			continue;
-		}
-		break;
-	}
-
-	freeaddrinfo(result);
-
-	if (ConnectSocket == INVALID_SOCKET) {
-		printf("Unable to connect to server!\n");
-		WSACleanup();
-		return 1;
-	}
-
-	// Send an initial buffer
-	iResult = send(ConnectSocket, sendbuf, (int)strlen(sendbuf), 0);
-	if (iResult == SOCKET_ERROR) {
-		printf("send failed with error: %d\n", WSAGetLastError());
-		closesocket(ConnectSocket);
-		WSACleanup();
-		return 1;
-	}
-
-	printf("Bytes Sent: %ld\n", iResult);
-	//iResult = recv(ConnectSocket, recvbuf, recvbuflen, 0);
-#endif
-
-	FrameData* frame_data = (FrameData*)simple_queue_pop(se->frame_extractor_pframe_pool);
-
-	while (se->finishing != 1) {
-
-		// Receive until the peer closes the connection
-		AVPacket* pkt;
-
-		if (USE_NETWORK) {
-#if WIN323
-			pkt = (AVPacket*) malloc(sizeof(AVPacket));
-			av_init_packet(pkt);
-			iResult = recv(ConnectSocket, recvbuf, recvbuflen, 0);
-
-			pkt->data = (uint8_t*)recvbuf;
-			pkt->size = iResult;
-#endif
-		}
-		else {
-			pkt = (AVPacket*) simple_queue_pop(se->network_simulated_queue);
-		}
-		int ret;
-
-		if (pkt) {
-			ret = avcodec_send_packet(se->pDecodingCtx, pkt);
-			if (USE_NETWORK) {
-#if WIN323
-				free(pkt);
-#endif
-			}
-			if (ret < 0) {
-				continue;
-			}
-		}
-
-		ret = avcodec_receive_frame(se->pDecodingCtx, frame_data->pFrame);
-		if (ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF) {
-			continue;
-		} else if (ret >= 0) {
-            std::chrono::system_clock::time_point after = frame_data->sdl_displayed_time_point = std::chrono::system_clock::now();
-            float frame_encode_duration = std::chrono::duration_cast<std::chrono::microseconds>(after - before).count() / 1000.0;
-            log_info(" decoding duration: %f", frame_encode_duration);
-			simple_queue_push(se->frame_output_thread_queue, frame_data);
-			frame_data = (FrameData*)simple_queue_pop(se->frame_extractor_pframe_pool);
-            before = std::chrono::system_clock::now();
-		}
-	}
-
-#if WIN323
-	// cleanup
-	closesocket(ConnectSocket);
-	WSACleanup();
-#endif
 	return 0;
 }
 
-int win_server_thread(void *arg) {
+int packet_receiver_thread(void *arg) {
 	StreamingEnvironment *se = (StreamingEnvironment*)arg;
 
-#if WIN323
-	WSADATA wsaData;
-	int iResult;
+    auto const host = SERVER_ADDRESS;
+    auto const port = "8000";
+    auto const text = "HelloWorld from a websocket client!";
 
-	SOCKET ListenSocket = INVALID_SOCKET;
-	SOCKET ClientSocket = INVALID_SOCKET;
+    // The io_service is required for all I/O
+    boost::asio::io_service ios;
 
-	struct addrinfo *result = NULL;
-	struct addrinfo hints;
+    // These objects perform our I/O
+    tcp::resolver resolver{ios};
+    websocket::stream<tcp::socket> ws{ios};
 
-	int iSendResult;
-	char recvbuf[DEFAULT_BUFLEN];
-	int recvbuflen = DEFAULT_BUFLEN;
+    // Look up the domain name
+    auto const lookup = resolver.resolve({host, port});
 
-	// Initialize Winsock
-	iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
-	if (iResult != 0) {
-		printf("WSAStartup failed with error: %d\n", iResult);
-		return 1;
-	}
+    // Make the connection on the IP address we get from a lookup
+    boost::asio::connect(ws.next_layer(), lookup);
 
-	ZeroMemory(&hints, sizeof(hints));
-	hints.ai_family = AF_INET;
-	hints.ai_socktype = SOCK_DGRAM;
-	hints.ai_protocol = IPPROTO_UDP;
-	hints.ai_flags = AI_PASSIVE;
+    // Perform the websocket handshake
+    ws.handshake(host, "/");
 
-	// Resolve the server address and port
-	iResult = getaddrinfo(SERVER_URL, DEFAULT_PORT, &hints, &result);
-	if (iResult != 0) {
-		printf("getaddrinfo failed with error: %d\n", iResult);
-		WSACleanup();
-		return 1;
-	}
+    // Send the message
+    ws.write(boost::asio::buffer(std::string(text)));
 
-	// Create a SOCKET for connecting to server
-	ListenSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
-	if (ListenSocket == INVALID_SOCKET) {
-		printf("socket failed with error: %ld\n", WSAGetLastError());
-		freeaddrinfo(result);
-		WSACleanup();
-		return 1;
-	}
+    // This buffer will hold the incoming message
+    boost::beast::multi_buffer buffer;
 
-	// Setup the TCP listening socket
-	iResult = bind(ListenSocket, result->ai_addr, (int)result->ai_addrlen);
-	if (iResult == SOCKET_ERROR) {
-		printf("bind failed with error: %d\n", WSAGetLastError());
-		freeaddrinfo(result);
-		closesocket(ListenSocket);
-		WSACleanup();
-		return 1;
-	}
+    // Allocate a buffer
+    int8_t* c_buffer = (int8_t *) malloc(BUFFER_SIZE * sizeof(int8_t));
+    ws.binary(true);
 
-	freeaddrinfo(result);
-	struct sockaddr_in servaddr, cliaddr;
-	int len;
+    while (!se->finishing) {
+        // Read a message into our buffer
+        ws.read(buffer);
 
-	sockaddr_in client;
-	len = sizeof(client);
-	iResult = recvfrom(ListenSocket, recvbuf, recvbuflen, 0, (struct sockaddr *)&client, (socklen_t *)&len);
-	int port = ntohs(client.sin_port);
-	if (iResult != -1) {
-		log_info("recv()'d %d bytes of data in buf\n", iResult);
-	}
-#endif
+        log_info("[websocket] read %d bytes", buffer.size());
 
-	//////////////////////////////////////////////////////
-	// <custom> BADOCK: READS AVFRAME AND SENDS PACKETS
-	//////////////////////////////////////////////////////
-	se->network_initialized = 1;
+        packet_data *network_packet_data = (packet_data*) malloc(sizeof(packet_data));
+        network_packet_data->data = (uint8_t *) malloc(sizeof(uint8_t) * buffer.size() - sizeof(packet_data));
 
-	AVPacket *pkt;
-	while (se->finishing != 1) {
-		FrameData* frame_data = (FrameData*) simple_queue_pop(se->frame_sender_thread_queue);
+        int8_t * tempchar = new int8_t[buffer.size()];
+        boost::asio::buffer_copy(boost::asio::buffer(tempchar, buffer.size()), buffer.data(), buffer.size());
 
-        std::chrono::system_clock::time_point before = frame_data->sdl_displayed_time_point = std::chrono::system_clock::now();
-		int ret = avcodec_send_frame(se->pEncodingCtx, frame_data->pFrame);
-		if (ret < 0) {
-			char myArray[AV_ERROR_MAX_STRING_SIZE] = { 0 }; // all elements 0
-			char * msg = av_make_error_string(myArray, AV_ERROR_MAX_STRING_SIZE, ret);
-			fprintf(stderr, "Error sending a frame for encoding %s\n", msg);
-			continue;
-		}
-		while (ret >= 0) {
-			pkt = av_packet_alloc();
-			int retReceivePacket = avcodec_receive_packet(se->pEncodingCtx, pkt);
-			if (retReceivePacket == AVERROR(EAGAIN) || retReceivePacket == AVERROR_EOF) {
-				break;
-			}
-			else if (ret < 0) {
-				fprintf(stderr, "Error during encoding\n");
-				exit(1);
-			}
+        deserialize_packet_data(tempchar, network_packet_data);
 
-			int size = pkt->size;
-			//printf("Write packet (size=%d)\n", size);
+        simple_queue_push(se->network_simulated_queue, network_packet_data);
 
-			if (USE_NETWORK) {
-#if WIN323
-				//iSendResult = send(ClientSocket, (char*) pkt->data, pkt->size, 0);
+        // clear buffer
+        buffer.consume(buffer.size());
+    }
 
-				iSendResult = sendto(ListenSocket, (char*)pkt->data, pkt->size,
-					0, (const struct sockaddr *) &client,
-					len);
-#endif
-			}
-			else {
-				simple_queue_push(se->network_simulated_queue, pkt);
-			}
-		}
-        std::chrono::system_clock::time_point after = frame_data->sdl_displayed_time_point = std::chrono::system_clock::now();
-        float frame_encode_duration = std::chrono::duration_cast<std::chrono::microseconds>(after - before).count() / 1000.0;
+    // Close the WebSocket connection
+    ws.close(websocket::close_code::normal);
 
-        log_info(" encoding duration: %f", frame_encode_duration);
-		simple_queue_push(se->frame_extractor_pframe_pool, frame_data);
-		//simple_queue_push(se->frame_output_thread_queue, frame_data);
-	}
+    // If we get here then the connection is closed gracefully
 
-	//////////////////////////////////////////////////////
-	// </custom>
-	//////////////////////////////////////////////////////
-
-#if WIN323
-	// shutdown the connection since we're done
-	iResult = shutdown(ClientSocket, SD_SEND);
-	if (iResult == SOCKET_ERROR) {
-		printf("shutdown failed with error: %d\n", WSAGetLastError());
-		closesocket(ClientSocket);
-		WSACleanup();
-		return 1;
-	}
-
-	// cleanup
-	closesocket(ClientSocket);
-	WSACleanup();
-#endif
 	return 0;
 }
