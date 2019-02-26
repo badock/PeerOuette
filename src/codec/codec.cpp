@@ -6,13 +6,13 @@
 // #define ENCODER_NAME "h264_nvenc"
 // #define DECODER_NAME "h264"
 
-// H264 (videotoolbox)
-#define ENCODER_NAME "h264_videotoolbox"
-#define DECODER_NAME "h264"
+// // H264 (videotoolbox)
+// #define ENCODER_NAME "h264_videotoolbox"
+// #define DECODER_NAME "h264"
 
-//// H264 (software)
-//#define ENCODER_NAME "libx264"
-//#define DECODER_NAME "h264"
+// H264 (software)
+#define ENCODER_NAME "libx264"
+#define DECODER_NAME "h264"
 
 //// H265 (videotoolbox)
 //#define ENCODER_NAME "hevc_videotoolbox"

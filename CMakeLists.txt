@@ -34,8 +34,8 @@ if(WIN32)
             src/queue/queue.h
             src/dxcapture/capture.cpp
             src/dxcapture/capture.h
-#            src/network/network_win.cpp
-#            src/network/network_win.h
+			src/network/network_win.cpp
+			src/network/network_win.h
             src/codec/codec.cpp
             src/codec/codec.h
             src/texture_converter/TextureConverter.cpp
