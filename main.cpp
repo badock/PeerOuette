@@ -416,7 +416,7 @@ int main(int argc, char* argv[]){
     se->initialized = 1;
 
 	// [FFMPEG] Initialize frame pool
-	for (int i = 0; i < 100; i++) {
+	for (int i = 0; i < 5; i++) {
 		FrameData* frame_data = frame_data_create(se);
 		frame_data->id = i;
 		simple_queue_push(se->frame_extractor_pframe_pool, frame_data);
@@ -440,6 +440,8 @@ int main(int argc, char* argv[]){
                     break;
             }
         }
+        // Prevent high CPU usage
+        SDL_Delay(1);
     }
 
     // [FFMPEG] Free the RGB image

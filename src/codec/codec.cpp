@@ -19,6 +19,7 @@
 //#define DECODER_NAME "hevc"
 
 #define BITRATE 6 * 1024 * 1024
+#define CRF "30"
 
 #if defined(WIN32)
 char* make_av_error_string(int errnum) {
@@ -98,15 +99,16 @@ int video_encode_thread(void *arg) {
     encodingContext->width = 1920;
     encodingContext->height = 816;
     encodingContext->bit_rate = BITRATE;
-    encodingContext->gop_size = 5 * 60;
-    // encodingContext->max_b_frames = 1;
+//    encodingContext->gop_size = 1;
+//    encodingContext->max_b_frames = 0;
     encodingContext->time_base.num = 1;
     encodingContext->time_base.den = 60;
     encodingContext->pix_fmt = AV_PIX_FMT_YUV420P;
+    encodingContext->thread_type   = FF_THREAD_SLICE;
 
     AVDictionary *param = NULL;
 	av_dict_set(&param, "preset", "ultrafast", 0);
-	av_dict_set(&param, "crf", "30", 0);
+	av_dict_set(&param, "crf", CRF, 0);
     av_dict_set(&param, "tune", "zerolatency", 0);
 
     // if (codec->id == AV_CODEC_ID_H264)
@@ -159,7 +161,7 @@ int video_encode_thread(void *arg) {
 			simple_queue_push(se->frame_extractor_pframe_pool, frame_data);
             std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
             float time_since_last_encoded_frame = std::chrono::duration_cast<std::chrono::microseconds>(now - after).count() / 1000.0;
-            if (time_since_last_encoded_frame > 13.0) {
+            if (time_since_last_encoded_frame > 5.0) {
                 clean_frames = 0;
             }
 		}
@@ -235,7 +237,8 @@ int video_decode_thread(void *arg) {
 
     AVDictionary *param = NULL;
 	av_dict_set(&param, "preset", "ultrafast", 0);
-	av_dict_set(&param, "crf", "30", 0);
+	av_dict_set(&param, "crf", CRF, 0);
+    av_dict_set(&param, "tune", "zerolatency", 0);
     av_dict_set(&param, "tune", "zerolatency", 0);
 
     if (codec->id == AV_CODEC_ID_H264)

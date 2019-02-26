@@ -15,11 +15,11 @@ HunterGate(
 project(GameClientSDL)
 set(CMAKE_CXX_STANDARD 11)
 
-hunter_add_package(Beast)
-find_package(Beast CONFIG REQUIRED)
+#hunter_add_package(Beast)
+#find_package(Beast CONFIG REQUIRED)
 
-hunter_add_package(Boost COMPONENTS system)
-
+hunter_add_package(Boost)
+find_package(Boost CONFIG REQUIRED)
 
 if(WIN32)
     add_executable(GameClientSDL
@@ -140,9 +140,9 @@ endif()
 
 
 if(WIN32)
-    target_link_libraries(${PROJECT_NAME} ${FFMPEG_LIBRARIES} ${SDL2_LIBRARY} ${DirectX11_LIBRARIES} Beast::Beast)
+    target_link_libraries(${PROJECT_NAME} ${FFMPEG_LIBRARIES} ${SDL2_LIBRARY} ${DirectX11_LIBRARIES} Boost::boost)
 else()
-    target_link_libraries(${PROJECT_NAME} ${FFMPEG_LIBRARIES} ${SDL2_LIBRARY} Beast::Beast)
+    target_link_libraries(${PROJECT_NAME} ${FFMPEG_LIBRARIES} ${SDL2_LIBRARY} Boost::boost)
 endif()
 
 if(WIN32)

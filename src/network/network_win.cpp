@@ -1,6 +1,6 @@
 #include "network_win.h"
 
-#define USE_NETWORK false
+#define USE_NETWORK true
 
 #define LISTENING_ADDRESS "0.0.0.0"
 #define WEBSOCKET_PORT 8000
@@ -41,11 +41,24 @@ void do_session(tcp::socket& socket, StreamingEnvironment* se)
 
         while (! se->finishing) {
             packet_data* pkt_d = (packet_data*) simple_queue_pop(se->packet_sender_thread_queue);
+            std::chrono::system_clock::time_point t1 = std::chrono::system_clock::now();
             int data_length = serialize_packet_data(pkt_d, c_buffer);
+            std::chrono::system_clock::time_point t2 = std::chrono::system_clock::now();
             std::vector<int8_t> data(c_buffer, c_buffer + data_length);
+            std::chrono::system_clock::time_point t3 = std::chrono::system_clock::now();
             auto buffer = boost::asio::buffer(data, data_length);
+            std::chrono::system_clock::time_point t4 = std::chrono::system_clock::now();
             int n_bytes_sent = ws.write(buffer);
+            std::chrono::system_clock::time_point t5 = std::chrono::system_clock::now();
             log_info("[Websocket] sent %d bytes", n_bytes_sent);
+            float d1 = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count() / 1000.0;
+            float d2 = std::chrono::duration_cast<std::chrono::microseconds>(t3 - t2).count() / 1000.0;
+            float d3 = std::chrono::duration_cast<std::chrono::microseconds>(t4 - t2).count() / 1000.0;
+            float d4 = std::chrono::duration_cast<std::chrono::microseconds>(t5 - t4).count() / 1000.0;
+            log_info(" - %f ms", d1);
+            log_info(" - %f ms", d2);
+            log_info(" - %f ms", d3);
+            log_info(" - %f ms", d4);
         }
     }
     catch(boost::system::system_error const& se)
@@ -154,6 +167,5 @@ int packet_receiver_thread(void *arg) {
     ws.close(websocket::close_code::normal);
 
     // If we get here then the connection is closed gracefully
-
 	return 0;
 }
