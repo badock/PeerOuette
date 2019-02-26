@@ -1,6 +1,6 @@
 #include "network_win.h"
 
-#define USE_NETWORK false
+#define USE_NETWORK true
 
 #define LISTENING_ADDRESS "0.0.0.0"
 #define WEBSOCKET_PORT 8000

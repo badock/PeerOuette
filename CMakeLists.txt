@@ -15,11 +15,11 @@ HunterGate(
 project(GameClientSDL)
 set(CMAKE_CXX_STANDARD 11)
 
-hunter_add_package(Beast)
-find_package(Beast CONFIG REQUIRED)
+#hunter_add_package(Beast)
+#find_package(Beast CONFIG REQUIRED)
 
-hunter_add_package(Boost COMPONENTS system)
-
+hunter_add_package(Boost)
+find_package(Boost CONFIG REQUIRED)
 
 if(WIN32)
     add_executable(GameClientSDL
@@ -34,8 +34,8 @@ if(WIN32)
             src/queue/queue.h
             src/dxcapture/capture.cpp
             src/dxcapture/capture.h
-#            src/network/network_win.cpp
-#            src/network/network_win.h
+			src/network/network_win.cpp
+			src/network/network_win.h
             src/codec/codec.cpp
             src/codec/codec.h
             src/texture_converter/TextureConverter.cpp
@@ -140,9 +140,9 @@ endif()
 
 
 if(WIN32)
-    target_link_libraries(${PROJECT_NAME} ${FFMPEG_LIBRARIES} ${SDL2_LIBRARY} ${DirectX11_LIBRARIES} Beast::Beast)
+    target_link_libraries(${PROJECT_NAME} ${FFMPEG_LIBRARIES} ${SDL2_LIBRARY} ${DirectX11_LIBRARIES} Boost::boost)
 else()
-    target_link_libraries(${PROJECT_NAME} ${FFMPEG_LIBRARIES} ${SDL2_LIBRARY} Beast::Beast)
+    target_link_libraries(${PROJECT_NAME} ${FFMPEG_LIBRARIES} ${SDL2_LIBRARY} Boost::boost)
 endif()
 
 if(WIN32)
