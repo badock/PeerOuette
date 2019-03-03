@@ -5,6 +5,9 @@
 #include <boost/beast/version.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
+#include <iostream>
+#include <boost/bind.hpp>
+#include <boost/array.hpp>
 #include <boost/asio.hpp>
 #include <cstdlib>
 #include <iostream>
@@ -15,9 +18,7 @@
 
 namespace beast = boost::beast;         // from <boost/beast.hpp>
 namespace http = beast::http;           // from <boost/beast/http.hpp>
-namespace websocket = beast::websocket; // from <boost/beast/websocket.hpp>
 namespace net = boost::asio;            // from <boost/asio.hpp>
-using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
-
+using udp = boost::asio::ip::udp;
 int packet_sender_thread(void *arg);
 int packet_receiver_thread(void *arg);
