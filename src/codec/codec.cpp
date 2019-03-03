@@ -18,8 +18,11 @@
 //#define ENCODER_NAME "hevc_videotoolbox"
 //#define DECODER_NAME "hevc"
 
+#define WIDTH 1920
+#define HEIGHT 1080
 #define BITRATE 6 * 1024 * 1024
 #define CRF "30"
+#define GOP_SIZE 5 * 60
 
 #if defined(WIN32)
 char* make_av_error_string(int errnum) {
@@ -96,10 +99,10 @@ int video_encode_thread(void *arg) {
     if (!pkt)
         exit(1);
 
-    encodingContext->width = 1920;
-    encodingContext->height = 1080;
+    encodingContext->width = WIDTH;
+    encodingContext->height = HEIGHT;
     encodingContext->bit_rate = BITRATE;
-//    encodingContext->gop_size = 1;
+   encodingContext->gop_size = GOP_SIZE;
 //    encodingContext->max_b_frames = 0;
     encodingContext->time_base.num = 1;
     encodingContext->time_base.den = 60;
@@ -226,10 +229,10 @@ int video_decode_thread(void *arg) {
         decodingContext->flags |= AV_CODEC_CAP_TRUNCATED; /* we do not send complete frames */
 
     /* put sample parameters */
-    decodingContext->width = 1920;
-    decodingContext->height = 1080;
+    decodingContext->width = WIDTH;
+    decodingContext->height = HEIGHT;
     decodingContext->bit_rate = BITRATE;
-    decodingContext->gop_size = 5 * 60;
+    decodingContext->gop_size = GOP_SIZE;
     // decodingContext->max_b_frames = 1;
     decodingContext->time_base.num = 1;
     decodingContext->time_base.den = 60;
@@ -238,7 +241,6 @@ int video_decode_thread(void *arg) {
     AVDictionary *param = NULL;
 	av_dict_set(&param, "preset", "ultrafast", 0);
 	av_dict_set(&param, "crf", CRF, 0);
-    av_dict_set(&param, "tune", "zerolatency", 0);
     av_dict_set(&param, "tune", "zerolatency", 0);
 
     if (codec->id == AV_CODEC_ID_H264)

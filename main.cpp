@@ -23,6 +23,7 @@ int CAPTURE_WINDOW_WIDTH = 1920;
 int CAPTURE_WINDOW_HEIGHT = 1080;
 int BITRATE = CAPTURE_WINDOW_WIDTH * CAPTURE_WINDOW_HEIGHT * 3;
 int FRAMERATE = 60;
+int FRAME_POOL_SIZE = 100;
 char* VIDEO_FILE_PATH = "misc/rogue.mp4";
 
 StreamingEnvironment *global_streaming_environment;
@@ -416,7 +417,7 @@ int main(int argc, char* argv[]){
     se->initialized = 1;
 
 	// [FFMPEG] Initialize frame pool
-	for (int i = 0; i < 5; i++) {
+	for (int i = 0; i < FRAME_POOL_SIZE; i++) {
 		FrameData* frame_data = frame_data_create(se);
 		frame_data->id = i;
 		simple_queue_push(se->frame_extractor_pframe_pool, frame_data);
