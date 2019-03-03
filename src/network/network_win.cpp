@@ -4,7 +4,7 @@
 #define network_PORT 8000
 #define SERVER_ADDRESS "127.0.0.1"
 #define BUFFER_SIZE 200000
-#define MAX_PACKET_SIZE 90000
+#define MAX_PACKET_SIZE 1000
 
 
 long compute_quick_n_dirty_hash(char* array, long length) {
@@ -63,16 +63,16 @@ void do_session(udp::socket& socket, udp::endpoint endpoint, StreamingEnvironmen
                     }
             );
             long packet_hash = compute_quick_n_dirty_hash((char*) temp_buffer, udp_packet_size);
-            log_info("[network]    - subpacket [%d] sent: %d bytes (hash: %d) (packet: %d)", i, udp_packet_size, packet_hash, packet_count);
+            log_info("[network]    - subpacket [%d %d/%d] sent: %d bytes (hash: %d)", packet_count, i, max_packet_count, udp_packet_size, packet_hash);
             already_copied_bytes_count += payload_size;
         }
         free(c_buffer);
         std::chrono::system_clock::time_point t3 = std::chrono::system_clock::now();
         log_info("[network] sent %d bytes", data_length);
-        float d1 = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count() / 1000.0;
-        float d2 = std::chrono::duration_cast<std::chrono::microseconds>(t3 - t2).count() / 1000.0;
-        log_info(" - %f ms", d1);
-        log_info(" - %f ms", d2);
+//        float d1 = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count() / 1000.0;
+//        float d2 = std::chrono::duration_cast<std::chrono::microseconds>(t3 - t2).count() / 1000.0;
+//        log_info(" - %f ms", d1);
+//        log_info(" - %f ms", d2);
         packet_count = (packet_count + 1) % 3000;
     }
 }
@@ -166,7 +166,7 @@ int packet_receiver_thread(void *arg) {
             new_entry->c_buffer = (int8_t *) malloc(sizeof(int8_t) * packet_data_size);
             new_entry->total_size = packet_data_size;
             new_entry->copied_bytes = 0;
-            new_entry->expected_packet_count = 0;
+            new_entry->expected_packet_count = expected_packet_count;
             new_entry->processed_packets = simple_queue_create();
             map_of_incoming_buffers[packet_number] = new_entry;
         }
@@ -177,7 +177,7 @@ int packet_receiver_thread(void *arg) {
         simple_queue_push(map_entry->processed_packets, &packet_index);
 
         long packet_hash = compute_quick_n_dirty_hash((char*) data, reply_length);
-        log_info("[network]     read sub packet [%d]: %d bytes (hash: %d) (packet: %d)", packet_index, reply_length, packet_hash, packet_number);
+        log_info("[network] read sub packet [%d %d/%d]: %d bytes (hash: %d)", packet_number, packet_index, map_entry->expected_packet_count, reply_length, packet_hash);
 
         if (simple_queue_length(map_entry->processed_packets) == expected_packet_count) {
             if(packet_number > packet_count) {
@@ -205,10 +205,10 @@ int packet_receiver_thread(void *arg) {
             float d2 = std::chrono::duration_cast<std::chrono::microseconds>(t3 - t2).count() / 1000.0;
             float d3 = std::chrono::duration_cast<std::chrono::microseconds>(t4 - t3).count() / 1000.0;
             float d4 = std::chrono::duration_cast<std::chrono::microseconds>(t5 - t4).count() / 1000.0;
-            log_info(" - r.d1 %f ms", d1);
-            log_info(" - r.d2 %f ms", d2);
-            log_info(" - r.d3 %f ms", d3);
-            log_info(" - r.d4 %f ms", d4);
+//            log_info(" - r.d1 %f ms", d1);
+//            log_info(" - r.d2 %f ms", d2);
+//            log_info(" - r.d3 %f ms", d3);
+//            log_info(" - r.d4 %f ms", d4);
 
             packet_count = (packet_count + 1) % 3000;
 
