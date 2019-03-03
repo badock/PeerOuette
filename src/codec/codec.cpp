@@ -6,9 +6,9 @@
 // #define ENCODER_NAME "h264_nvenc"
 // #define DECODER_NAME "h264"
 
-// // H264 (videotoolbox)
-// #define ENCODER_NAME "h264_videotoolbox"
-// #define DECODER_NAME "h264"
+//  // H264 (videotoolbox)
+//  #define ENCODER_NAME "h264_videotoolbox"
+//  #define DECODER_NAME "h264"
 
 // H264 (software)
 #define ENCODER_NAME "libx264"
@@ -19,7 +19,7 @@
 //#define DECODER_NAME "hevc"
 
 #define WIDTH 1920
-#define HEIGHT 1080
+#define HEIGHT 816
 #define BITRATE 6 * 1024 * 1024
 #define CRF "30"
 #define GOP_SIZE 5 * 60

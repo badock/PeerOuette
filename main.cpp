@@ -20,7 +20,7 @@
 int SDL_WINDOW_WIDTH = 1280;
 int SDL_WINDOW_HEIGHT = 720;
 int CAPTURE_WINDOW_WIDTH = 1920;
-int CAPTURE_WINDOW_HEIGHT = 1080;
+int CAPTURE_WINDOW_HEIGHT = 816;
 int BITRATE = CAPTURE_WINDOW_WIDTH * CAPTURE_WINDOW_HEIGHT * 3;
 int FRAMERATE = 60;
 int FRAME_POOL_SIZE = 100;
@@ -299,10 +299,8 @@ int frame_extractor_thread(void *arg) {
 	while (av_read_frame(se->frameExtractorEncodingFormatContext, &packet) >= 0) {
 		// Is this a packet from the video stream?
 		if (packet.stream_index == se->videoStream) {
-			// [FFMPEG] Allocate video frame
-//			log_info("frame_extractor_pframe_pool: %i elements in queue", simple_queue_length(se->frame_extractor_pframe_pool));
+			// [FFMPEG] Grab a frame data structure from the frame pool
 			FrameData* frame_data = (FrameData *)simple_queue_pop(se->frame_extractor_pframe_pool);
-//			log_info("WRITE ====> %i (%i)", frame_data->id, i);
 
 			// Decode video frame
 			avcodec_decode_video2(se->frameExtractorEncodingContext
@@ -315,11 +313,10 @@ int frame_extractor_thread(void *arg) {
 				frame_data->pFrame = av_frame_clone(frame_data->pFrame);
 				simple_queue_push(se->frame_sender_thread_queue, frame_data);
 
-				//simple_queue_push(se->frame_output_thread_queue, frame_data);
 				av_free(old_pframe);
 				i++;
 
-				// usleep(16.666 * 1000);
+                // usleep(16.666 * 1000);
 			}
 		}
 
@@ -358,9 +355,9 @@ int main(int argc, char* argv[]){
     se->network_simulated_queue = simple_queue_create();
 
 	se->frame_output_thread = SDL_CreateThread(frame_output_thread, "frame_output_thread", se);
-    // se->frame_extractor_thread = SDL_CreateThread(frame_extractor_thread, "frame_extractor_thread", se);
+     se->frame_extractor_thread = SDL_CreateThread(frame_extractor_thread, "frame_extractor_thread", se);
     #if defined(WIN32)
-    se->gpu_frame_extractor_thread = SDL_CreateThread(gpu_frame_extractor_thread, "gpu_frame_extractor_thread", se);
+//    se->gpu_frame_extractor_thread = SDL_CreateThread(gpu_frame_extractor_thread, "gpu_frame_extractor_thread", se);
     #endif
 
  	se->frame_receiver_thread = SDL_CreateThread(video_encode_thread, "frame_receiver_thread", se);
