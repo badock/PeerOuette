@@ -315,8 +315,6 @@ int frame_extractor_thread(void *arg) {
 
 				av_free(old_pframe);
 				i++;
-
-                // usleep(16.666 * 1000);
 			}
 		}
 
