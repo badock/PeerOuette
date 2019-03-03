@@ -89,6 +89,7 @@ int packet_sender_thread(void *arg) {
         boost::asio::io_context ioc{1};
 
         udp::socket sock(ioc, udp::endpoint(udp::v4(), port));
+        sock.set_option(boost::asio::socket_base::receive_buffer_size(1000000));
         for (;;)
         {
             char data[BUFFER_SIZE];
@@ -129,6 +130,7 @@ int packet_receiver_thread(void *arg) {
     boost::asio::io_context io_context;
 
     udp::socket s(io_context, udp::endpoint(udp::v4(), 0));
+    s.set_option(boost::asio::socket_base::receive_buffer_size(1000000));
 
     udp::resolver resolver(io_context);
     udp::resolver::results_type endpoints = resolver.resolve(udp::v4(), host, port);
