@@ -69,10 +69,10 @@ void do_session(udp::socket& socket, udp::endpoint endpoint, StreamingEnvironmen
         free(c_buffer);
         std::chrono::system_clock::time_point t3 = std::chrono::system_clock::now();
         log_info("[network] sent %d bytes", data_length);
-//        float d1 = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count() / 1000.0;
-//        float d2 = std::chrono::duration_cast<std::chrono::microseconds>(t3 - t2).count() / 1000.0;
-//        log_info(" - %f ms", d1);
-//        log_info(" - %f ms", d2);
+        float d1 = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count() / 1000.0;
+        float d2 = std::chrono::duration_cast<std::chrono::microseconds>(t3 - t2).count() / 1000.0;
+        log_info(" - %f ms", d1);
+        log_info(" - %f ms", d2);
         packet_count = (packet_count + 1) % 3000;
     }
 }
@@ -121,7 +121,7 @@ int packet_receiver_thread(void *arg) {
 
     auto const host = SERVER_ADDRESS;
     auto const port = "8000";
-    auto const text = std::string(50000, '.') + "lolcat" + "HelloWorld from a network client!";
+    auto const text = "HelloWorld from a network client!";
 
     // The io_service is required for all I/O
     boost::asio::io_service ios;
