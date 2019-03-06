@@ -153,7 +153,7 @@ int video_encode_thread(void *arg) {
         
         std::chrono::system_clock::time_point after = std::chrono::system_clock::now();
         float frame_encode_duration = std::chrono::duration_cast<std::chrono::microseconds>(after - before).count() / 1000.0;
-        log_info(" encoding duration (packet: %d): %f", image_count, frame_encode_duration);
+        // log_info(" encoding duration (packet: %d): %f", image_count, frame_encode_duration);
         
         simple_queue_push(se->frame_extractor_pframe_pool, frame_data);
         image_count++;
@@ -284,9 +284,9 @@ int video_decode_thread(void *arg) {
             max_packet_size = pkt->size;
         }
 
-        avg_packet_size = (avg_packet_size * nb_packet + pkt->size) / ++nb_packet;
+        // avg_packet_size = (avg_packet_size * nb_packet + pkt->size) / ++nb_packet;
 
-        log_info("avg_packet_size: %d (max: %d)\n", avg_packet_size, max_packet_size);
+        // log_info("avg_packet_size: %d (max: %d)\n", avg_packet_size, max_packet_size);
 
         int ret;
 
@@ -303,7 +303,7 @@ int video_decode_thread(void *arg) {
         } else if (ret >= 0) {
             std::chrono::system_clock::time_point after = frame_data->sdl_displayed_time_point = std::chrono::system_clock::now();
             float frame_encode_duration = std::chrono::duration_cast<std::chrono::microseconds>(after - before).count() / 1000.0;
-            log_info(" decoding duration (packet:%d): %f", nb_img, frame_encode_duration);
+            // log_info(" decoding duration (packet:%d): %f", nb_img, frame_encode_duration);
             nb_img++;
 
             simple_queue_push(se->frame_output_thread_queue, frame_data);
