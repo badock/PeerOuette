@@ -21,6 +21,9 @@ set(CMAKE_CXX_STANDARD 11)
 hunter_add_package(Boost)
 find_package(Boost CONFIG REQUIRED)
 
+hunter_add_package(nlohmann_fifo_map)
+find_package(nlohmann_fifo_map CONFIG REQUIRED)
+
 if(WIN32)
     add_executable(GameClientSDL
             main.cpp
@@ -140,9 +143,9 @@ endif()
 
 
 if(WIN32)
-    target_link_libraries(${PROJECT_NAME} ${FFMPEG_LIBRARIES} ${SDL2_LIBRARY} ${DirectX11_LIBRARIES} Boost::boost)
+    target_link_libraries(${PROJECT_NAME} ${FFMPEG_LIBRARIES} ${SDL2_LIBRARY} ${DirectX11_LIBRARIES} Boost::boost nlohmann_fifo_map::fifo_map)
 else()
-    target_link_libraries(${PROJECT_NAME} ${FFMPEG_LIBRARIES} ${SDL2_LIBRARY} Boost::boost)
+    target_link_libraries(${PROJECT_NAME} ${FFMPEG_LIBRARIES} ${SDL2_LIBRARY} Boost::boost nlohmann_fifo_map::fifo_map)
 endif()
 
 if(WIN32)

@@ -142,10 +142,10 @@ int packet_receiver_thread(void *arg) {
     float d0 = std::chrono::duration_cast<std::chrono::microseconds>(t0b - t0a).count() / 1000.0;
     log_info(" - d0 %f ms", d0);
 
-
     int8_t reply[BUFFER_SIZE];
 
-    std::map<int, map_packet_entry*> map_of_incoming_buffers;
+    fifo_map<int, map_packet_entry*> map_of_incoming_buffers;
+
     auto buffer_reply = boost::asio::buffer(reply, BUFFER_SIZE);
     udp::endpoint sender_endpoint;
     int packet_count = 0;
