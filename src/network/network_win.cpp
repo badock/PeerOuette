@@ -196,13 +196,13 @@ int packet_receiver_thread(void *arg) {
     udp::endpoint sender_endpoint;
     int packet_count = 0;
     while (!se->finishing) {
-        // log_info("aa");
+//         log_info("aa");
 
         std::chrono::system_clock::time_point t1 = std::chrono::system_clock::now();
 //        while (loop) {
         auto buffer_reply = boost::asio::buffer(reply, BUFFER_SIZE);
         size_t reply_length = s.receive_from(buffer_reply, sender_endpoint);
-        // log_info("bb");
+//         log_info("bb");
 
         int8_t* data = (int8_t*) buffer_reply.data();
         int8_t* payload_address = data + 5 * sizeof(int);
@@ -213,8 +213,10 @@ int packet_receiver_thread(void *arg) {
         int packet_data_size = ((int *) data)[3];
         int offset = ((int *) data)[4];
 
+//        log_info(" >> %d[%d]", packet_number);
+
         if (map_of_incoming_buffers.find(packet_number) == map_of_incoming_buffers.end()) {
-            // log_info("bb1");
+//             log_info("bb1");
             map_packet_entry *new_entry = new map_packet_entry();
             new_entry->packet_number = packet_number;
             new_entry->c_buffer = new int8_t[packet_data_size];
@@ -223,18 +225,18 @@ int packet_receiver_thread(void *arg) {
             new_entry->expected_packet_count = expected_packet_count;
             new_entry->processed_packets = simple_queue_create();
             map_of_incoming_buffers[packet_number] = new_entry;
-            // log_info("bb2");
+//             log_info("bb2");
         }
-        // log_info("cc");
+//         log_info("cc");
 
         map_packet_entry *map_entry = map_of_incoming_buffers[packet_number];
         memcpy(map_entry->c_buffer + offset, payload_address, payload_size);
         map_entry->copied_bytes += payload_size;
         simple_queue_push(map_entry->processed_packets, &packet_index);
-        // log_info("dd");
+//         log_info("dd");
 
         long packet_hash = compute_quick_n_dirty_hash((char*) data, reply_length);
-        // log_info("[network] read sub packet [%d %d/%d]: %d bytes (hash: %d)", packet_number, packet_index, map_entry->expected_packet_count, reply_length, packet_hash);
+//         log_info("[network] read sub packet [%d %d/%d]: %d bytes (hash: %d)", packet_number, packet_index, map_entry->expected_packet_count, reply_length, packet_hash);
 
         if (simple_queue_length(map_entry->processed_packets) == expected_packet_count) {
             if(packet_number > packet_count) {
@@ -242,8 +244,13 @@ int packet_receiver_thread(void *arg) {
                 log_info("A packet may have been dropped...");
             }
 
+            if (payload_size == 0) {
+//                log_info("aborting: payload == 0");
+                continue;
+            }
+
             long hash = compute_quick_n_dirty_hash((char *) map_entry->c_buffer, map_entry->total_size);
-            // log_info("[network] received a packet: %d bytes (hash: %d)", map_entry->total_size, hash);
+//             log_info("[network] received a packet: %d bytes (hash: %d)", map_entry->total_size, hash);
             std::chrono::system_clock::time_point t2 = std::chrono::system_clock::now();
 
             packet_data *network_packet_data = new packet_data();
@@ -251,15 +258,15 @@ int packet_receiver_thread(void *arg) {
             network_packet_data->data = new uint8_t[map_entry->total_size - sizeof(packet_data)];
             std::chrono::system_clock::time_point t3 = std::chrono::system_clock::now();
 
-            // log_info("vv");
+//             log_info("vv");
             deserialize_packet_data(map_entry->c_buffer, network_packet_data);
             std::chrono::system_clock::time_point t4 = std::chrono::system_clock::now();
 
-            // log_info("ww");
+//             log_info("ww");
             simple_queue_push(se->network_simulated_queue, network_packet_data);
             std::chrono::system_clock::time_point t5 = std::chrono::system_clock::now();
 
-        //     log_info("[Network] frame received");
+//             log_info("[Network] frame received");
         //     float d1 = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count() / 1000.0;
         //     float d2 = std::chrono::duration_cast<std::chrono::microseconds>(t3 - t2).count() / 1000.0;
         //     float d3 = std::chrono::duration_cast<std::chrono::microseconds>(t4 - t3).count() / 1000.0;
@@ -270,7 +277,7 @@ int packet_receiver_thread(void *arg) {
         //    log_info(" - r.d4 %f ms", d4);
 
             packet_count = (packet_count + 1) % 3000;
-            // log_info("yy");
+//             log_info("yy");
 
             // Clean the map entry
             // while (simple_queue_length(map_entry->processed_packets) > 0) {
@@ -283,9 +290,9 @@ int packet_receiver_thread(void *arg) {
             // free(map_entry->c_buffer);
             // free(map_entry);
             remove_outdated_packets(map_of_incoming_buffers, packet_number);
-            // log_info("zz");
+//             log_info("zz");
         }
-        // log_info("czzc");
+//         log_info("czzc");
     }
 
     // If we get here then the connection is closed gracefully
