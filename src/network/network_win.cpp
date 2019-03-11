@@ -122,7 +122,8 @@ typedef struct map_packet_entry {
     int copied_bytes;
     int8_t* c_buffer;
     int expected_packet_count;
-    SimpleQueue *processed_packets;
+    int received_packet_count;
+//    SimpleQueue *processed_packets;
 } map_packet_entry;
 
 
@@ -145,11 +146,11 @@ void remove_outdated_packets(fifo_map<int, map_packet_entry*> &m, int last_packe
         map_packet_entry* entry = iter->second;
         // log_info("yyb4");
         // Clean the map entry
-        while (simple_queue_length(entry->processed_packets) > 0) {
-            FrameData* frame_data = (FrameData*)simple_queue_pop(entry->processed_packets);
-        }
+//        while (simple_queue_length(entry->processed_packets) > 0) {
+//            FrameData* frame_data = (FrameData*)simple_queue_pop(entry->processed_packets);
+//        }
         // log_info("yyb5");
-        free(entry->processed_packets);
+//        free(entry->processed_packets);
         // log_info("yyb6");
         free(entry->c_buffer);
         // log_info("yyb7");
@@ -223,7 +224,7 @@ int packet_receiver_thread(void *arg) {
             new_entry->total_size = packet_data_size;
             new_entry->copied_bytes = 0;
             new_entry->expected_packet_count = expected_packet_count;
-            new_entry->processed_packets = simple_queue_create();
+            new_entry->received_packet_count = 0;
             map_of_incoming_buffers[packet_number] = new_entry;
 //             log_info("bb2");
         }
@@ -232,13 +233,14 @@ int packet_receiver_thread(void *arg) {
         map_packet_entry *map_entry = map_of_incoming_buffers[packet_number];
         memcpy(map_entry->c_buffer + offset, payload_address, payload_size);
         map_entry->copied_bytes += payload_size;
-        simple_queue_push(map_entry->processed_packets, &packet_index);
+        map_entry->received_packet_count += 1;
+//        simple_queue_push(map_entry->processed_packets, &packet_index);
 //         log_info("dd");
 
         long packet_hash = compute_quick_n_dirty_hash((char*) data, reply_length);
 //         log_info("[network] read sub packet [%d %d/%d]: %d bytes (hash: %d)", packet_number, packet_index, map_entry->expected_packet_count, reply_length, packet_hash);
 
-        if (simple_queue_length(map_entry->processed_packets) == expected_packet_count) {
+        if (map_entry->received_packet_count == expected_packet_count) {
             if(packet_number > packet_count) {
                 // A packet may have been dropped!
                 log_info("A packet may have been dropped...");
