@@ -1,3 +1,6 @@
+protos/*.cc
+protos/*.h
+
 *.db
 tmp
 deps
@@ -8,6 +11,7 @@ cmake-build-release-mingw/
 enc_temp_folder
 .vscode
 misc
+GameClientSDL
 
 ## CMAKE
 

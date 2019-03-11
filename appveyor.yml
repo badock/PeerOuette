@@ -1,6 +1,7 @@
 # Specify version format
 version: "1.0.0.{build}"
 
+
 # Image to use
 image: Visual Studio 2017
 
@@ -8,32 +9,53 @@ image: Visual Studio 2017
 environment:
   matrix:
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
-      CMAKE_COMPILER: Visual Studio 15 2017
+      CMAKE_COMPILER: Visual Studio 15 2017 Win64
       CMAKE_COMPILER_TARGET: host=x64
       CMAKE_SYSTEM_VERSION: 10.0.16299.91
-      CPACK_SYSTEM_NAME: win32
+      CPACK_SYSTEM_NAME: win64
+      APPVEYOR_SAVE_CACHE_ON_ERROR: true
 #    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
 #      CMAKE_COMPILER: Visual Studio 15 2017 Win64
 #      CMAKE_COMPILER_TARGET: host=x64
 #      CMAKE_SYSTEM_VERSION: 10.0.16299.91
 #      CPACK_SYSTEM_NAME: win64
 
+#init:
+#  - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+#
+#on_finish:
+#  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+
 # Allow to fail on first error in matrix
 matrix:
   fast_finish: true
 
 install:
+  # Install VCPKG
+  - cd C:\Tools\vcpkg
+  - git pull
+  - .\bootstrap-vcpkg.bat
+  - cd %APPVEYOR_BUILD_FOLDER%
+  - if exist c:/vcpkg_cache.tgz (tar -C C:/. -zxf c:/vcpkg_cache.tgz  --force-local) ^& exit 0
+  # Install FFMPEG and SDL2
   - git submodule update --init --recursive
   - nuget install SDL2 -OutputDirectory deps -ExcludeVersion -NoCache
   - nuget install FFmpeg.Nightly -OutputDirectory deps -ExcludeVersion -NoCache
+  - C:/Python36/Scripts/pip3.6.exe install psutil
+  - C:/Python36/python scripts/build.py "vcpkg install grpc"
+  - vcpkg integrate install
 
 before_build:
   - mkdir build
   - cd build
-  - cmake -G "%CMAKE_COMPILER%" -T "%CMAKE_COMPILER_TARGET%" -DCMAKE_SYSTEM_VERSION="%CMAKE_SYSTEM_VERSION%" -DCMAKE_INSTALL_PREFIX="%CD%/distrib" -DCPACK_GENERATOR="7Z;ZIP" -DCPACK_SYSTEM_NAME="%CPACK_SYSTEM_NAME%" ..
+  - echo %cd%
+  - cmake "-DCMAKE_TOOLCHAIN_FILE=C:/Tools/vcpkg/scripts/buildsystems/vcpkg.cmake" ..
 
 build_script:
-  - cmake --build . --config RelWithDebInfo
+  - cmake --build .
 
 # Test scripts
 test: off
+
+cache:
+  - C:/vcpkg_cache.tgz

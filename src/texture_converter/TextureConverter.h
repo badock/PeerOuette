@@ -4,7 +4,7 @@ https://github.com/gnif/LookingGlass/blob/master/host/TextureConverter.h
 */
 
 #pragma once
-
+#define NOMINMAX
 #include <windows.h>
 #include <d3d11.h>
 #include <dxgi1_2.h>

@@ -1,7 +1,7 @@
 //
 // Created by jonathan on 11/20/2018.
 //
-
+#define NOMINMAX
 #include "capture.h"
 #include <windows.h>
 #include <d3d11.h>
@@ -339,6 +339,24 @@ int capture_frame(CaptureContext* cc, D3D_FRAME_DATA* Data, FrameData* ffmpeg_fr
     Data->Frame = cc->m_AcquiredDesktopImage;
     Data->FrameInfo = FrameInfo;
 
+	//cursor.shape.buffer     = new char[frameInfo.PointerShapeBufferSize];
+    //cursor.shape.bufferSize = frameInfo.PointerShapeBufferSize;
+      
+
+    //cursor.shape.pointerSize = 0;
+    //int ret                     |= GRAB_STATUS_CURSOR;
+
+    DXGI_OUTDUPL_POINTER_SHAPE_INFO shapeInfo;
+	int buffer_size = 10 * 1024;
+	UINT* buffer = new UINT[buffer_size];
+	UINT pointerSize = 0;
+	
+    hr = cc->m_dup->GetFramePointerShape(buffer_size, buffer, &pointerSize, &shapeInfo);
+    if (FAILED(hr)) {
+        log_error("Failed to get the new pointer shape\n");
+        return -1;
+	}
+
 
 	return 0;
 }
@@ -356,7 +374,6 @@ int done_with_frame(CaptureContext* cc) {
 
 
 int get_pixels(CaptureContext* cc, FrameData* ffmpeg_frame_data) {
-	int               result;
 	D3D11_MAPPED_SUBRESOURCE mapping;
 	ID3D11Texture2D* m_ftexture;
 
@@ -410,27 +427,6 @@ int get_pixels(CaptureContext* cc, FrameData* ffmpeg_frame_data) {
 	//log_info("RGBA(%i, %i, %i, %i)", r, g, b, a);
 
 	return 1;
-
-	uint8_t* buffer = (uint8_t *) malloc(sizeof(uint8_t) * 1920 * 1080 * 4);
-	int pitch = cc->m_width * 4;
-	int stride = cc->m_width;
-
-	
-	if (pitch == mapping.RowPitch)
-		memcpy
-		(buffer, mapping.pData, pitch * cc->m_height);
-	else
-		for (unsigned int y = 0; y < cc->m_height; ++y)
-			memcpy(
-			(uint8_t *)buffer + (pitch      * y),
-				(uint8_t *)mapping.pData + (mapping.RowPitch * y),
-				pitch
-			);
-
-	cc->context->Unmap(cc->m_AcquiredDesktopImage, 0);
-	free(buffer);
-
-	return 0;
 }
 
 // The following function is inspired by https://github.com/brichard19/memcpy_sse
