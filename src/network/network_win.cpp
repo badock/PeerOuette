@@ -66,7 +66,7 @@ void do_session(udp::socket& socket, udp::endpoint endpoint, StreamingEnvironmen
             //     [](boost::system::error_code /*ec*/, std::size_t /*bytes_sent*/) {
             //     }
             // );
-            socket.send_to(boost::asio::buffer(temp_buffer, udp_packet_size), endpoint);
+            socket.send(boost::asio::buffer(temp_buffer, udp_packet_size));
             long packet_hash = compute_quick_n_dirty_hash((char*) temp_buffer, udp_packet_size);
             // log_info("[network]    - subpacket [%d %d/%d] sent: %d bytes (hash: %d)", packet_count, i, max_packet_count, udp_packet_size, packet_hash);
             already_copied_bytes_count += payload_size;
