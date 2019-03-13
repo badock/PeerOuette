@@ -2,13 +2,13 @@
 
 #define LISTENING_ADDRESS "0.0.0.0"
 #define network_PORT 8000
-#define SERVER_ADDRESS "127.0.0.1"
+#define SERVER_ADDRESS "192.168.1.30"
 #define BUFFER_SIZE 800000
 #define MAX_PACKET_SIZE 3000
 
 
 long compute_quick_n_dirty_hash(char* array, long length) {
-    return -1;
+//    return -1;
     long result = 0;
     int modulo = 10000;
     for(int i=0; i<length; i++) {
@@ -29,7 +29,7 @@ void deserialize_packet_data(const int8_t* src, packet_data* dst) {
     memcpy(dst->data , src, dst->size);
 }
 
-void do_session(udp::socket& socket, udp::endpoint endpoint, StreamingEnvironment* se)
+void do_session(tcp::socket& socket, StreamingEnvironment* se)
 {
     int packet_count = 0;
     int8_t* c_buffer = new int8_t[BUFFER_SIZE];
@@ -61,14 +61,15 @@ void do_session(udp::socket& socket, udp::endpoint endpoint, StreamingEnvironmen
             ((int *) temp_buffer)[4] = already_copied_bytes_count;
             memcpy(temp_buffer + 5 * sizeof(int), c_buffer + already_copied_bytes_count, payload_size);
 
-            socket.async_send_to(
-                boost::asio::buffer(temp_buffer, udp_packet_size), endpoint,
-                [](boost::system::error_code /*ec*/, std::size_t /*bytes_sent*/) {
-                }
-            );
-            // int size = socket.send_to(boost::asio::buffer(temp_buffer, udp_packet_size), endpoint);
+//            socket.async_send_to(
+//                boost::asio::buffer(temp_buffer, udp_packet_size), endpoint,
+//                [](boost::system::error_code /*ec*/, std::size_t /*bytes_sent*/) {
+//                }
+//            );
+            int size = socket.send(boost::asio::buffer(temp_buffer, udp_packet_size));
+            usleep(200);
             long packet_hash = compute_quick_n_dirty_hash((char*) temp_buffer, udp_packet_size);
-            // log_info("[network]    - subpacket [%d %d/%d] sent: %d bytes (hash: %d) []", packet_count, i, max_packet_count, udp_packet_size, packet_hash);
+             log_info("[network]    - subpacket [%d %d/%d] sent: %d bytes (hash: %d) []", packet_count, i, max_packet_count, udp_packet_size, packet_hash);
             already_copied_bytes_count += payload_size;
         }
 
@@ -100,15 +101,42 @@ int packet_sender_thread(void *arg) {
 
         // The io_context is required for all I/O
         boost::asio::io_context ioc{1};
+//        tcp::acceptor acceptor(ios, tcp::endpoint(tcp::v4(), port));
 
-        udp::socket sock(ioc, udp::endpoint(udp::v4(), port));
-        for (;;)
+
+        // Création du service principal et du résolveur.
+        boost::asio::io_service ios;
+
+        // Création de l'acceptor avec le port d'écoute 7171 et une adresse quelconque de type IPv4 // (1)
+        tcp::acceptor acceptor(ios, tcp::endpoint(tcp::v4(), port));
+
+        std::string msg ("Bienvenue sur le serveur !"); // (2)
+        // On attend la venue d'un client
+        while (1)
         {
-            char data[BUFFER_SIZE];
-            udp::endpoint sender_endpoint;
-            size_t length = sock.receive_from(boost::asio::buffer(data, BUFFER_SIZE), sender_endpoint);
-            do_session(sock, sender_endpoint, se);
+            // Création d'une socket
+            tcp::socket socket(ios); // (3)
+//            socket.set_option(tcp::no_delay(true));
+
+            // On accepte la connexion
+            acceptor.accept(socket); // (4)
+            std::cout << "Client reçu ! " << std::endl;
+
+            do_session(socket, se);
+
+//            // On envoi un message de bienvenue
+//            socket.send(boost::asio::buffer(msg)); // (5)
         }
+
+//        tcp::socket sock(ioc, tcp::endpoint(tcp::v4(), port));
+//        for (;;)
+//        {
+//            char data[BUFFER_SIZE];
+//            tcp::endpoint sender_endpoint;
+//            acceptor.accept(socket);
+//            size_t length = sock.read_some(boost::asio::buffer(data, BUFFER_SIZE));
+//            do_session(sock, sender_endpoint, se);
+//        }
     }
     catch (const std::exception& e)
     {
@@ -168,7 +196,7 @@ int packet_receiver_thread(void *arg) {
 	StreamingEnvironment *se = (StreamingEnvironment*)arg;
 
     auto const host = SERVER_ADDRESS;
-    auto const port = "8000";
+    auto const port = network_PORT;
     auto const text = "HelloWorld from a network client!";
 
     usleep(3 * 1000);
@@ -176,30 +204,32 @@ int packet_receiver_thread(void *arg) {
     // The io_service is required for all I/O
     boost::asio::io_service ios;
 
-    // These objects perform our I/O
-    boost::asio::io_context io_context;
+    // On veut se connecter sur la machine locale, port 7171
+    tcp::endpoint endpoint(boost::asio::ip::address::from_string(host), port);
 
-    udp::socket s(io_context, udp::endpoint(udp::v4(), 0));
+    // On crée une socket // (1)
+    tcp::socket socket(ios);
 
-    udp::resolver resolver(io_context);
-    udp::resolver::results_type endpoints = resolver.resolve(udp::v4(), host, port);
+    // Tentative de connexion, bloquante // (2)
+    socket.connect(endpoint);
+//    socket.set_option(tcp::no_delay(true));
 
     // Send the message
     std::chrono::system_clock::time_point t0a = std::chrono::system_clock::now();
-    s.send_to(boost::asio::buffer(std::string(text)), *endpoints.begin());
+    socket.send(boost::asio::buffer(std::string(text)));
     std::chrono::system_clock::time_point t0b = std::chrono::system_clock::now();
     float d0 = std::chrono::duration_cast<std::chrono::microseconds>(t0b - t0a).count() / 1000.0;
     log_info(" - d0 %f ms", d0);
 
     int8_t reply[BUFFER_SIZE];
 
-    udp::endpoint sender_endpoint;
+    tcp::endpoint sender_endpoint;
     int packet_count = 0;
     while (!se->finishing) {
 
         std::chrono::system_clock::time_point t1 = std::chrono::system_clock::now();
         auto buffer_reply = boost::asio::buffer(reply, BUFFER_SIZE);
-        size_t reply_length = s.receive_from(buffer_reply, sender_endpoint);
+        size_t reply_length = socket.read_some(buffer_reply);
 
         int8_t* data = (int8_t*) buffer_reply.data();
         int8_t* payload_address = data + 5 * sizeof(int);
@@ -237,7 +267,7 @@ int packet_receiver_thread(void *arg) {
         map_entry->received_packet_count += 1;
 
         long packet_hash = compute_quick_n_dirty_hash((char*) data, reply_length);
-        // log_info("[network] read sub packet [%d %d/%d]: %d bytes (hash: %d)", packet_number, packet_index, map_entry->expected_packet_count, reply_length, packet_hash);
+         log_info("[network] read sub packet [%d %d/%d]: %d bytes (hash: %d)", packet_number, packet_index, map_entry->expected_packet_count, reply_length, packet_hash);
 
         if (map_entry->received_packet_count == expected_packet_count) {
             if(packet_number > packet_count) {
