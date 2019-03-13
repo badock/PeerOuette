@@ -4,7 +4,7 @@
 #define network_PORT 8000
 #define SERVER_ADDRESS "127.0.0.1"
 #define BUFFER_SIZE 800000
-#define MAX_PACKET_SIZE 8000
+#define MAX_PACKET_SIZE 3000
 
 
 long compute_quick_n_dirty_hash(char* array, long length) {
@@ -44,13 +44,13 @@ void do_session(udp::socket& socket, udp::endpoint endpoint, StreamingEnvironmen
         std::chrono::system_clock::time_point t2 = std::chrono::system_clock::now();
         long hash = compute_quick_n_dirty_hash((char*) c_buffer, data_length);
         std::chrono::system_clock::time_point t3 = std::chrono::system_clock::now();
-        //log_info("[network] I will send a packet: %d bytes (hash: %d) (dst->size: %d)", data_length, hash, pkt_d->size);
+//        log_info("[network] I will send a packet: %d bytes (hash: %d) (dst->size: %d)", data_length, hash, pkt_d->size);
         int max_packet_count = data_length / MAX_PACKET_SIZE + (data_length % MAX_PACKET_SIZE != 0);;
         long already_copied_bytes_count = 0;
         std::chrono::system_clock::time_point t4 = std::chrono::system_clock::now();
         for (int i = 1; i <= max_packet_count; i++) {
             int payload_size = MAX_PACKET_SIZE;
-            if (i == max_packet_count) {
+            if (i == max_packet_count && (data_length % MAX_PACKET_SIZE > 0)) {
                 payload_size = (data_length % MAX_PACKET_SIZE);
             }
             int udp_packet_size = payload_size + 5 * sizeof(int);
@@ -61,14 +61,14 @@ void do_session(udp::socket& socket, udp::endpoint endpoint, StreamingEnvironmen
             ((int *) temp_buffer)[4] = already_copied_bytes_count;
             memcpy(temp_buffer + 5 * sizeof(int), c_buffer + already_copied_bytes_count, payload_size);
 
-            // socket.async_send_to(
-            //     boost::asio::buffer(temp_buffer, udp_packet_size), endpoint,
-            //     [](boost::system::error_code /*ec*/, std::size_t /*bytes_sent*/) {
-            //     }
-            // );
-            socket.send(boost::asio::buffer(temp_buffer, udp_packet_size));
+            socket.async_send_to(
+                boost::asio::buffer(temp_buffer, udp_packet_size), endpoint,
+                [](boost::system::error_code /*ec*/, std::size_t /*bytes_sent*/) {
+                }
+            );
+            // int size = socket.send_to(boost::asio::buffer(temp_buffer, udp_packet_size), endpoint);
             long packet_hash = compute_quick_n_dirty_hash((char*) temp_buffer, udp_packet_size);
-            // log_info("[network]    - subpacket [%d %d/%d] sent: %d bytes (hash: %d)", packet_count, i, max_packet_count, udp_packet_size, packet_hash);
+            // log_info("[network]    - subpacket [%d %d/%d] sent: %d bytes (hash: %d) []", packet_count, i, max_packet_count, udp_packet_size, packet_hash);
             already_copied_bytes_count += payload_size;
         }
 
@@ -123,50 +123,45 @@ typedef struct map_packet_entry {
     int packet_number;
     int total_size;
     int copied_bytes;
-//    int8_t* c_buffer;
     std::vector<int8_t> bytes;
+    std::vector<int> processed_packets;
     int expected_packet_count;
     int received_packet_count;
-//    SimpleQueue *processed_packets;
 } map_packet_entry;
 
 
 fifo_map<int, map_packet_entry*> map_of_incoming_buffers;
 
-void remove_outdated_packets(fifo_map<int, map_packet_entry*> &m, int last_packet_number) {
-    
-    // log_info("yya");
-    for(auto iter = m.cbegin(); iter != m.cend();) {        
-        // log_info("yyb1");
-        int packet_number =  iter->first;
-        // log_info("yyb2");
+void flush_packets(StreamingEnvironment *se, fifo_map<int, map_packet_entry *> &m, int last_packet_number) {
 
-        if (packet_number > last_packet_number) {
-            // log_info("yyb2a");
-            continue;
+    for(auto iter = m.cbegin(); iter != m.cend();) {
+        int packet_number =  iter->first;
+        map_packet_entry* map_entry = iter->second;
+
+        std::chrono::system_clock::time_point t2 = std::chrono::system_clock::now();
+
+        if (map_entry->expected_packet_count == map_entry->received_packet_count) {
+            long hash = compute_quick_n_dirty_hash((char *) map_entry->bytes.data(), map_entry->total_size);
+
+            packet_data *network_packet_data = new packet_data();
+            network_packet_data->size = map_entry->total_size;
+            network_packet_data->data = new uint8_t[map_entry->total_size - sizeof(packet_data)];
+            std::chrono::system_clock::time_point t3 = std::chrono::system_clock::now();
+
+            network_packet_data->size = map_entry->total_size - sizeof(packet_data);
+            memcpy(network_packet_data->data, map_entry->bytes.data() + sizeof(packet_data), map_entry->total_size - sizeof(packet_data));
+
+            std::chrono::system_clock::time_point t4 = std::chrono::system_clock::now();
+
+            simple_queue_push(se->network_simulated_queue, network_packet_data);
+            std::chrono::system_clock::time_point t5 = std::chrono::system_clock::now();
+
+            map_packet_entry* entry = iter->second;
+            free(entry);
         }
         
-        // log_info("yyb3");
-        map_packet_entry* entry = iter->second;
-        // log_info("yyb4");
-        // Clean the map entry
-//        while (simple_queue_length(entry->processed_packets) > 0) {
-//            FrameData* frame_data = (FrameData*)simple_queue_pop(entry->processed_packets);
-//        }
-        // log_info("yyb5");
-//        free(entry->processed_packets);
-        // log_info("yyb6");
-//        free(entry->c_buffer);
-        // log_info("yyb7");
-        delete entry;
-        // log_info("yyb8");
-        
         m.erase(iter++);
-        // log_info("yyb9");
-
-        int x = 1;
     }
-    // log_info("yyz");
 }
 
 int packet_receiver_thread(void *arg) {
@@ -201,13 +196,10 @@ int packet_receiver_thread(void *arg) {
     udp::endpoint sender_endpoint;
     int packet_count = 0;
     while (!se->finishing) {
-//         log_info("aa");
 
         std::chrono::system_clock::time_point t1 = std::chrono::system_clock::now();
-//        while (loop) {
         auto buffer_reply = boost::asio::buffer(reply, BUFFER_SIZE);
         size_t reply_length = s.receive_from(buffer_reply, sender_endpoint);
-//         log_info("bb");
 
         int8_t* data = (int8_t*) buffer_reply.data();
         int8_t* payload_address = data + 5 * sizeof(int);
@@ -219,21 +211,15 @@ int packet_receiver_thread(void *arg) {
         int offset = ((int *) data)[4];
         std::chrono::system_clock::time_point t2 = std::chrono::system_clock::now();
 
-//        log_info(" >> %d[%d]", packet_number);
-
         if (map_of_incoming_buffers.find(packet_number) == map_of_incoming_buffers.end()) {
-            // log_info("creating entry for [%d]", packet_number);
             map_packet_entry *new_entry = new map_packet_entry();
             new_entry->packet_number = packet_number;
-//            new_entry->c_buffer = new int8_t[packet_data_size];
             new_entry->total_size = packet_data_size;
             new_entry->copied_bytes = 0;
             new_entry->expected_packet_count = expected_packet_count;
             new_entry->received_packet_count = 0;
             map_of_incoming_buffers[packet_number] = new_entry;
-//             log_info("bb2");
         }
-//         log_info("cc");
 
         std::chrono::system_clock::time_point t3 = std::chrono::system_clock::now();
         map_packet_entry *map_entry = map_of_incoming_buffers[packet_number];
@@ -243,23 +229,12 @@ int packet_receiver_thread(void *arg) {
         std::vector<uint8_t> v(payload_address, payload_address + payload_size);
         map_entry->bytes.insert(map_entry->bytes.end(), v.begin(), v.end());
         v.erase(v.begin(), v.end());
-        std::chrono::system_clock::time_point t5 = std::chrono::system_clock::now();
 
-        
-        float d1 = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count() / 1000.0;
-        float d2 = std::chrono::duration_cast<std::chrono::microseconds>(t3 - t2).count() / 1000.0;
-        float d3 = std::chrono::duration_cast<std::chrono::microseconds>(t4 - t3).count() / 1000.0;
-        float d4 = std::chrono::duration_cast<std::chrono::microseconds>(t5 - t4).count() / 1000.0;
-        // log_info(" - r.d1 %f ms", d1);
-        // log_info(" - r.d2 %f ms", d2);
-        // log_info(" - r.d3 %f ms", d3);
-        // log_info(" - r.d4 %f ms", d4);
+        map_entry->processed_packets.insert(map_entry->processed_packets.end(), packet_index);
 
-//        memcpy(map_entry->c_buffer + offset, payload_address, payload_size);
+
         map_entry->copied_bytes += payload_size;
         map_entry->received_packet_count += 1;
-//        simple_queue_push(map_entry->processed_packets, &packet_index);
-//         log_info("dd");
 
         long packet_hash = compute_quick_n_dirty_hash((char*) data, reply_length);
         // log_info("[network] read sub packet [%d %d/%d]: %d bytes (hash: %d)", packet_number, packet_index, map_entry->expected_packet_count, reply_length, packet_hash);
@@ -271,50 +246,12 @@ int packet_receiver_thread(void *arg) {
             }
 
             if (payload_size == 0) {
-//                log_info("aborting: payload == 0");
                 continue;
             }
 
-
-            long hash = compute_quick_n_dirty_hash((char *) map_entry->bytes.data(), map_entry->total_size);
-//             log_info("[network] received a packet: %d bytes (hash: %d)", map_entry->total_size, hash);
-            std::chrono::system_clock::time_point t2 = std::chrono::system_clock::now();
-
-            packet_data *network_packet_data = new packet_data();
-            network_packet_data->size = packet_data_size;
-            network_packet_data->data = new uint8_t[map_entry->total_size - sizeof(packet_data)];
-//            network_packet_data->data = (uint8_t*) malloc(sizeof(uint8_t) * 200000);//new uint8_t[map_entry->total_size - sizeof(packet_data)];
-            std::chrono::system_clock::time_point t3 = std::chrono::system_clock::now();
-
-
-//            free(network_packet_data->data);
-
-//            memcpy(network_packet_data, map_entry->bytes.data(), sizeof(packet_data));
-            network_packet_data->size = map_entry->total_size - sizeof(packet_data);
-            memcpy(network_packet_data->data, map_entry->bytes.data() + sizeof(packet_data), map_entry->total_size - sizeof(packet_data));
-//            free(network_packet_data->data);
-//            free(network_packet_data);
-
-//            deserialize_packet_data(map_entry->bytes.data(), network_packet_data);
-            std::chrono::system_clock::time_point t4 = std::chrono::system_clock::now();
-
-//             log_info("ww");
-            simple_queue_push(se->network_simulated_queue, network_packet_data);
-            std::chrono::system_clock::time_point t5 = std::chrono::system_clock::now();
-
-//             log_info("[Network] frame received");
-        //     float d1 = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count() / 1000.0;
-        //     float d2 = std::chrono::duration_cast<std::chrono::microseconds>(t3 - t2).count() / 1000.0;
-        //     float d3 = std::chrono::duration_cast<std::chrono::microseconds>(t4 - t3).count() / 1000.0;
-        //     float d4 = std::chrono::duration_cast<std::chrono::microseconds>(t5 - t4).count() / 1000.0;
-        //    log_info(" - r.d1 %f ms", d1);
-        //    log_info(" - r.d2 %f ms", d2);
-        //    log_info(" - r.d3 %f ms", d3);
-        //    log_info(" - r.d4 %f ms", d4);
-
             packet_count = (packet_count + 1) % 3000;
-            // packet_count = (packet_number + 1) % 3000;
-            //remove_outdated_packets(map_of_incoming_buffers, packet_number);
+
+            flush_packets(se, map_of_incoming_buffers, packet_number);
         }
     }
 

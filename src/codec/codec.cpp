@@ -22,7 +22,7 @@
 #define HEIGHT 1080
 #define BITRATE 2 * 1024 * 1024
 #define CRF "32"
-#define GOP_SIZE 2 * 60
+#define GOP_SIZE 5 * 60
 
 #if defined(WIN32)
 char* make_av_error_string(int errnum) {
