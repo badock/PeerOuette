@@ -21,6 +21,7 @@ namespace beast = boost::beast;         // from <boost/beast.hpp>
 namespace http = beast::http;           // from <boost/beast/http.hpp>
 namespace net = boost::asio;            // from <boost/asio.hpp>
 using udp = boost::asio::ip::udp;
+using tcp = boost::asio::ip::tcp;
 using nlohmann::fifo_map;
 int packet_sender_thread(void *arg);
 int packet_receiver_thread(void *arg);

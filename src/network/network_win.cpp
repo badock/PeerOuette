@@ -4,10 +4,11 @@
 #define network_PORT 8000
 #define SERVER_ADDRESS "127.0.0.1"
 #define BUFFER_SIZE 800000
-#define MAX_PACKET_SIZE 3000
+#define MAX_PACKET_SIZE 8000
 
 
 long compute_quick_n_dirty_hash(char* array, long length) {
+    return -1;
     long result = 0;
     int modulo = 10000;
     for(int i=0; i<length; i++) {
@@ -60,15 +61,14 @@ void do_session(udp::socket& socket, udp::endpoint endpoint, StreamingEnvironmen
             ((int *) temp_buffer)[4] = already_copied_bytes_count;
             memcpy(temp_buffer + 5 * sizeof(int), c_buffer + already_copied_bytes_count, payload_size);
 
-            socket.async_send_to(
-                boost::asio::buffer(temp_buffer, udp_packet_size), endpoint,
-                [](boost::system::error_code /*ec*/, std::size_t /*bytes_sent*/) {
-//                    free(temp_buffer);
-                }
-            );
-//            free(temp_buffer);
+            // socket.async_send_to(
+            //     boost::asio::buffer(temp_buffer, udp_packet_size), endpoint,
+            //     [](boost::system::error_code /*ec*/, std::size_t /*bytes_sent*/) {
+            //     }
+            // );
+            socket.send_to(boost::asio::buffer(temp_buffer, udp_packet_size), endpoint);
             long packet_hash = compute_quick_n_dirty_hash((char*) temp_buffer, udp_packet_size);
-            //log_info("[network]    - subpacket [%d %d/%d] sent: %d bytes (hash: %d)", packet_count, i, max_packet_count, udp_packet_size, packet_hash);
+            // log_info("[network]    - subpacket [%d %d/%d] sent: %d bytes (hash: %d)", packet_count, i, max_packet_count, udp_packet_size, packet_hash);
             already_copied_bytes_count += payload_size;
         }
 
@@ -158,7 +158,7 @@ void remove_outdated_packets(fifo_map<int, map_packet_entry*> &m, int last_packe
         // log_info("yyb6");
 //        free(entry->c_buffer);
         // log_info("yyb7");
-        free(entry);
+        delete entry;
         // log_info("yyb8");
         
         m.erase(iter++);
@@ -217,11 +217,12 @@ int packet_receiver_thread(void *arg) {
         int packet_number = ((int *) data)[2];
         int packet_data_size = ((int *) data)[3];
         int offset = ((int *) data)[4];
+        std::chrono::system_clock::time_point t2 = std::chrono::system_clock::now();
 
 //        log_info(" >> %d[%d]", packet_number);
 
         if (map_of_incoming_buffers.find(packet_number) == map_of_incoming_buffers.end()) {
-//             log_info("bb1");
+            // log_info("creating entry for [%d]", packet_number);
             map_packet_entry *new_entry = new map_packet_entry();
             new_entry->packet_number = packet_number;
 //            new_entry->c_buffer = new int8_t[packet_data_size];
@@ -234,10 +235,25 @@ int packet_receiver_thread(void *arg) {
         }
 //         log_info("cc");
 
+        std::chrono::system_clock::time_point t3 = std::chrono::system_clock::now();
         map_packet_entry *map_entry = map_of_incoming_buffers[packet_number];
 
+        
+        std::chrono::system_clock::time_point t4 = std::chrono::system_clock::now();
         std::vector<uint8_t> v(payload_address, payload_address + payload_size);
         map_entry->bytes.insert(map_entry->bytes.end(), v.begin(), v.end());
+        v.erase(v.begin(), v.end());
+        std::chrono::system_clock::time_point t5 = std::chrono::system_clock::now();
+
+        
+        float d1 = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count() / 1000.0;
+        float d2 = std::chrono::duration_cast<std::chrono::microseconds>(t3 - t2).count() / 1000.0;
+        float d3 = std::chrono::duration_cast<std::chrono::microseconds>(t4 - t3).count() / 1000.0;
+        float d4 = std::chrono::duration_cast<std::chrono::microseconds>(t5 - t4).count() / 1000.0;
+        // log_info(" - r.d1 %f ms", d1);
+        // log_info(" - r.d2 %f ms", d2);
+        // log_info(" - r.d3 %f ms", d3);
+        // log_info(" - r.d4 %f ms", d4);
 
 //        memcpy(map_entry->c_buffer + offset, payload_address, payload_size);
         map_entry->copied_bytes += payload_size;
@@ -246,7 +262,7 @@ int packet_receiver_thread(void *arg) {
 //         log_info("dd");
 
         long packet_hash = compute_quick_n_dirty_hash((char*) data, reply_length);
-//         log_info("[network] read sub packet [%d %d/%d]: %d bytes (hash: %d)", packet_number, packet_index, map_entry->expected_packet_count, reply_length, packet_hash);
+        // log_info("[network] read sub packet [%d %d/%d]: %d bytes (hash: %d)", packet_number, packet_index, map_entry->expected_packet_count, reply_length, packet_hash);
 
         if (map_entry->received_packet_count == expected_packet_count) {
             if(packet_number > packet_count) {
@@ -279,7 +295,6 @@ int packet_receiver_thread(void *arg) {
 //            free(network_packet_data->data);
 //            free(network_packet_data);
 
-//             log_info("vv");
 //            deserialize_packet_data(map_entry->bytes.data(), network_packet_data);
             std::chrono::system_clock::time_point t4 = std::chrono::system_clock::now();
 
@@ -298,22 +313,9 @@ int packet_receiver_thread(void *arg) {
         //    log_info(" - r.d4 %f ms", d4);
 
             packet_count = (packet_count + 1) % 3000;
-//             log_info("yy");
-
-            // Clean the map entry
-            // while (simple_queue_length(map_entry->processed_packets) > 0) {
-            //     FrameData* frame_data = (FrameData*)simple_queue_pop(map_entry->processed_packets);
-            // }
-            // if (map_of_incoming_buffers.find(packet_number) != map_of_incoming_buffers.end()) {
-            //     map_of_incoming_buffers.erase(packet_number);
-            // }
-            // free(map_entry->processed_packets);
-            // free(map_entry->c_buffer);
-            // free(map_entry);
-            remove_outdated_packets(map_of_incoming_buffers, packet_number);
-//             log_info("zz");
+            // packet_count = (packet_number + 1) % 3000;
+            //remove_outdated_packets(map_of_incoming_buffers, packet_number);
         }
-//         log_info("czzc");
     }
 
     // If we get here then the connection is closed gracefully
