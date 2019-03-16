@@ -19,27 +19,27 @@ void frame_data_reset_time_points(FrameData* frame_data) {
 }
 
 void frame_data_debug(FrameData* frame_data) {
-	//log_info("####### Debug a frame #######");
-	std::chrono::steady_clock::time_point start;
-	std::chrono::steady_clock::time_point end;
+	// //log_info("####### Debug a frame #######");
+	// std::chrono::steady_clock::time_point start;
+	// std::chrono::steady_clock::time_point end;
 
-	float dxframe_acquired_duration = std::chrono::duration_cast<std::chrono::microseconds>(frame_data->dxframe_acquired_time_point - frame_data->life_started_time_point).count() / 1000.0;
-	float dxframe_processed_duration = std::chrono::duration_cast<std::chrono::microseconds>(frame_data->dxframe_processed_time_point - frame_data->dxframe_acquired_time_point).count() / 1000.0;
-	float avframe_produced_duration = std::chrono::duration_cast<std::chrono::microseconds>(frame_data->avframe_produced_time_point - frame_data->dxframe_processed_time_point).count() / 1000.0;
-	float sdl_received_duration = std::chrono::duration_cast<std::chrono::microseconds>(frame_data->sdl_received_time_point - frame_data->avframe_produced_time_point).count() / 1000.0;
-	float sdl_avframe_duration = std::chrono::duration_cast<std::chrono::microseconds>(frame_data->sdl_avframe_rescale_time_point - frame_data->sdl_received_time_point).count() / 1000.0;
-	float sdl_displayed_duration = std::chrono::duration_cast<std::chrono::microseconds>(frame_data->sdl_displayed_time_point - frame_data->sdl_avframe_rescale_time_point).count() / 1000.0;
-	float total_duration = std::chrono::duration_cast<std::chrono::microseconds>(frame_data->sdl_displayed_time_point - frame_data->life_started_time_point).count() / 1000.0;
-	float frame_delay = std::chrono::duration_cast<std::chrono::microseconds>(frame_data->sdl_displayed_time_point - frame_data->dxframe_acquired_time_point).count() / 1000.0;
+	// float dxframe_acquired_duration = std::chrono::duration_cast<std::chrono::microseconds>(frame_data->dxframe_acquired_time_point - frame_data->life_started_time_point).count() / 1000.0;
+	// float dxframe_processed_duration = std::chrono::duration_cast<std::chrono::microseconds>(frame_data->dxframe_processed_time_point - frame_data->dxframe_acquired_time_point).count() / 1000.0;
+	// float avframe_produced_duration = std::chrono::duration_cast<std::chrono::microseconds>(frame_data->avframe_produced_time_point - frame_data->dxframe_processed_time_point).count() / 1000.0;
+	// float sdl_received_duration = std::chrono::duration_cast<std::chrono::microseconds>(frame_data->sdl_received_time_point - frame_data->avframe_produced_time_point).count() / 1000.0;
+	// float sdl_avframe_duration = std::chrono::duration_cast<std::chrono::microseconds>(frame_data->sdl_avframe_rescale_time_point - frame_data->sdl_received_time_point).count() / 1000.0;
+	// float sdl_displayed_duration = std::chrono::duration_cast<std::chrono::microseconds>(frame_data->sdl_displayed_time_point - frame_data->sdl_avframe_rescale_time_point).count() / 1000.0;
+	// float total_duration = std::chrono::duration_cast<std::chrono::microseconds>(frame_data->sdl_displayed_time_point - frame_data->life_started_time_point).count() / 1000.0;
+	// float frame_delay = std::chrono::duration_cast<std::chrono::microseconds>(frame_data->sdl_displayed_time_point - frame_data->dxframe_acquired_time_point).count() / 1000.0;
 
-	//log_info("# dxframe_acquired_duration = %f ms", dxframe_acquired_duration);
-	//log_info("# avframe_produced_duration = %f ms", avframe_produced_duration);
-	//log_info("# sdl_received_duration = %f ms", sdl_received_duration);
-	//log_info("# sdl_avframe_duration = %f ms", sdl_avframe_duration);
-	//log_info("# sdl_displayed_duration = %f ms", sdl_displayed_duration);
-	//log_info("# total_duration = %f ms", (1.0 * total_duration));
-	log_info("# frame_delay = %f ms", (1.0 * frame_delay));
-	//log_info("##############");
+	// //log_info("# dxframe_acquired_duration = %f ms", dxframe_acquired_duration);
+	// //log_info("# avframe_produced_duration = %f ms", avframe_produced_duration);
+	// //log_info("# sdl_received_duration = %f ms", sdl_received_duration);
+	// //log_info("# sdl_avframe_duration = %f ms", sdl_avframe_duration);
+	// //log_info("# sdl_displayed_duration = %f ms", sdl_displayed_duration);
+	// //log_info("# total_duration = %f ms", (1.0 * total_duration));
+	// log_info("# frame_delay = %f ms", (1.0 * frame_delay));
+	// //log_info("##############");
 }
 
 FrameData* frame_data_create(StreamingEnvironment* se) {

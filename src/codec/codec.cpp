@@ -19,10 +19,10 @@
 //#define DECODER_NAME "hevc"
 
 #define WIDTH 1920
-#define HEIGHT 1080
-#define BITRATE 2 * 1024 * 1024
-#define CRF "32"
-#define GOP_SIZE 5 * 60
+#define HEIGHT 816
+#define BITRATE 10 * 1024 * 1024
+#define CRF "1"
+#define GOP_SIZE 30 * 60
 
 #if defined(WIN32)
 char* make_av_error_string(int errnum) {
@@ -110,7 +110,9 @@ int video_encode_thread(void *arg) {
     encodingContext->thread_type   = FF_THREAD_SLICE;
 
     AVDictionary *param = NULL;
-	av_dict_set(&param, "preset", "ultrafast", 0);
+    if (strcmp(ENCODER_NAME, "h264_nvenc") != 0) {
+	    av_dict_set(&param, "preset", "ultrafast", 0);
+    }
 	av_dict_set(&param, "crf", CRF, 0);
     av_dict_set(&param, "tune", "zerolatency", 0);
 
@@ -143,10 +145,10 @@ int video_encode_thread(void *arg) {
     long image_count = 0;
     
     while (se->finishing != 1) {
-        FrameData* frame_data = (FrameData*) simple_queue_pop(se->frame_sender_thread_queue);
-        frame_data->pFrame->pts = image_count;
 
         std::chrono::system_clock::time_point before = std::chrono::system_clock::now();
+        FrameData* frame_data = (FrameData*) simple_queue_pop(se->frame_sender_thread_queue);
+        frame_data->pFrame->pts = image_count;
 
         /* encode the image */
         encode(encodingContext, frame_data->pFrame, pkt, se);
@@ -164,7 +166,7 @@ int video_encode_thread(void *arg) {
 			simple_queue_push(se->frame_extractor_pframe_pool, frame_data);
             std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
             float time_since_last_encoded_frame = std::chrono::duration_cast<std::chrono::microseconds>(now - after).count() / 1000.0;
-            if (time_since_last_encoded_frame > 6.0) {
+            if (time_since_last_encoded_frame > (16.666 - 2.0 - frame_encode_duration)) {
                 clean_frames = 0;
             }
 		}

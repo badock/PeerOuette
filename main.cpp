@@ -20,10 +20,10 @@
 int SDL_WINDOW_WIDTH = 1280;
 int SDL_WINDOW_HEIGHT = 720;
 int CAPTURE_WINDOW_WIDTH = 1920;
-int CAPTURE_WINDOW_HEIGHT = 1080;
+int CAPTURE_WINDOW_HEIGHT = 816;
 int BITRATE = CAPTURE_WINDOW_WIDTH * CAPTURE_WINDOW_HEIGHT * 3;
 int FRAMERATE = 60;
-int FRAME_POOL_SIZE = 200;
+int FRAME_POOL_SIZE = 45;
 char* VIDEO_FILE_PATH = "misc/rogue.mp4";
 
 StreamingEnvironment *global_streaming_environment;
@@ -54,6 +54,8 @@ int gpu_frame_extractor_thread(void *arg) {
     int64_t framecount = 0;
     while(1) {
 		FrameData* ffmpeg_frame_data = (FrameData *) simple_queue_pop(se->frame_extractor_pframe_pool);
+        
+        std::chrono::system_clock::time_point before = std::chrono::system_clock::now();
 		frame_data_reset_time_points(ffmpeg_frame_data);
 	    
 		int capture_result = capture_frame(&cc, d3d_frame_data, ffmpeg_frame_data);
@@ -72,8 +74,15 @@ int gpu_frame_extractor_thread(void *arg) {
 		else {
 			simple_queue_push(se->frame_output_thread_queue, ffmpeg_frame_data);
 		}
+        
+        std::chrono::system_clock::time_point after = std::chrono::system_clock::now();
+        float frame_capture_duration = std::chrono::duration_cast<std::chrono::microseconds>(after - before).count() / 1000.0;
 
-        // usleep(16.666 * 1000);
+        float wait_duration = 16.6666 - frame_capture_duration;
+        if (wait_duration > 0) {
+            usleep(wait_duration * 1000);
+        }
+
     }
 
     return 0;
@@ -353,9 +362,9 @@ int main(int argc, char* argv[]){
     se->network_simulated_queue = simple_queue_create();
 
 	se->frame_output_thread = SDL_CreateThread(frame_output_thread, "frame_output_thread", se);
-    // se->frame_extractor_thread = SDL_CreateThread(frame_extractor_thread, "frame_extractor_thread", se);
+    se->frame_extractor_thread = SDL_CreateThread(frame_extractor_thread, "frame_extractor_thread", se);
     #if defined(WIN32)
-   se->gpu_frame_extractor_thread = SDL_CreateThread(gpu_frame_extractor_thread, "gpu_frame_extractor_thread", se);
+//    se->gpu_frame_extractor_thread = SDL_CreateThread(gpu_frame_extractor_thread, "gpu_frame_extractor_thread", se);
     #endif
 
  	se->frame_receiver_thread = SDL_CreateThread(video_encode_thread, "frame_receiver_thread", se);
