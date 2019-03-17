@@ -45,8 +45,9 @@ typedef struct _StreamingEnvironment {
 	SDL_Thread *frame_output_thread;
 	SDL_Thread *frame_receiver_thread;
 	SDL_Thread *frame_sender_thread;
-	SDL_Thread *packet_receiver_thread;
 	SDL_Thread *packet_sender_thread;
+    SDL_Thread *asio_udp_listener;
+	SDL_Thread *packet_receiver_thread;
 #if defined(WIN32)
 	SDL_Thread *gpu_frame_extractor_thread;
 #endif
@@ -56,6 +57,7 @@ typedef struct _StreamingEnvironment {
 	SimpleQueue *frame_receiver_thread_queue;
 	SimpleQueue *packet_sender_thread_queue;
 	SimpleQueue *frame_output_thread_queue;
+    SimpleQueue *incoming_asio_buffer_queue;
 	AVPixelFormat format;
 
 	AVCodecContext* frameExtractorEncodingContext;

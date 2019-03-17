@@ -360,6 +360,7 @@ int main(int argc, char* argv[]){
 	se->frame_receiver_thread_queue = simple_queue_create();
     se->packet_sender_thread_queue = simple_queue_create();
     se->network_simulated_queue = simple_queue_create();
+    se->incoming_asio_buffer_queue = simple_queue_create();
 
 	se->frame_output_thread = SDL_CreateThread(frame_output_thread, "frame_output_thread", se);
     se->frame_extractor_thread = SDL_CreateThread(frame_extractor_thread, "frame_extractor_thread", se);
@@ -367,11 +368,12 @@ int main(int argc, char* argv[]){
 //    se->gpu_frame_extractor_thread = SDL_CreateThread(gpu_frame_extractor_thread, "gpu_frame_extractor_thread", se);
     #endif
 
- 	se->frame_receiver_thread = SDL_CreateThread(video_encode_thread, "frame_receiver_thread", se);
 	se->frame_sender_thread = SDL_CreateThread(video_decode_thread, "frame_sender_thread", se);
+ 	se->frame_receiver_thread = SDL_CreateThread(video_encode_thread, "frame_receiver_thread", se);
 
-    se->packet_receiver_thread = SDL_CreateThread(packet_receiver_thread, "packet_receiver_thread", se);
     se->packet_sender_thread = SDL_CreateThread(packet_sender_thread, "packet_sender_thread", se);
+    se->asio_udp_listener = SDL_CreateThread(asio_udp_listener, "asio_udp_listener", se);
+    se->packet_receiver_thread = SDL_CreateThread(packet_receiver_thread, "packet_receiver_thread", se);
 
     se->finishing = 0;
     se->initialized = 0;
