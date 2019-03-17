@@ -53,7 +53,7 @@ void do_session(udp::socket& socket, udp::endpoint endpoint, StreamingEnvironmen
         std::chrono::system_clock::time_point t2 = std::chrono::system_clock::now();
         long hash = compute_quick_n_dirty_hash((char*) c_buffer.data(), data_length);
         std::chrono::system_clock::time_point t3 = std::chrono::system_clock::now();
-         log_info("[network] I will send a packet: %d bytes (hash: %d) (dst->size: %d)", data_length, hash, pkt_d->size);
+//         log_info("[network] I will send a packet: %d bytes (hash: %d) (dst->size: %d)", data_length, hash, pkt_d->size);
         int max_packet_count = data_length / MAX_PACKET_SIZE + (data_length % MAX_PACKET_SIZE != 0);;
         long already_copied_bytes_count = 0;
         std::chrono::system_clock::time_point t4 = std::chrono::system_clock::now();
@@ -265,7 +265,7 @@ int asio_udp_listener(void *arg) {
         float d1 = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count() / 1000.0;
 //        log_info("took %f ms", d1);
 
-        log_info("[network] received sub packet [%d %d/%d]: %d bytes (hash: %d) (took %f ms)", packet_number, packet_index, expected_packet_count, rb->reply_length, -1, d1);
+//        log_info("[network] received sub packet [%d %d/%d]: %d bytes (hash: %d) (took %f ms)", packet_number, packet_index, expected_packet_count, rb->reply_length, -1, d1);
 
         if (map_entry->processed_packets.size() == expected_packet_count) {
             if(packet_number > expected_packet_number) {
