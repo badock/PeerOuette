@@ -21,7 +21,7 @@
 #define WIDTH 1920
 #define HEIGHT 816
 #define BITRATE 10 * 1024 * 1024
-#define CRF "32"
+#define CRF "3"
 #define GOP_SIZE 30 * 60
 
 #if defined(WIN32)
@@ -34,7 +34,7 @@ char* make_av_error_string(int errnum) {
 #endif
 
 
-static void encode(AVCodecContext *enc_ctx, AVFrame *frame, AVPacket *pkt, StreamingEnvironment *se) {
+static void encode(AVCodecContext *enc_ctx, AVFrame *frame, AVPacket *pkt, StreamingEnvironment *se, int frame_number) {
     int ret;
 
     ret = avcodec_send_frame(enc_ctx, frame);
@@ -43,6 +43,7 @@ static void encode(AVCodecContext *enc_ctx, AVFrame *frame, AVPacket *pkt, Strea
         exit(1);
     }
 
+    int packet_number = 0;
     while (ret >= 0) {
         ret = avcodec_receive_packet(enc_ctx, pkt);
         if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
@@ -53,8 +54,12 @@ static void encode(AVCodecContext *enc_ctx, AVFrame *frame, AVPacket *pkt, Strea
         }
 
         packet_data *network_packet_data = (packet_data*) malloc(sizeof(packet_data));
+        // fields related to ffmpeg
         network_packet_data->size = pkt->size;
         network_packet_data->data = (uint8_t*) malloc(sizeof(uint8_t) * pkt->size);
+        // fields related to frame management
+        network_packet_data->frame_number = frame_number;
+        network_packet_data->packet_number = packet_number;
         memcpy(network_packet_data->data, pkt->data, sizeof(uint8_t) * pkt->size);
 
         if (!USE_NETWORK) {
@@ -63,6 +68,7 @@ static void encode(AVCodecContext *enc_ctx, AVFrame *frame, AVPacket *pkt, Strea
             simple_queue_push(se->packet_sender_thread_queue, network_packet_data);
         }
         av_packet_unref(pkt);
+        packet_number++;
     }
 }
 
@@ -151,7 +157,7 @@ int video_encode_thread(void *arg) {
         frame_data->pFrame->pts = image_count;
 
         /* encode the image */
-        encode(encodingContext, frame_data->pFrame, pkt, se);
+        encode(encodingContext, frame_data->pFrame, pkt, se, image_count);
         
         std::chrono::system_clock::time_point after = std::chrono::system_clock::now();
         float frame_encode_duration = std::chrono::duration_cast<std::chrono::microseconds>(after - before).count() / 1000.0;
@@ -173,7 +179,7 @@ int video_encode_thread(void *arg) {
     }
 
     /* flush the encoder */
-    encode(encodingContext, NULL, pkt, se);
+    encode(encodingContext, NULL, pkt, se, image_count);
 
     avcodec_free_context(&encodingContext);
     av_frame_free(&frame);
