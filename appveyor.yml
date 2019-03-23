@@ -9,9 +9,9 @@ environment:
   matrix:
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
       CMAKE_COMPILER: Visual Studio 15 2017
-      CMAKE_COMPILER_TARGET: host=x86
+      CMAKE_COMPILER_TARGET: host=x64
       CMAKE_SYSTEM_VERSION: 10.0.16299.91
-      CPACK_SYSTEM_NAME: win32
+      CPACK_SYSTEM_NAME: win64
 #    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
 #      CMAKE_COMPILER: Visual Studio 15 2017 Win64
 #      CMAKE_COMPILER_TARGET: host=x64
