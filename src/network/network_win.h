@@ -37,5 +37,4 @@ typedef struct map_packet_entry {
 } map_packet_entry;
 
 int packet_sender_thread(void *arg);
-int asio_udp_listener(void *arg);
 int packet_receiver_thread(void *arg);

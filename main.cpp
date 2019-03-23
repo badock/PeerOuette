@@ -372,7 +372,6 @@ int main(int argc, char* argv[]){
  	se->frame_receiver_thread = SDL_CreateThread(video_encode_thread, "frame_receiver_thread", se);
 
     se->packet_sender_thread = SDL_CreateThread(packet_sender_thread, "packet_sender_thread", se);
-    se->asio_udp_listener = SDL_CreateThread(asio_udp_listener, "asio_udp_listener", se);
     se->packet_receiver_thread = SDL_CreateThread(packet_receiver_thread, "packet_receiver_thread", se);
 
     se->finishing = 0;

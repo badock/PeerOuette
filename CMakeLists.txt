@@ -12,6 +12,10 @@ HunterGate(
 		SHA1 "712b3f5ea467fbddd4769a7800a060fbd6a31ab5"
 )
 
+
+# add_subdirectory(src/network/grpc)
+add_subdirectory(protobuf)
+
 project(GameClientSDL)
 set(CMAKE_CXX_STANDARD 11)
 
@@ -23,6 +27,15 @@ find_package(Boost CONFIG REQUIRED)
 
 hunter_add_package(nlohmann_fifo_map)
 find_package(nlohmann_fifo_map CONFIG REQUIRED)
+
+hunter_add_package(Protobuf)
+find_package(Protobuf CONFIG REQUIRED)
+
+hunter_add_package(gRPC)
+find_package(gRPC CONFIG REQUIRED)
+
+###########
+###########
 
 if(WIN32)
     add_executable(GameClientSDL
@@ -38,6 +51,7 @@ if(WIN32)
             src/dxcapture/capture.cpp
             src/dxcapture/capture.h
 			src/network/network_win.cpp
+#			src/network/network_win_raw_sockets.cpp
 			src/network/network_win.h
             src/codec/codec.cpp
             src/codec/codec.h
@@ -61,6 +75,8 @@ if(WIN32)
 
 
 else()
+    message("TOTOTOTTOTO = __${hw_proto_srcs}__ __${hw_grpc_srcs}__ ")
+
     add_executable(GameClientSDL
             main.cpp
             src/streaming/streaming.cpp
@@ -69,7 +85,19 @@ else()
             #src/video/ffmpeg.h
             src/log/log.cpp
             src/log/log.h
-			src/network/network_win.cpp
+#			src/network/network_win.cpp
+#            src/network/grpc/route_guide.pb.cc
+#            src/network/grpc/route_guide.grpc.pb.cc
+#            /Users/jonathan/CLionProjects/GameClientSDL/build/src/network/grpc/route_guide.pb.cc
+#            /Users/jonathan/CLionProjects/GameClientSDL/build/src/network/grpc/route_guide.grpc.pb.cc
+#            protobuf/route_guide_client.cc
+#            src/network/grpc/route_guide_server.cc
+            src/network/grpc/route_guide.grpc.pb.cc
+            src/network/grpc/route_guide.grpc.pb.h
+            src/network/grpc/route_guide.pb.cc
+            src/network/grpc/route_guide.pb.h
+
+            src/network/network_win_raw_sockets.cpp
 			src/network/network_win.h
             src/codec/codec.cpp
             src/codec/codec.h
@@ -141,11 +169,18 @@ if(WIN32)
 
 endif()
 
+MESSAGE(CUICUICICICICI ${hw_proto_srcs} ${hw_grpc_srcs})
+
+if(NOT MSVC)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+else()
+    add_definitions(-D_WIN32_WINNT=0x600)
+endif()
 
 if(WIN32)
-    target_link_libraries(${PROJECT_NAME} ${FFMPEG_LIBRARIES} ${SDL2_LIBRARY} ${DirectX11_LIBRARIES} Boost::boost nlohmann_fifo_map::fifo_map)
+    target_link_libraries(${PROJECT_NAME} ${FFMPEG_LIBRARIES} ${SDL2_LIBRARY} ${DirectX11_LIBRARIES} Boost::boost nlohmann_fifo_map::fifo_map gRPC::grpc)
 else()
-    target_link_libraries(${PROJECT_NAME} ${FFMPEG_LIBRARIES} ${SDL2_LIBRARY} Boost::boost nlohmann_fifo_map::fifo_map)
+    target_link_libraries(${PROJECT_NAME} ${FFMPEG_LIBRARIES} ${SDL2_LIBRARY} Boost::boost nlohmann_fifo_map::fifo_map gRPC::grpc++_unsecure protobuf::libprotobuf)
 endif()
 
 if(WIN32)
@@ -162,3 +197,11 @@ if(WIN32)
     )
     add_dependencies(GameClientSDL DLLCopyBinaries)
 endif()
+
+add_dependencies(GameClientSDL CopyGeneratedFiles)
+#LINK_DIRECTORIES(${CMAKE_BINARY_DIR}/route_guide_client)
+
+#add_dependencies(GameClientSDL ploufplouf)
+#add_dependencies(GameClientSDL test2_run)
+#add_dependencies(test2_run ploufplouf)
+
