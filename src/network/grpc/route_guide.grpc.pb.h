@@ -56,14 +56,14 @@ class GamingStreamingService final {
     //
     // Accepts a stream of RouteNotes sent while a route is being traversed,
     // while receiving other RouteNotes (e.g. from other users).
-    std::unique_ptr< ::grpc::ClientReaderWriterInterface< ::gamingstreaming::InputCommand, ::gamingstreaming::Frame>> GamingChannel(::grpc::ClientContext* context) {
-      return std::unique_ptr< ::grpc::ClientReaderWriterInterface< ::gamingstreaming::InputCommand, ::gamingstreaming::Frame>>(GamingChannelRaw(context));
+    std::unique_ptr< ::grpc::ClientReaderWriterInterface< ::gamingstreaming::InputCommand, ::gamingstreaming::FrameSubPacket>> GamingChannel(::grpc::ClientContext* context) {
+      return std::unique_ptr< ::grpc::ClientReaderWriterInterface< ::gamingstreaming::InputCommand, ::gamingstreaming::FrameSubPacket>>(GamingChannelRaw(context));
     }
-    std::unique_ptr< ::grpc::ClientAsyncReaderWriterInterface< ::gamingstreaming::InputCommand, ::gamingstreaming::Frame>> AsyncGamingChannel(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq, void* tag) {
-      return std::unique_ptr< ::grpc::ClientAsyncReaderWriterInterface< ::gamingstreaming::InputCommand, ::gamingstreaming::Frame>>(AsyncGamingChannelRaw(context, cq, tag));
+    std::unique_ptr< ::grpc::ClientAsyncReaderWriterInterface< ::gamingstreaming::InputCommand, ::gamingstreaming::FrameSubPacket>> AsyncGamingChannel(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq, void* tag) {
+      return std::unique_ptr< ::grpc::ClientAsyncReaderWriterInterface< ::gamingstreaming::InputCommand, ::gamingstreaming::FrameSubPacket>>(AsyncGamingChannelRaw(context, cq, tag));
     }
-    std::unique_ptr< ::grpc::ClientAsyncReaderWriterInterface< ::gamingstreaming::InputCommand, ::gamingstreaming::Frame>> PrepareAsyncGamingChannel(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncReaderWriterInterface< ::gamingstreaming::InputCommand, ::gamingstreaming::Frame>>(PrepareAsyncGamingChannelRaw(context, cq));
+    std::unique_ptr< ::grpc::ClientAsyncReaderWriterInterface< ::gamingstreaming::InputCommand, ::gamingstreaming::FrameSubPacket>> PrepareAsyncGamingChannel(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncReaderWriterInterface< ::gamingstreaming::InputCommand, ::gamingstreaming::FrameSubPacket>>(PrepareAsyncGamingChannelRaw(context, cq));
     }
     class experimental_async_interface {
      public:
@@ -75,21 +75,21 @@ class GamingStreamingService final {
     };
     virtual class experimental_async_interface* experimental_async() { return nullptr; }
   private:
-    virtual ::grpc::ClientReaderWriterInterface< ::gamingstreaming::InputCommand, ::gamingstreaming::Frame>* GamingChannelRaw(::grpc::ClientContext* context) = 0;
-    virtual ::grpc::ClientAsyncReaderWriterInterface< ::gamingstreaming::InputCommand, ::gamingstreaming::Frame>* AsyncGamingChannelRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq, void* tag) = 0;
-    virtual ::grpc::ClientAsyncReaderWriterInterface< ::gamingstreaming::InputCommand, ::gamingstreaming::Frame>* PrepareAsyncGamingChannelRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientReaderWriterInterface< ::gamingstreaming::InputCommand, ::gamingstreaming::FrameSubPacket>* GamingChannelRaw(::grpc::ClientContext* context) = 0;
+    virtual ::grpc::ClientAsyncReaderWriterInterface< ::gamingstreaming::InputCommand, ::gamingstreaming::FrameSubPacket>* AsyncGamingChannelRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq, void* tag) = 0;
+    virtual ::grpc::ClientAsyncReaderWriterInterface< ::gamingstreaming::InputCommand, ::gamingstreaming::FrameSubPacket>* PrepareAsyncGamingChannelRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq) = 0;
   };
   class Stub final : public StubInterface {
    public:
     Stub(const std::shared_ptr< ::grpc::ChannelInterface>& channel);
-    std::unique_ptr< ::grpc::ClientReaderWriter< ::gamingstreaming::InputCommand, ::gamingstreaming::Frame>> GamingChannel(::grpc::ClientContext* context) {
-      return std::unique_ptr< ::grpc::ClientReaderWriter< ::gamingstreaming::InputCommand, ::gamingstreaming::Frame>>(GamingChannelRaw(context));
+    std::unique_ptr< ::grpc::ClientReaderWriter< ::gamingstreaming::InputCommand, ::gamingstreaming::FrameSubPacket>> GamingChannel(::grpc::ClientContext* context) {
+      return std::unique_ptr< ::grpc::ClientReaderWriter< ::gamingstreaming::InputCommand, ::gamingstreaming::FrameSubPacket>>(GamingChannelRaw(context));
     }
-    std::unique_ptr<  ::grpc::ClientAsyncReaderWriter< ::gamingstreaming::InputCommand, ::gamingstreaming::Frame>> AsyncGamingChannel(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq, void* tag) {
-      return std::unique_ptr< ::grpc::ClientAsyncReaderWriter< ::gamingstreaming::InputCommand, ::gamingstreaming::Frame>>(AsyncGamingChannelRaw(context, cq, tag));
+    std::unique_ptr<  ::grpc::ClientAsyncReaderWriter< ::gamingstreaming::InputCommand, ::gamingstreaming::FrameSubPacket>> AsyncGamingChannel(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq, void* tag) {
+      return std::unique_ptr< ::grpc::ClientAsyncReaderWriter< ::gamingstreaming::InputCommand, ::gamingstreaming::FrameSubPacket>>(AsyncGamingChannelRaw(context, cq, tag));
     }
-    std::unique_ptr<  ::grpc::ClientAsyncReaderWriter< ::gamingstreaming::InputCommand, ::gamingstreaming::Frame>> PrepareAsyncGamingChannel(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq) {
-      return std::unique_ptr< ::grpc::ClientAsyncReaderWriter< ::gamingstreaming::InputCommand, ::gamingstreaming::Frame>>(PrepareAsyncGamingChannelRaw(context, cq));
+    std::unique_ptr<  ::grpc::ClientAsyncReaderWriter< ::gamingstreaming::InputCommand, ::gamingstreaming::FrameSubPacket>> PrepareAsyncGamingChannel(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncReaderWriter< ::gamingstreaming::InputCommand, ::gamingstreaming::FrameSubPacket>>(PrepareAsyncGamingChannelRaw(context, cq));
     }
     class experimental_async final :
       public StubInterface::experimental_async_interface {
@@ -105,9 +105,9 @@ class GamingStreamingService final {
    private:
     std::shared_ptr< ::grpc::ChannelInterface> channel_;
     class experimental_async async_stub_{this};
-    ::grpc::ClientReaderWriter< ::gamingstreaming::InputCommand, ::gamingstreaming::Frame>* GamingChannelRaw(::grpc::ClientContext* context) override;
-    ::grpc::ClientAsyncReaderWriter< ::gamingstreaming::InputCommand, ::gamingstreaming::Frame>* AsyncGamingChannelRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq, void* tag) override;
-    ::grpc::ClientAsyncReaderWriter< ::gamingstreaming::InputCommand, ::gamingstreaming::Frame>* PrepareAsyncGamingChannelRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientReaderWriter< ::gamingstreaming::InputCommand, ::gamingstreaming::FrameSubPacket>* GamingChannelRaw(::grpc::ClientContext* context) override;
+    ::grpc::ClientAsyncReaderWriter< ::gamingstreaming::InputCommand, ::gamingstreaming::FrameSubPacket>* AsyncGamingChannelRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq, void* tag) override;
+    ::grpc::ClientAsyncReaderWriter< ::gamingstreaming::InputCommand, ::gamingstreaming::FrameSubPacket>* PrepareAsyncGamingChannelRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq) override;
     const ::grpc::internal::RpcMethod rpcmethod_GamingChannel_;
   };
   static std::unique_ptr<Stub> NewStub(const std::shared_ptr< ::grpc::ChannelInterface>& channel, const ::grpc::StubOptions& options = ::grpc::StubOptions());
@@ -120,7 +120,7 @@ class GamingStreamingService final {
     //
     // Accepts a stream of RouteNotes sent while a route is being traversed,
     // while receiving other RouteNotes (e.g. from other users).
-    virtual ::grpc::Status GamingChannel(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::gamingstreaming::Frame, ::gamingstreaming::InputCommand>* stream);
+    virtual ::grpc::Status GamingChannel(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::gamingstreaming::FrameSubPacket, ::gamingstreaming::InputCommand>* stream);
   };
   template <class BaseClass>
   class WithAsyncMethod_GamingChannel : public BaseClass {
@@ -134,11 +134,11 @@ class GamingStreamingService final {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status GamingChannel(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::gamingstreaming::Frame, ::gamingstreaming::InputCommand>* stream)  override {
+    ::grpc::Status GamingChannel(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::gamingstreaming::FrameSubPacket, ::gamingstreaming::InputCommand>* stream)  override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
-    void RequestGamingChannel(::grpc::ServerContext* context, ::grpc::ServerAsyncReaderWriter< ::gamingstreaming::Frame, ::gamingstreaming::InputCommand>* stream, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+    void RequestGamingChannel(::grpc::ServerContext* context, ::grpc::ServerAsyncReaderWriter< ::gamingstreaming::FrameSubPacket, ::gamingstreaming::InputCommand>* stream, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
       ::grpc::Service::RequestAsyncBidiStreaming(0, context, stream, new_call_cq, notification_cq, tag);
     }
   };
@@ -154,7 +154,7 @@ class GamingStreamingService final {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status GamingChannel(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::gamingstreaming::Frame, ::gamingstreaming::InputCommand>* stream)  override {
+    ::grpc::Status GamingChannel(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::gamingstreaming::FrameSubPacket, ::gamingstreaming::InputCommand>* stream)  override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
@@ -172,7 +172,7 @@ class GamingStreamingService final {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status GamingChannel(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::gamingstreaming::Frame, ::gamingstreaming::InputCommand>* stream)  override {
+    ::grpc::Status GamingChannel(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::gamingstreaming::FrameSubPacket, ::gamingstreaming::InputCommand>* stream)  override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
@@ -189,7 +189,7 @@ class GamingStreamingService final {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status GamingChannel(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::gamingstreaming::Frame, ::gamingstreaming::InputCommand>* stream)  override {
+    ::grpc::Status GamingChannel(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::gamingstreaming::FrameSubPacket, ::gamingstreaming::InputCommand>* stream)  override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
@@ -208,7 +208,7 @@ class GamingStreamingService final {
       BaseClassMustBeDerivedFromService(this);
     }
     // disable synchronous version of this method
-    ::grpc::Status GamingChannel(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::gamingstreaming::Frame, ::gamingstreaming::InputCommand>* stream)  override {
+    ::grpc::Status GamingChannel(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::gamingstreaming::FrameSubPacket, ::gamingstreaming::InputCommand>* stream)  override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }

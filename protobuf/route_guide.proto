@@ -18,17 +18,22 @@ package gamingstreaming;
 
 // Interface exported by the server.
 service GamingStreamingService {
-  // A Bidirectional streaming RPC.
-  //
-  // Accepts a stream of RouteNotes sent while a route is being traversed,
-  // while receiving other RouteNotes (e.g. from other users).
-  rpc GamingChannel(stream InputCommand) returns (stream Frame) {}
+    // A Bidirectional streaming RPC.
+    //
+    // Accepts a stream of RouteNotes sent while a route is being traversed,
+    // while receiving other RouteNotes (e.g. from other users).
+    rpc GamingChannel (stream InputCommand) returns (stream FrameSubPacket) {}
 }
 
-message Frame {
-        int32 height = 1;
-        int32 width = 2;
-        repeated int32 pixels = 3 [packed=true];
+message FrameSubPacket {
+        int32 frame_number = 1;
+        int32 packet_number = 2;
+        int32 size = 3;
+        int64 pts = 4;
+        int64 dts = 5;
+        int64 flags = 6;
+        // field related to frame management
+        bytes data = 7;
 }
 
 message InputCommand {

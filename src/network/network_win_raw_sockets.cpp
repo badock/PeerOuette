@@ -1,17 +1,4 @@
 #include "network_win.h"
-#include <algorithm>
-#include <chrono>
-#include <cmath>
-#include <iostream>
-#include <memory>
-#include <string>
-
-#include <chrono>
-#include <iostream>
-#include <memory>
-#include <random>
-#include <string>
-#include <thread>
 
 #include <grpc/grpc.h>
 #include <grpcpp/channel.h>
@@ -41,7 +28,7 @@ using grpc::ServerReader;
 using grpc::ServerReaderWriter;
 using grpc::ServerWriter;
 using grpc::Status;
-using gamingstreaming::Frame;
+using gamingstreaming::FrameSubPacket;
 using gamingstreaming::InputCommand;
 
 using grpc::Channel;
@@ -50,125 +37,139 @@ using grpc::ClientReader;
 using grpc::ClientReaderWriter;
 using grpc::ClientWriter;
 using grpc::Status;
-using gamingstreaming::Frame;
 using gamingstreaming::InputCommand;
 
 
-Frame MakeFrame(const int height, const int width, const std::vector<int> &pixels) {
-    Frame f;
-    f.set_height(height);
-    f.set_width(width);
-    for (const int pixel: pixels) {
-        f.add_pixels(pixel);
-    }
+FrameSubPacket MakeFrame(const int frame_number,
+                         const int packet_number,
+                         const int size,
+                         const int pts,
+                         const int dts,
+                         const int flags,
+                         const char* data) {
+    FrameSubPacket f;
+    f.set_frame_number(frame_number);
+    f.set_packet_number(packet_number);
+    f.set_size(size);
+    f.set_pts(pts);
+    f.set_dts(dts);
+    f.set_flags(flags);
+    f.set_data(data, size);
+
     return f;
 }
 
+class GamingStreamingServiceImpl final : public gamingstreaming::GamingStreamingService::Service {
+public:
+    StreamingEnvironment* se;
 
-//class GamingStreamingServiceImpl final : public gamingstreaming::GamingStreamingService::Service {
-//public:
-//    explicit GamingStreamingServiceImpl() {
-//    }
-//
-//    Status GamingChannel(ServerContext *context,
-//                         ServerReaderWriter<Frame, InputCommand> *stream) override {
-//        // std::vector<Frame> new_frames;
-//        std::vector<int> fakePixels;
-//        for (int i=0; i< 400000; i++) {
-//            fakePixels.push_back(i);
-//        }
-//
-//
-//        std::vector<Frame> new_frames{
-//                MakeFrame(100, 100, fakePixels),
-//                MakeFrame(100, 100, fakePixels),
-//                MakeFrame(100, 100, fakePixels),
-//                MakeFrame(100, 100, fakePixels)
-//        };
-//
-//        InputCommand cmd;
-//        while (stream->Read(&cmd)) {
-//            std::cout << "Received an input command" << cmd.command() << std::endl;
-//            for (const Frame &frame : new_frames) {
-//                stream->Write(frame);
-//            }
-//        }
-//
-//        return Status::OK;
-//    }
-//
-//private:
-//};
-//
-//void RunServer() {
-//    std::string server_address("0.0.0.0:50051");
-//    GamingStreamingServiceImpl service;
-//
-//    ServerBuilder builder;
-//    builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
-//    builder.RegisterService(&service);
-//    std::unique_ptr<Server> server(builder.BuildAndStart());
-//    std::cout << "Server listening on " << server_address << std::endl;
-//    server->Wait();
-//}
+    explicit GamingStreamingServiceImpl(StreamingEnvironment* se) {
+        this->se = se;
+    }
 
-//InputCommand MakeInputCommand(const std::string& command) {
-//    InputCommand c;
-//    c.set_command(command);
-//    return c;
-//}
+    Status GamingChannel(ServerContext *context,
+                         ServerReaderWriter<FrameSubPacket, InputCommand> *stream) override {
+        InputCommand cmd;
+
+        while (!se->finishing) {
+            packet_data *pkt_d = (packet_data *) simple_queue_pop(se->packet_sender_thread_queue);
 
 
-//class GamingStreamingServiceClient {
-//public:
-//    GamingStreamingServiceClient(std::shared_ptr<Channel> channel)
-//            : stub_(gamingstreaming::GamingStreamingService::NewStub(channel)) {
-//    }
-//
-//
-//    void GamingChannel() {
-//        ClientContext context;
-//
-//        std::shared_ptr<ClientReaderWriter<InputCommand, Frame> > stream(
-//                stub_->GamingChannel(&context));
-//
-//        std::thread writer([stream]() {
-//            std::vector<InputCommand> input_commands {
-//                    MakeInputCommand("click (0,100)"),
-//                    MakeInputCommand("click (100,0)"),
-//                    MakeInputCommand("click (100,100)"),
-//                    MakeInputCommand("click (100,50)")};
-//            for (const InputCommand& cmd : input_commands) {
-//                std::cout << "Sending command " << cmd.command() << std::endl;
-//                stream->Write(cmd);
-//            }
-//            stream->WritesDone();
-//        });
-//
-//        Frame server_frame;
-//        while (stream->Read(&server_frame)) {
-//            std::cout << "Got frame (" << server_frame.height()
-//                      << ", " << server_frame.width() << ") " << std::endl;
-//        }
+            FrameSubPacket subPacket = MakeFrame(pkt_d->frame_number,
+                                                 pkt_d->packet_number,
+                                                 pkt_d->size,
+                                                 pkt_d->pts,
+                                                 pkt_d->dts,
+                                                 pkt_d->flags,
+                                                 (char*) pkt_d->data);
+            stream->Write(subPacket);
+
+            free(pkt_d->data);
+            free(pkt_d);
+
+            while (stream->Read(&cmd)) {
+                std::cout << "Received an input command" << cmd.command() << std::endl;
+            }
+        }
+
+        return Status::OK;
+    }
+
+private:
+};
+
+InputCommand MakeInputCommand(const std::string& command) {
+    InputCommand c;
+    c.set_command(command);
+    return c;
+}
+
+
+class GamingStreamingServiceClient {
+public:
+    StreamingEnvironment* se;
+    GamingStreamingServiceClient(std::shared_ptr<Channel> channel, StreamingEnvironment* se)
+            : stub_(gamingstreaming::GamingStreamingService::NewStub(channel)) {
+        this->se = se;
+    }
+
+
+    void GamingChannel() {
+        ClientContext context;
+
+        std::shared_ptr<ClientReaderWriter<InputCommand, FrameSubPacket> > stream(
+                stub_->GamingChannel(&context));
+
+        std::thread writer([stream]() {
+            stream->Write(MakeInputCommand("START STREAMING PACKETS!"));
+            stream->WritesDone();
+        });
+
+        FrameSubPacket server_frame;
+        while (stream->Read(&server_frame) && !se->finishing) {
+//            std::cout << "Got frame (" << server_frame.frame_number()
+//                      << ", " << server_frame.packet_number() << ") " << std::endl;
+
+            packet_data* new_packet_data = new packet_data();
+            new_packet_data->frame_number = server_frame.frame_number();
+            new_packet_data->packet_number = server_frame.packet_number();
+//            new_packet_data->data = (uint8_t*) server_frame.data().data();
+            new_packet_data->size = server_frame.size();
+            new_packet_data->flags = server_frame.flags();
+            new_packet_data->dts = server_frame.dts();
+            new_packet_data->pts = server_frame.pts();
+
+            // Copy data
+            new_packet_data->data = new uint8_t[new_packet_data->size];
+            memcpy(new_packet_data->data, server_frame.data().data(), new_packet_data->size);
+
+            simple_queue_push(se->network_simulated_queue, new_packet_data);
+        }
 //        writer.join();
-//        Status status = stream->Finish();
-//        if (!status.ok()) {
-//            std::cout << "GamingStreaming rpc failed." << std::endl;
-//        }
-//    }
-//
-//private:
-//
-//    const float kCoordFactor_ = 10000000.0;
-//    std::unique_ptr<gamingstreaming::GamingStreamingService::Stub> stub_;
-//};
+        Status status = stream->Finish();
+        if (!status.ok()) {
+            std::cout << "GamingStreaming rpc failed." << std::endl;
+        }
+    }
+
+private:
+
+    const float kCoordFactor_ = 10000000.0;
+    std::unique_ptr<gamingstreaming::GamingStreamingService::Stub> stub_;
+};
 
 int packet_sender_thread(void *arg) {
     StreamingEnvironment *se = (StreamingEnvironment*)arg;
 
-    while (! se->finishing) {
+    std::string server_address("0.0.0.0:50051");
+    GamingStreamingServiceImpl service(se);
 
-    }
+    ServerBuilder builder;
+    builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
+    builder.RegisterService(&service);
+    std::unique_ptr<Server> server(builder.BuildAndStart());
+    std::cout << "Server listening on " << server_address << std::endl;
+    server->Wait();
 
     return 0;
 }
@@ -176,9 +177,14 @@ int packet_sender_thread(void *arg) {
 int packet_receiver_thread(void *arg) {
     StreamingEnvironment *se = (StreamingEnvironment*)arg;
 
-    while (! se->finishing) {
+    GamingStreamingServiceClient client(
+            grpc::CreateChannel("localhost:50051",
+                                grpc::InsecureChannelCredentials()),
+            se
+    );
 
-    }
+    std::cout << "-------------- GetFeature --------------" << std::endl;
+    client.GamingChannel();
 
     return 0;
 }

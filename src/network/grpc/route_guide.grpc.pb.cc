@@ -32,30 +32,30 @@ GamingStreamingService::Stub::Stub(const std::shared_ptr< ::grpc::ChannelInterfa
   : channel_(channel), rpcmethod_GamingChannel_(GamingStreamingService_method_names[0], ::grpc::internal::RpcMethod::BIDI_STREAMING, channel)
   {}
 
-::grpc::ClientReaderWriter< ::gamingstreaming::InputCommand, ::gamingstreaming::Frame>* GamingStreamingService::Stub::GamingChannelRaw(::grpc::ClientContext* context) {
-  return ::grpc::internal::ClientReaderWriterFactory< ::gamingstreaming::InputCommand, ::gamingstreaming::Frame>::Create(channel_.get(), rpcmethod_GamingChannel_, context);
+::grpc::ClientReaderWriter< ::gamingstreaming::InputCommand, ::gamingstreaming::FrameSubPacket>* GamingStreamingService::Stub::GamingChannelRaw(::grpc::ClientContext* context) {
+  return ::grpc::internal::ClientReaderWriterFactory< ::gamingstreaming::InputCommand, ::gamingstreaming::FrameSubPacket>::Create(channel_.get(), rpcmethod_GamingChannel_, context);
 }
 
-::grpc::ClientAsyncReaderWriter< ::gamingstreaming::InputCommand, ::gamingstreaming::Frame>* GamingStreamingService::Stub::AsyncGamingChannelRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq, void* tag) {
-  return ::grpc::internal::ClientAsyncReaderWriterFactory< ::gamingstreaming::InputCommand, ::gamingstreaming::Frame>::Create(channel_.get(), cq, rpcmethod_GamingChannel_, context, true, tag);
+::grpc::ClientAsyncReaderWriter< ::gamingstreaming::InputCommand, ::gamingstreaming::FrameSubPacket>* GamingStreamingService::Stub::AsyncGamingChannelRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq, void* tag) {
+  return ::grpc::internal::ClientAsyncReaderWriterFactory< ::gamingstreaming::InputCommand, ::gamingstreaming::FrameSubPacket>::Create(channel_.get(), cq, rpcmethod_GamingChannel_, context, true, tag);
 }
 
-::grpc::ClientAsyncReaderWriter< ::gamingstreaming::InputCommand, ::gamingstreaming::Frame>* GamingStreamingService::Stub::PrepareAsyncGamingChannelRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq) {
-  return ::grpc::internal::ClientAsyncReaderWriterFactory< ::gamingstreaming::InputCommand, ::gamingstreaming::Frame>::Create(channel_.get(), cq, rpcmethod_GamingChannel_, context, false, nullptr);
+::grpc::ClientAsyncReaderWriter< ::gamingstreaming::InputCommand, ::gamingstreaming::FrameSubPacket>* GamingStreamingService::Stub::PrepareAsyncGamingChannelRaw(::grpc::ClientContext* context, ::grpc::CompletionQueue* cq) {
+  return ::grpc::internal::ClientAsyncReaderWriterFactory< ::gamingstreaming::InputCommand, ::gamingstreaming::FrameSubPacket>::Create(channel_.get(), cq, rpcmethod_GamingChannel_, context, false, nullptr);
 }
 
 GamingStreamingService::Service::Service() {
   AddMethod(new ::grpc::internal::RpcServiceMethod(
       GamingStreamingService_method_names[0],
       ::grpc::internal::RpcMethod::BIDI_STREAMING,
-      new ::grpc::internal::BidiStreamingHandler< GamingStreamingService::Service, ::gamingstreaming::InputCommand, ::gamingstreaming::Frame>(
+      new ::grpc::internal::BidiStreamingHandler< GamingStreamingService::Service, ::gamingstreaming::InputCommand, ::gamingstreaming::FrameSubPacket>(
           std::mem_fn(&GamingStreamingService::Service::GamingChannel), this)));
 }
 
 GamingStreamingService::Service::~Service() {
 }
 
-::grpc::Status GamingStreamingService::Service::GamingChannel(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::gamingstreaming::Frame, ::gamingstreaming::InputCommand>* stream) {
+::grpc::Status GamingStreamingService::Service::GamingChannel(::grpc::ServerContext* context, ::grpc::ServerReaderWriter< ::gamingstreaming::FrameSubPacket, ::gamingstreaming::InputCommand>* stream) {
   (void) context;
   (void) stream;
   return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");

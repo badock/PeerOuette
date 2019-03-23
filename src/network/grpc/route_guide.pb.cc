@@ -20,11 +20,11 @@
 // @@protoc_insertion_point(includes)
 
 namespace gamingstreaming {
-class FrameDefaultTypeInternal {
+class FrameSubPacketDefaultTypeInternal {
  public:
-  ::google::protobuf::internal::ExplicitlyConstructed<Frame>
+  ::google::protobuf::internal::ExplicitlyConstructed<FrameSubPacket>
       _instance;
-} _Frame_default_instance_;
+} _FrameSubPacket_default_instance_;
 class InputCommandDefaultTypeInternal {
  public:
   ::google::protobuf::internal::ExplicitlyConstructed<InputCommand>
@@ -32,19 +32,19 @@ class InputCommandDefaultTypeInternal {
 } _InputCommand_default_instance_;
 }  // namespace gamingstreaming
 namespace protobuf_route_5fguide_2eproto {
-static void InitDefaultsFrame() {
+static void InitDefaultsFrameSubPacket() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
   {
-    void* ptr = &::gamingstreaming::_Frame_default_instance_;
-    new (ptr) ::gamingstreaming::Frame();
+    void* ptr = &::gamingstreaming::_FrameSubPacket_default_instance_;
+    new (ptr) ::gamingstreaming::FrameSubPacket();
     ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
   }
-  ::gamingstreaming::Frame::InitAsDefaultInstance();
+  ::gamingstreaming::FrameSubPacket::InitAsDefaultInstance();
 }
 
-::google::protobuf::internal::SCCInfo<0> scc_info_Frame =
-    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsFrame}, {}};
+::google::protobuf::internal::SCCInfo<0> scc_info_FrameSubPacket =
+    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsFrameSubPacket}, {}};
 
 static void InitDefaultsInputCommand() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
@@ -61,7 +61,7 @@ static void InitDefaultsInputCommand() {
     {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsInputCommand}, {}};
 
 void InitDefaults() {
-  ::google::protobuf::internal::InitSCC(&scc_info_Frame.base);
+  ::google::protobuf::internal::InitSCC(&scc_info_FrameSubPacket.base);
   ::google::protobuf::internal::InitSCC(&scc_info_InputCommand.base);
 }
 
@@ -69,13 +69,17 @@ void InitDefaults() {
 
 const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
   ~0u,  // no _has_bits_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::gamingstreaming::Frame, _internal_metadata_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::gamingstreaming::FrameSubPacket, _internal_metadata_),
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::gamingstreaming::Frame, height_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::gamingstreaming::Frame, width_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::gamingstreaming::Frame, pixels_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::gamingstreaming::FrameSubPacket, frame_number_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::gamingstreaming::FrameSubPacket, packet_number_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::gamingstreaming::FrameSubPacket, size_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::gamingstreaming::FrameSubPacket, pts_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::gamingstreaming::FrameSubPacket, dts_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::gamingstreaming::FrameSubPacket, flags_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::gamingstreaming::FrameSubPacket, data_),
   ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::gamingstreaming::InputCommand, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -84,12 +88,12 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_PROTOBUF_ATTRIBUT
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::gamingstreaming::InputCommand, command_),
 };
 static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
-  { 0, -1, sizeof(::gamingstreaming::Frame)},
-  { 8, -1, sizeof(::gamingstreaming::InputCommand)},
+  { 0, -1, sizeof(::gamingstreaming::FrameSubPacket)},
+  { 12, -1, sizeof(::gamingstreaming::InputCommand)},
 };
 
 static ::google::protobuf::Message const * const file_default_instances[] = {
-  reinterpret_cast<const ::google::protobuf::Message*>(&::gamingstreaming::_Frame_default_instance_),
+  reinterpret_cast<const ::google::protobuf::Message*>(&::gamingstreaming::_FrameSubPacket_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&::gamingstreaming::_InputCommand_default_instance_),
 };
 
@@ -114,16 +118,18 @@ void protobuf_RegisterTypes(const ::std::string&) {
 void AddDescriptorsImpl() {
   InitDefaults();
   static const char descriptor[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
-      "\n\021route_guide.proto\022\017gamingstreaming\":\n\005"
-      "Frame\022\016\n\006height\030\001 \001(\005\022\r\n\005width\030\002 \001(\005\022\022\n\006"
-      "pixels\030\003 \003(\005B\002\020\001\"\037\n\014InputCommand\022\017\n\007comm"
-      "and\030\001 \001(\t2f\n\026GamingStreamingService\022L\n\rG"
-      "amingChannel\022\035.gamingstreaming.InputComm"
-      "and\032\026.gamingstreaming.Frame\"\000(\0010\001b\006proto"
-      "3"
+      "\n\021route_guide.proto\022\017gamingstreaming\"\202\001\n"
+      "\016FrameSubPacket\022\024\n\014frame_number\030\001 \001(\005\022\025\n"
+      "\rpacket_number\030\002 \001(\005\022\014\n\004size\030\003 \001(\005\022\013\n\003pt"
+      "s\030\004 \001(\003\022\013\n\003dts\030\005 \001(\003\022\r\n\005flags\030\006 \001(\003\022\014\n\004d"
+      "ata\030\007 \001(\014\"\037\n\014InputCommand\022\017\n\007command\030\001 \001"
+      "(\t2o\n\026GamingStreamingService\022U\n\rGamingCh"
+      "annel\022\035.gamingstreaming.InputCommand\032\037.g"
+      "amingstreaming.FrameSubPacket\"\000(\0010\001b\006pro"
+      "to3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 241);
+      descriptor, 323);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "route_guide.proto", &protobuf_RegisterTypes);
 }
@@ -143,124 +149,182 @@ namespace gamingstreaming {
 
 // ===================================================================
 
-void Frame::InitAsDefaultInstance() {
+void FrameSubPacket::InitAsDefaultInstance() {
 }
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
-const int Frame::kHeightFieldNumber;
-const int Frame::kWidthFieldNumber;
-const int Frame::kPixelsFieldNumber;
+const int FrameSubPacket::kFrameNumberFieldNumber;
+const int FrameSubPacket::kPacketNumberFieldNumber;
+const int FrameSubPacket::kSizeFieldNumber;
+const int FrameSubPacket::kPtsFieldNumber;
+const int FrameSubPacket::kDtsFieldNumber;
+const int FrameSubPacket::kFlagsFieldNumber;
+const int FrameSubPacket::kDataFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
-Frame::Frame()
+FrameSubPacket::FrameSubPacket()
   : ::google::protobuf::Message(), _internal_metadata_(NULL) {
   ::google::protobuf::internal::InitSCC(
-      &protobuf_route_5fguide_2eproto::scc_info_Frame.base);
+      &protobuf_route_5fguide_2eproto::scc_info_FrameSubPacket.base);
   SharedCtor();
-  // @@protoc_insertion_point(constructor:gamingstreaming.Frame)
+  // @@protoc_insertion_point(constructor:gamingstreaming.FrameSubPacket)
 }
-Frame::Frame(const Frame& from)
+FrameSubPacket::FrameSubPacket(const FrameSubPacket& from)
   : ::google::protobuf::Message(),
-      _internal_metadata_(NULL),
-      pixels_(from.pixels_) {
+      _internal_metadata_(NULL) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
-  ::memcpy(&height_, &from.height_,
-    static_cast<size_t>(reinterpret_cast<char*>(&width_) -
-    reinterpret_cast<char*>(&height_)) + sizeof(width_));
-  // @@protoc_insertion_point(copy_constructor:gamingstreaming.Frame)
+  data_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (from.data().size() > 0) {
+    data_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.data_);
+  }
+  ::memcpy(&frame_number_, &from.frame_number_,
+    static_cast<size_t>(reinterpret_cast<char*>(&size_) -
+    reinterpret_cast<char*>(&frame_number_)) + sizeof(size_));
+  // @@protoc_insertion_point(copy_constructor:gamingstreaming.FrameSubPacket)
 }
 
-void Frame::SharedCtor() {
-  ::memset(&height_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&width_) -
-      reinterpret_cast<char*>(&height_)) + sizeof(width_));
+void FrameSubPacket::SharedCtor() {
+  data_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  ::memset(&frame_number_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&size_) -
+      reinterpret_cast<char*>(&frame_number_)) + sizeof(size_));
 }
 
-Frame::~Frame() {
-  // @@protoc_insertion_point(destructor:gamingstreaming.Frame)
+FrameSubPacket::~FrameSubPacket() {
+  // @@protoc_insertion_point(destructor:gamingstreaming.FrameSubPacket)
   SharedDtor();
 }
 
-void Frame::SharedDtor() {
+void FrameSubPacket::SharedDtor() {
+  data_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 
-void Frame::SetCachedSize(int size) const {
+void FrameSubPacket::SetCachedSize(int size) const {
   _cached_size_.Set(size);
 }
-const ::google::protobuf::Descriptor* Frame::descriptor() {
+const ::google::protobuf::Descriptor* FrameSubPacket::descriptor() {
   ::protobuf_route_5fguide_2eproto::protobuf_AssignDescriptorsOnce();
   return ::protobuf_route_5fguide_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
 }
 
-const Frame& Frame::default_instance() {
-  ::google::protobuf::internal::InitSCC(&protobuf_route_5fguide_2eproto::scc_info_Frame.base);
+const FrameSubPacket& FrameSubPacket::default_instance() {
+  ::google::protobuf::internal::InitSCC(&protobuf_route_5fguide_2eproto::scc_info_FrameSubPacket.base);
   return *internal_default_instance();
 }
 
 
-void Frame::Clear() {
-// @@protoc_insertion_point(message_clear_start:gamingstreaming.Frame)
+void FrameSubPacket::Clear() {
+// @@protoc_insertion_point(message_clear_start:gamingstreaming.FrameSubPacket)
   ::google::protobuf::uint32 cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  pixels_.Clear();
-  ::memset(&height_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&width_) -
-      reinterpret_cast<char*>(&height_)) + sizeof(width_));
+  data_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  ::memset(&frame_number_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&size_) -
+      reinterpret_cast<char*>(&frame_number_)) + sizeof(size_));
   _internal_metadata_.Clear();
 }
 
-bool Frame::MergePartialFromCodedStream(
+bool FrameSubPacket::MergePartialFromCodedStream(
     ::google::protobuf::io::CodedInputStream* input) {
 #define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
   ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:gamingstreaming.Frame)
+  // @@protoc_insertion_point(parse_start:gamingstreaming.FrameSubPacket)
   for (;;) {
     ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
     tag = p.first;
     if (!p.second) goto handle_unusual;
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // int32 height = 1;
+      // int32 frame_number = 1;
       case 1: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(8u /* 8 & 0xFF */)) {
 
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
-                 input, &height_)));
+                 input, &frame_number_)));
         } else {
           goto handle_unusual;
         }
         break;
       }
 
-      // int32 width = 2;
+      // int32 packet_number = 2;
       case 2: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(16u /* 16 & 0xFF */)) {
 
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
-                 input, &width_)));
+                 input, &packet_number_)));
         } else {
           goto handle_unusual;
         }
         break;
       }
 
-      // repeated int32 pixels = 3 [packed = true];
+      // int32 size = 3;
       case 3: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(26u /* 26 & 0xFF */)) {
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPackedPrimitive<
-                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
-                 input, this->mutable_pixels())));
-        } else if (
-            static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(24u /* 24 & 0xFF */)) {
-          DO_((::google::protobuf::internal::WireFormatLite::ReadRepeatedPrimitiveNoInline<
+
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
-                 1, 26u, input, this->mutable_pixels())));
+                 input, &size_)));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // int64 pts = 4;
+      case 4: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(32u /* 32 & 0xFF */)) {
+
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::int64, ::google::protobuf::internal::WireFormatLite::TYPE_INT64>(
+                 input, &pts_)));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // int64 dts = 5;
+      case 5: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(40u /* 40 & 0xFF */)) {
+
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::int64, ::google::protobuf::internal::WireFormatLite::TYPE_INT64>(
+                 input, &dts_)));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // int64 flags = 6;
+      case 6: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(48u /* 48 & 0xFF */)) {
+
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::int64, ::google::protobuf::internal::WireFormatLite::TYPE_INT64>(
+                 input, &flags_)));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // bytes data = 7;
+      case 7: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(58u /* 58 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
+                input, this->mutable_data()));
         } else {
           goto handle_unusual;
         }
@@ -279,88 +343,117 @@ bool Frame::MergePartialFromCodedStream(
     }
   }
 success:
-  // @@protoc_insertion_point(parse_success:gamingstreaming.Frame)
+  // @@protoc_insertion_point(parse_success:gamingstreaming.FrameSubPacket)
   return true;
 failure:
-  // @@protoc_insertion_point(parse_failure:gamingstreaming.Frame)
+  // @@protoc_insertion_point(parse_failure:gamingstreaming.FrameSubPacket)
   return false;
 #undef DO_
 }
 
-void Frame::SerializeWithCachedSizes(
+void FrameSubPacket::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:gamingstreaming.Frame)
+  // @@protoc_insertion_point(serialize_start:gamingstreaming.FrameSubPacket)
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // int32 height = 1;
-  if (this->height() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt32(1, this->height(), output);
+  // int32 frame_number = 1;
+  if (this->frame_number() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(1, this->frame_number(), output);
   }
 
-  // int32 width = 2;
-  if (this->width() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt32(2, this->width(), output);
+  // int32 packet_number = 2;
+  if (this->packet_number() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(2, this->packet_number(), output);
   }
 
-  // repeated int32 pixels = 3 [packed = true];
-  if (this->pixels_size() > 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteTag(3, ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED, output);
-    output->WriteVarint32(static_cast< ::google::protobuf::uint32>(
-        _pixels_cached_byte_size_));
+  // int32 size = 3;
+  if (this->size() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(3, this->size(), output);
   }
-  for (int i = 0, n = this->pixels_size(); i < n; i++) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt32NoTag(
-      this->pixels(i), output);
+
+  // int64 pts = 4;
+  if (this->pts() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt64(4, this->pts(), output);
+  }
+
+  // int64 dts = 5;
+  if (this->dts() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt64(5, this->dts(), output);
+  }
+
+  // int64 flags = 6;
+  if (this->flags() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt64(6, this->flags(), output);
+  }
+
+  // bytes data = 7;
+  if (this->data().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
+      7, this->data(), output);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
   }
-  // @@protoc_insertion_point(serialize_end:gamingstreaming.Frame)
+  // @@protoc_insertion_point(serialize_end:gamingstreaming.FrameSubPacket)
 }
 
-::google::protobuf::uint8* Frame::InternalSerializeWithCachedSizesToArray(
+::google::protobuf::uint8* FrameSubPacket::InternalSerializeWithCachedSizesToArray(
     bool deterministic, ::google::protobuf::uint8* target) const {
   (void)deterministic; // Unused
-  // @@protoc_insertion_point(serialize_to_array_start:gamingstreaming.Frame)
+  // @@protoc_insertion_point(serialize_to_array_start:gamingstreaming.FrameSubPacket)
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // int32 height = 1;
-  if (this->height() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(1, this->height(), target);
+  // int32 frame_number = 1;
+  if (this->frame_number() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(1, this->frame_number(), target);
   }
 
-  // int32 width = 2;
-  if (this->width() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(2, this->width(), target);
+  // int32 packet_number = 2;
+  if (this->packet_number() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(2, this->packet_number(), target);
   }
 
-  // repeated int32 pixels = 3 [packed = true];
-  if (this->pixels_size() > 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteTagToArray(
-      3,
-      ::google::protobuf::internal::WireFormatLite::WIRETYPE_LENGTH_DELIMITED,
-      target);
-    target = ::google::protobuf::io::CodedOutputStream::WriteVarint32ToArray(
-        static_cast< ::google::protobuf::int32>(
-            _pixels_cached_byte_size_), target);
-    target = ::google::protobuf::internal::WireFormatLite::
-      WriteInt32NoTagToArray(this->pixels_, target);
+  // int32 size = 3;
+  if (this->size() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(3, this->size(), target);
+  }
+
+  // int64 pts = 4;
+  if (this->pts() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt64ToArray(4, this->pts(), target);
+  }
+
+  // int64 dts = 5;
+  if (this->dts() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt64ToArray(5, this->dts(), target);
+  }
+
+  // int64 flags = 6;
+  if (this->flags() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt64ToArray(6, this->flags(), target);
+  }
+
+  // bytes data = 7;
+  if (this->data().size() > 0) {
+    target =
+      ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
+        7, this->data(), target);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
   }
-  // @@protoc_insertion_point(serialize_to_array_end:gamingstreaming.Frame)
+  // @@protoc_insertion_point(serialize_to_array_end:gamingstreaming.FrameSubPacket)
   return target;
 }
 
-size_t Frame::ByteSizeLong() const {
-// @@protoc_insertion_point(message_byte_size_start:gamingstreaming.Frame)
+size_t FrameSubPacket::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:gamingstreaming.FrameSubPacket)
   size_t total_size = 0;
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -368,34 +461,53 @@ size_t Frame::ByteSizeLong() const {
       ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
   }
-  // repeated int32 pixels = 3 [packed = true];
-  {
-    size_t data_size = ::google::protobuf::internal::WireFormatLite::
-      Int32Size(this->pixels_);
-    if (data_size > 0) {
-      total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::Int32Size(
-            static_cast< ::google::protobuf::int32>(data_size));
-    }
-    int cached_size = ::google::protobuf::internal::ToCachedSize(data_size);
-    GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
-    _pixels_cached_byte_size_ = cached_size;
-    GOOGLE_SAFE_CONCURRENT_WRITES_END();
-    total_size += data_size;
+  // bytes data = 7;
+  if (this->data().size() > 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::BytesSize(
+        this->data());
   }
 
-  // int32 height = 1;
-  if (this->height() != 0) {
+  // int32 frame_number = 1;
+  if (this->frame_number() != 0) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::Int32Size(
-        this->height());
+        this->frame_number());
   }
 
-  // int32 width = 2;
-  if (this->width() != 0) {
+  // int32 packet_number = 2;
+  if (this->packet_number() != 0) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::Int32Size(
-        this->width());
+        this->packet_number());
+  }
+
+  // int64 pts = 4;
+  if (this->pts() != 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::Int64Size(
+        this->pts());
+  }
+
+  // int64 dts = 5;
+  if (this->dts() != 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::Int64Size(
+        this->dts());
+  }
+
+  // int64 flags = 6;
+  if (this->flags() != 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::Int64Size(
+        this->flags());
+  }
+
+  // int32 size = 3;
+  if (this->size() != 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::Int32Size(
+        this->size());
   }
 
   int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
@@ -403,68 +515,88 @@ size_t Frame::ByteSizeLong() const {
   return total_size;
 }
 
-void Frame::MergeFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_merge_from_start:gamingstreaming.Frame)
+void FrameSubPacket::MergeFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_merge_from_start:gamingstreaming.FrameSubPacket)
   GOOGLE_DCHECK_NE(&from, this);
-  const Frame* source =
-      ::google::protobuf::internal::DynamicCastToGenerated<const Frame>(
+  const FrameSubPacket* source =
+      ::google::protobuf::internal::DynamicCastToGenerated<const FrameSubPacket>(
           &from);
   if (source == NULL) {
-  // @@protoc_insertion_point(generalized_merge_from_cast_fail:gamingstreaming.Frame)
+  // @@protoc_insertion_point(generalized_merge_from_cast_fail:gamingstreaming.FrameSubPacket)
     ::google::protobuf::internal::ReflectionOps::Merge(from, this);
   } else {
-  // @@protoc_insertion_point(generalized_merge_from_cast_success:gamingstreaming.Frame)
+  // @@protoc_insertion_point(generalized_merge_from_cast_success:gamingstreaming.FrameSubPacket)
     MergeFrom(*source);
   }
 }
 
-void Frame::MergeFrom(const Frame& from) {
-// @@protoc_insertion_point(class_specific_merge_from_start:gamingstreaming.Frame)
+void FrameSubPacket::MergeFrom(const FrameSubPacket& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:gamingstreaming.FrameSubPacket)
   GOOGLE_DCHECK_NE(&from, this);
   _internal_metadata_.MergeFrom(from._internal_metadata_);
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  pixels_.MergeFrom(from.pixels_);
-  if (from.height() != 0) {
-    set_height(from.height());
+  if (from.data().size() > 0) {
+
+    data_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.data_);
   }
-  if (from.width() != 0) {
-    set_width(from.width());
+  if (from.frame_number() != 0) {
+    set_frame_number(from.frame_number());
+  }
+  if (from.packet_number() != 0) {
+    set_packet_number(from.packet_number());
+  }
+  if (from.pts() != 0) {
+    set_pts(from.pts());
+  }
+  if (from.dts() != 0) {
+    set_dts(from.dts());
+  }
+  if (from.flags() != 0) {
+    set_flags(from.flags());
+  }
+  if (from.size() != 0) {
+    set_size(from.size());
   }
 }
 
-void Frame::CopyFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_copy_from_start:gamingstreaming.Frame)
+void FrameSubPacket::CopyFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_copy_from_start:gamingstreaming.FrameSubPacket)
   if (&from == this) return;
   Clear();
   MergeFrom(from);
 }
 
-void Frame::CopyFrom(const Frame& from) {
-// @@protoc_insertion_point(class_specific_copy_from_start:gamingstreaming.Frame)
+void FrameSubPacket::CopyFrom(const FrameSubPacket& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:gamingstreaming.FrameSubPacket)
   if (&from == this) return;
   Clear();
   MergeFrom(from);
 }
 
-bool Frame::IsInitialized() const {
+bool FrameSubPacket::IsInitialized() const {
   return true;
 }
 
-void Frame::Swap(Frame* other) {
+void FrameSubPacket::Swap(FrameSubPacket* other) {
   if (other == this) return;
   InternalSwap(other);
 }
-void Frame::InternalSwap(Frame* other) {
+void FrameSubPacket::InternalSwap(FrameSubPacket* other) {
   using std::swap;
-  pixels_.InternalSwap(&other->pixels_);
-  swap(height_, other->height_);
-  swap(width_, other->width_);
+  data_.Swap(&other->data_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+    GetArenaNoVirtual());
+  swap(frame_number_, other->frame_number_);
+  swap(packet_number_, other->packet_number_);
+  swap(pts_, other->pts_);
+  swap(dts_, other->dts_);
+  swap(flags_, other->flags_);
+  swap(size_, other->size_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
 }
 
-::google::protobuf::Metadata Frame::GetMetadata() const {
+::google::protobuf::Metadata FrameSubPacket::GetMetadata() const {
   protobuf_route_5fguide_2eproto::protobuf_AssignDescriptorsOnce();
   return ::protobuf_route_5fguide_2eproto::file_level_metadata[kIndexInFileMessages];
 }
@@ -716,8 +848,8 @@ void InputCommand::InternalSwap(InputCommand* other) {
 }  // namespace gamingstreaming
 namespace google {
 namespace protobuf {
-template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::gamingstreaming::Frame* Arena::CreateMaybeMessage< ::gamingstreaming::Frame >(Arena* arena) {
-  return Arena::CreateInternal< ::gamingstreaming::Frame >(arena);
+template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::gamingstreaming::FrameSubPacket* Arena::CreateMaybeMessage< ::gamingstreaming::FrameSubPacket >(Arena* arena) {
+  return Arena::CreateInternal< ::gamingstreaming::FrameSubPacket >(arena);
 }
 template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::gamingstreaming::InputCommand* Arena::CreateMaybeMessage< ::gamingstreaming::InputCommand >(Arena* arena) {
   return Arena::CreateInternal< ::gamingstreaming::InputCommand >(arena);
