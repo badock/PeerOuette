@@ -124,15 +124,21 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 if(EXISTS ${CMAKE_BINARY_DIR}/../src/network/grpc)
     add_custom_target(CopyGeneratedFiles
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different  ${CMAKE_BINARY_DIR}/protobuf/*.pb.h ${CMAKE_BINARY_DIR}/../src/network/grpc/.
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different  ${CMAKE_BINARY_DIR}/protobuf/*.pb.cc ${CMAKE_BINARY_DIR}/../src/network/grpc/.
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different  ${CMAKE_BINARY_DIR}/protobuf/route_guide.grpc.pb.h ${CMAKE_BINARY_DIR}/../src/network/grpc/route_guide.grpc.pb.h
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different  ${CMAKE_BINARY_DIR}/protobuf/route_guide.pb.h ${CMAKE_BINARY_DIR}/../src/network/grpc/route_guide.pb.h
+        
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different  ${CMAKE_BINARY_DIR}/protobuf/route_guide.grpc.pb.cc ${CMAKE_BINARY_DIR}/../src/network/grpc/route_guide.grpc.pb.cc
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different  ${CMAKE_BINARY_DIR}/protobuf/route_guide.pb.cc ${CMAKE_BINARY_DIR}/../src/network/grpc/route_guide.pb.cc
     )
 endif()
 
 if(EXISTS ${CMAKE_BINARY_DIR}/../../src/network/grpc)
-    add_custom_target(CopyGeneratedFiles
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different  ${CMAKE_BINARY_DIR}/protobuf/*.pb.h ${CMAKE_BINARY_DIR}/../../src/network/grpc/.
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different  ${CMAKE_BINARY_DIR}/protobuf/*.pb.cc ${CMAKE_BINARY_DIR}/../../src/network/grpc/.
+    add_custom_target(CopyGeneratedFiles            
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different  ${CMAKE_BINARY_DIR}/protobuf/route_guide.grpc.pb.h ${CMAKE_BINARY_DIR}/../../src/network/grpc/route_guide.grpc.pb.h
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different  ${CMAKE_BINARY_DIR}/protobuf/route_guide.pb.h ${CMAKE_BINARY_DIR}/../../src/network/grpc/route_guide.pb.h
+            
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different  ${CMAKE_BINARY_DIR}/protobuf/route_guide.grpc.pb.cc ${CMAKE_BINARY_DIR}/../../src/network/grpc/route_guide.grpc.pb.cc
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different  ${CMAKE_BINARY_DIR}/protobuf/route_guide.pb.cc ${CMAKE_BINARY_DIR}/../../src/network/grpc/route_guide.pb.cc
             )
 endif()
 

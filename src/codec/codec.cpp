@@ -19,9 +19,9 @@
 //#define DECODER_NAME "hevc"
 
 #define WIDTH 1920
-#define HEIGHT 816
+#define HEIGHT 1080
 #define BITRATE 10 * 1024 * 1024
-#define CRF "24"
+#define CRF "20"
 #define GOP_SIZE 30 * 60
 
 #if defined(WIN32)
@@ -166,16 +166,16 @@ int video_encode_thread(void *arg) {
         simple_queue_push(se->frame_extractor_pframe_pool, frame_data);
         image_count++;
 
-        int clean_frames = 1;
-        while (clean_frames && simple_queue_length(se->frame_sender_thread_queue) > 0) {
-			FrameData* frame_data = (FrameData*)simple_queue_pop(se->frame_sender_thread_queue);
-			simple_queue_push(se->frame_extractor_pframe_pool, frame_data);
-            std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
-            float time_since_last_encoded_frame = std::chrono::duration_cast<std::chrono::microseconds>(now - after).count() / 1000.0;
-            if (time_since_last_encoded_frame > (16.666 - 2.0 - frame_encode_duration)) {
-                clean_frames = 0;
-            }
-		}
+        // int clean_frames = 1;
+        // while (clean_frames && simple_queue_length(se->frame_sender_thread_queue) > 0) {
+		// 	FrameData* frame_data = (FrameData*)simple_queue_pop(se->frame_sender_thread_queue);
+		// 	simple_queue_push(se->frame_extractor_pframe_pool, frame_data);
+        //     std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+        //     float time_since_last_encoded_frame = std::chrono::duration_cast<std::chrono::microseconds>(now - after).count() / 1000.0;
+        //     if (time_since_last_encoded_frame > (16.666 - 2.0 - frame_encode_duration)) {
+        //         clean_frames = 0;
+        //     }
+		// }
     }
 
     /* flush the encoder */

@@ -50,8 +50,13 @@ if(WIN32)
             src/queue/queue.h
             src/dxcapture/capture.cpp
             src/dxcapture/capture.h
-			src/network/network_win.cpp
-#			src/network/network_win_raw_sockets.cpp
+#			src/network/network_win.cpp
+
+            src/network/grpc/route_guide.grpc.pb.cc
+            src/network/grpc/route_guide.grpc.pb.h
+            src/network/grpc/route_guide.pb.cc
+            src/network/grpc/route_guide.pb.h
+			src/network/network_win_raw_sockets.cpp
 			src/network/network_win.h
             src/codec/codec.cpp
             src/codec/codec.h
@@ -178,9 +183,9 @@ else()
 endif()
 
 if(WIN32)
-    target_link_libraries(${PROJECT_NAME} ${FFMPEG_LIBRARIES} ${SDL2_LIBRARY} ${DirectX11_LIBRARIES} Boost::boost nlohmann_fifo_map::fifo_map gRPC::grpc)
+    target_link_libraries(${PROJECT_NAME} ${FFMPEG_LIBRARIES} ${SDL2_LIBRARY} ${DirectX11_LIBRARIES} Boost::boost nlohmann_fifo_map::fifo_map gRPC::grpc gRPC::grpc++_unsecure protobuf::libprotobuf)
 else()
-    target_link_libraries(${PROJECT_NAME} ${FFMPEG_LIBRARIES} ${SDL2_LIBRARY} Boost::boost nlohmann_fifo_map::fifo_map gRPC::grpc++_unsecure protobuf::libprotobuf)
+    target_link_libraries(${PROJECT_NAME} ${FFMPEG_LIBRARIES} ${SDL2_LIBRARY} Boost::boost nlohmann_fifo_map::fifo_map gRPC::grpc gRPC::grpc++_unsecure protobuf::libprotobuf)
 endif()
 
 if(WIN32)
