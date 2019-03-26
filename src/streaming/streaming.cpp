@@ -43,12 +43,14 @@ void frame_data_debug(FrameData* frame_data) {
 }
 
 FrameData* frame_data_create(StreamingEnvironment* se) {
-	FrameData* frame_data = (FrameData*)malloc(sizeof(FrameData));
+	auto frame_data = new FrameData();
 
 	// [FFMPEG] Allocate an AVFrame structure
 	frame_data->pFrame = av_frame_alloc();
-	if (frame_data->pFrame == NULL)
-		return NULL;
+	if (frame_data->pFrame == nullptr) {
+		free(frame_data);
+		return nullptr;
+	}
 
 	// [FFMPEG] Determine required buffer size and allocate buffer
 	int numBytes;
@@ -60,7 +62,7 @@ FrameData* frame_data_create(StreamingEnvironment* se) {
 	numBytes = avpicture_get_size(AV_PIX_FMT_YUV420P,
 		width,
 		height);
-	frame_data->buffer = (uint8_t *)av_malloc(numBytes * sizeof(uint8_t));
+	frame_data->buffer = new uint8_t[numBytes];
 	frame_data->numBytes = numBytes;
 
 	// [FFMPEG] Assign appropriate parts of buffer to image planes in pFrameRGB
@@ -92,7 +94,7 @@ FrameData* frame_data_create(StreamingEnvironment* se) {
 int frame_data_destroy(FrameData* frame_data) {
 	av_frame_free(&frame_data->pFrame);
 	av_free(frame_data->buffer);
-	free(frame_data);
+	delete frame_data;
 
 	return 0;
 }

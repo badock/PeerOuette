@@ -2,13 +2,13 @@
 
 #define USE_NETWORK true
 
-// // H264 (nvenc)
-// #define ENCODER_NAME "h264_nvenc"
-// #define DECODER_NAME "h264"
+//// H264 (nvenc)
+//#define ENCODER_NAME "h264_nvenc"
+//#define DECODER_NAME "h264"
 
-//  // H264 (videotoolbox)
-//  #define ENCODER_NAME "h264_videotoolbox"
-//  #define DECODER_NAME "h264"
+//// H264 (videotoolbox)
+//#define ENCODER_NAME "h264_videotoolbox"
+//#define DECODER_NAME "h264"
 
 // H264 (software)
 #define ENCODER_NAME "libx264"
@@ -19,14 +19,14 @@
 //#define DECODER_NAME "hevc"
 
 #define WIDTH 1920
-#define HEIGHT 1080
+#define HEIGHT 816
 #define BITRATE 10 * 1024 * 1024
 #define CRF "20"
 #define GOP_SIZE 30 * 60
 
 #if defined(WIN32)
 char* make_av_error_string(int errnum) {
-    char *buffer = (char*) malloc(sizeof(char) * AV_ERROR_MAX_STRING_SIZE);
+    auto buffer = new char[AV_ERROR_MAX_STRING_SIZE];
     return av_make_error_string(buffer, AV_ERROR_MAX_STRING_SIZE, errnum);
 }
 #else
@@ -34,7 +34,7 @@ char* make_av_error_string(int errnum) {
 #endif
 
 
-static void encode(AVCodecContext *enc_ctx, AVFrame *frame, AVPacket *pkt, StreamingEnvironment *se, int frame_number) {
+static void encode(AVCodecContext *enc_ctx, AVFrame *frame, AVPacket *pkt, StreamingEnvironment *se, int64_t frame_number) {
     int ret;
 
     ret = avcodec_send_frame(enc_ctx, frame);
@@ -53,11 +53,14 @@ static void encode(AVCodecContext *enc_ctx, AVFrame *frame, AVPacket *pkt, Strea
             exit(1);
         }
 
-        packet_data *network_packet_data = (packet_data*) malloc(sizeof(packet_data));
+        auto network_packet_data = new packet_data();
         // fields related to ffmpeg
         network_packet_data->size = pkt->size;
-        network_packet_data->data = (uint8_t*) malloc(sizeof(uint8_t) * pkt->size);
+        network_packet_data->data = new uint8_t[pkt->size];
         // fields related to frame management
+        network_packet_data->dts  = pkt->dts;
+        network_packet_data->pts  = pkt->pts;
+        network_packet_data->flags  = pkt->flags;
         network_packet_data->frame_number = frame_number;
         network_packet_data->packet_number = packet_number;
         memcpy(network_packet_data->data, pkt->data, sizeof(uint8_t) * pkt->size);
@@ -73,7 +76,7 @@ static void encode(AVCodecContext *enc_ctx, AVFrame *frame, AVPacket *pkt, Strea
 }
 
 int video_encode_thread(void *arg) {
-    StreamingEnvironment *se = (StreamingEnvironment *) arg;
+    auto se = (StreamingEnvironment *) arg;
 
     while(! se->screen_is_initialized) {
         usleep(30 * 1000);
@@ -81,7 +84,7 @@ int video_encode_thread(void *arg) {
 
     const char *codec_name;
     const AVCodec *codec;
-    AVCodecContext *encodingContext = NULL;
+    AVCodecContext *encodingContext = nullptr;
     int ret;
     AVFrame *frame;
     AVPacket *pkt;
@@ -115,15 +118,12 @@ int video_encode_thread(void *arg) {
     encodingContext->pix_fmt = AV_PIX_FMT_YUV420P;
     encodingContext->thread_type   = FF_THREAD_SLICE;
 
-    AVDictionary *param = NULL;
+    AVDictionary *param = nullptr;
     if (strcmp(ENCODER_NAME, "h264_nvenc") != 0) {
 	    av_dict_set(&param, "preset", "ultrafast", 0);
     }
 	av_dict_set(&param, "crf", CRF, 0);
     av_dict_set(&param, "tune", "zerolatency", 0);
-
-    // if (codec->id == AV_CODEC_ID_H264)
-    //     av_opt_set(encodingContext->priv_data, "preset", "ultrafast", 0);
 
     /* open it */
     ret = avcodec_open2(encodingContext, codec, &param);
@@ -153,7 +153,7 @@ int video_encode_thread(void *arg) {
     while (se->finishing != 1) {
 
         std::chrono::system_clock::time_point before = std::chrono::system_clock::now();
-        FrameData* frame_data = (FrameData*) simple_queue_pop(se->frame_sender_thread_queue);
+        auto frame_data = (FrameData*) simple_queue_pop(se->frame_sender_thread_queue);
         frame_data->pFrame->pts = image_count;
 
         /* encode the image */
@@ -179,7 +179,7 @@ int video_encode_thread(void *arg) {
     }
 
     /* flush the encoder */
-    encode(encodingContext, NULL, pkt, se, image_count);
+    encode(encodingContext, nullptr, pkt, se, image_count);
 
     avcodec_free_context(&encodingContext);
     av_frame_free(&frame);
@@ -193,7 +193,7 @@ int video_encode_thread(void *arg) {
  */
 
 int video_decode_thread(void *arg) {
-    StreamingEnvironment *se = (StreamingEnvironment *) arg;
+    auto se = (StreamingEnvironment *) arg;
 
     while(! se->screen_is_initialized) {
         usleep(30 * 1000);
@@ -201,7 +201,7 @@ int video_decode_thread(void *arg) {
 
     const char *codec_name;
     AVCodec *codec;
-    AVCodecContext *decodingContext = NULL;
+    AVCodecContext *decodingContext = nullptr;
     AVCodecParserContext *parser;
     AVPacket *pkt;
 
@@ -246,7 +246,7 @@ int video_decode_thread(void *arg) {
     decodingContext->time_base.den = 60;
     decodingContext->pix_fmt = AV_PIX_FMT_YUV420P;
 
-    AVDictionary *param = NULL;
+    AVDictionary *param = nullptr;
 	av_dict_set(&param, "preset", "ultrafast", 0);
 	av_dict_set(&param, "crf", CRF, 0);
     av_dict_set(&param, "tune", "zerolatency", 0);
@@ -273,7 +273,7 @@ int video_decode_thread(void *arg) {
     if (!pkt)
         exit(1);
 
-    FrameData* frame_data = (FrameData*)simple_queue_pop(se->frame_extractor_pframe_pool);
+    auto frame_data = (FrameData*)simple_queue_pop(se->frame_extractor_pframe_pool);
 
     std::chrono::system_clock::time_point before = std::chrono::system_clock::now();
 
@@ -283,7 +283,7 @@ int video_decode_thread(void *arg) {
     long nb_img = 0;
     while (se->finishing != 1) {
 
-        packet_data* network_packet_data = (packet_data*) simple_queue_pop(se->network_simulated_queue);
+        auto network_packet_data = (packet_data*) simple_queue_pop(se->network_simulated_queue);
 
         pkt->data = network_packet_data->data;
         pkt->size = network_packet_data->size;
@@ -328,7 +328,7 @@ int video_decode_thread(void *arg) {
     /* some codecs, such as MPEG, transmit the I and P frame with a
        latency of one frame. You must do the following to have a
        chance to get the last frame of the video */
-    avpkt.data = NULL;
+    avpkt.data = nullptr;
     avpkt.size = 0;
 
     avcodec_close(decodingContext);

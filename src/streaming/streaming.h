@@ -60,7 +60,7 @@ typedef struct _StreamingEnvironment {
     SimpleQueue *incoming_asio_buffer_queue;
 	AVPixelFormat format;
 
-	AVCodecContext* frameExtractorEncodingContext;
+	AVCodecContext* frameExtractorDecodingContext;
 	AVFormatContext* frameExtractorEncodingFormatContext;
 
 	int width;

@@ -22,11 +22,11 @@ set(CMAKE_CXX_STANDARD 11)
 #hunter_add_package(Beast)
 #find_package(Beast CONFIG REQUIRED)
 
-hunter_add_package(Boost)
-find_package(Boost CONFIG REQUIRED)
+#hunter_add_package(Boost)
+#find_package(Boost CONFIG REQUIRED)
 
-hunter_add_package(nlohmann_fifo_map)
-find_package(nlohmann_fifo_map CONFIG REQUIRED)
+#hunter_add_package(nlohmann_fifo_map)
+#find_package(nlohmann_fifo_map CONFIG REQUIRED)
 
 hunter_add_package(Protobuf)
 find_package(Protobuf CONFIG REQUIRED)
@@ -42,22 +42,18 @@ if(WIN32)
             main.cpp
             src/streaming/streaming.cpp
             src/streaming/streaming.h
-            #src/video/ffmpeg.cpp
-            #src/video/ffmpeg.h
             src/log/log.cpp
             src/log/log.h
             src/queue/queue.cpp
             src/queue/queue.h
             src/dxcapture/capture.cpp
             src/dxcapture/capture.h
-#			src/network/network_win.cpp
-
             src/network/grpc/route_guide.grpc.pb.cc
             src/network/grpc/route_guide.grpc.pb.h
             src/network/grpc/route_guide.pb.cc
             src/network/grpc/route_guide.pb.h
-			src/network/network_win_raw_sockets.cpp
-			src/network/network_win.h
+			src/network/network.cpp
+			src/network/network.h
             src/codec/codec.cpp
             src/codec/codec.h
             src/texture_converter/TextureConverter.cpp
@@ -80,34 +76,26 @@ if(WIN32)
 
 
 else()
-    message("TOTOTOTTOTO = __${hw_proto_srcs}__ __${hw_grpc_srcs}__ ")
-
     add_executable(GameClientSDL
             main.cpp
             src/streaming/streaming.cpp
             src/streaming/streaming.h
-            #src/video/ffmpeg.cpp
-            #src/video/ffmpeg.h
             src/log/log.cpp
             src/log/log.h
-#			src/network/network_win.cpp
-#            src/network/grpc/route_guide.pb.cc
-#            src/network/grpc/route_guide.grpc.pb.cc
-#            /Users/jonathan/CLionProjects/GameClientSDL/build/src/network/grpc/route_guide.pb.cc
-#            /Users/jonathan/CLionProjects/GameClientSDL/build/src/network/grpc/route_guide.grpc.pb.cc
-#            protobuf/route_guide_client.cc
-#            src/network/grpc/route_guide_server.cc
             src/network/grpc/route_guide.grpc.pb.cc
             src/network/grpc/route_guide.grpc.pb.h
             src/network/grpc/route_guide.pb.cc
             src/network/grpc/route_guide.pb.h
-
-            src/network/network_win_raw_sockets.cpp
-			src/network/network_win.h
+			src/network/network.cpp
+			src/network/network.h
+			src/extractors/extractors.cpp
+			src/extractors/extractors.h
+			src/output/output.cpp
+			src/output/output.h
             src/codec/codec.cpp
             src/codec/codec.h
             src/queue/queue.cpp
-            src/queue/queue.h)
+            src/queue/queue.h src/extractors/extractors.cpp src/extractors/extractors.h src/output/output.cpp src/output/output.h)
 endif()
 INCLUDE(FindPkgConfig)
 
@@ -139,7 +127,7 @@ if(WIN32)
         message("DirectX11_INCLUDE_DIRS = ${DirectX11_INCLUDE_DIRS} ")
         message("DirectX11_LIBRARIES = ${DirectX11_LIBRARIES} ")
     else()
-        message(FATAL_ERROR "FFMPEG not found")
+        message(FATAL_ERROR "DirectX11 not found")
     endif()
     INCLUDE_DIRECTORIES(${DirectX11_INCLUDE_DIRS})
 endif()
@@ -174,8 +162,6 @@ if(WIN32)
 
 endif()
 
-MESSAGE(CUICUICICICICI ${hw_proto_srcs} ${hw_grpc_srcs})
-
 if(NOT MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 else()
@@ -183,9 +169,9 @@ else()
 endif()
 
 if(WIN32)
-    target_link_libraries(${PROJECT_NAME} ${FFMPEG_LIBRARIES} ${SDL2_LIBRARY} ${DirectX11_LIBRARIES} Boost::boost nlohmann_fifo_map::fifo_map gRPC::grpc gRPC::grpc++_unsecure protobuf::libprotobuf)
+    target_link_libraries(${PROJECT_NAME} ${FFMPEG_LIBRARIES} ${SDL2_LIBRARY} ${DirectX11_LIBRARIES} gRPC::grpc gRPC::grpc++_unsecure protobuf::libprotobuf)
 else()
-    target_link_libraries(${PROJECT_NAME} ${FFMPEG_LIBRARIES} ${SDL2_LIBRARY} Boost::boost nlohmann_fifo_map::fifo_map gRPC::grpc gRPC::grpc++_unsecure protobuf::libprotobuf)
+    target_link_libraries(${PROJECT_NAME} ${FFMPEG_LIBRARIES} ${SDL2_LIBRARY} gRPC::grpc gRPC::grpc++_unsecure protobuf::libprotobuf)
 endif()
 
 if(WIN32)
@@ -198,15 +184,8 @@ if(WIN32)
         COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/deps/FFmpeg.Nightly/build/native/bin/Win32/avformat-58.dll ${CMAKE_BINARY_DIR}/Debug
         COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/deps/FFmpeg.Nightly/build/native/bin/Win32/avutil-56.dll ${CMAKE_BINARY_DIR}/Debug
         COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/deps/FFmpeg.Nightly/build/native/bin/Win32/swresample-3.dll ${CMAKE_BINARY_DIR}/Debug
-
     )
     add_dependencies(GameClientSDL DLLCopyBinaries)
 endif()
 
 add_dependencies(GameClientSDL CopyGeneratedFiles)
-#LINK_DIRECTORIES(${CMAKE_BINARY_DIR}/route_guide_client)
-
-#add_dependencies(GameClientSDL ploufplouf)
-#add_dependencies(GameClientSDL test2_run)
-#add_dependencies(test2_run ploufplouf)
-

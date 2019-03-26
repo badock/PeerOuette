@@ -1,25 +1,11 @@
-#include "network_win.h"
+#include "network.h"
 
-#include <grpc/grpc.h>
 #include <grpcpp/channel.h>
-#include <grpcpp/client_context.h>
 #include <grpcpp/create_channel.h>
-#include <grpcpp/security/credentials.h>
 
-#include <grpc/grpc.h>
 #include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
-#include <grpcpp/server_context.h>
-#include <grpcpp/security/server_credentials.h>
 #include "grpc/route_guide.grpc.pb.h"
-
-#define LISTENING_ADDRESS "0.0.0.0"
-#define network_PORT 8000
-//#define SERVER_ADDRESS "192.168.1.30"
-#define SERVER_ADDRESS "127.0.0.1"
-#define BUFFER_SIZE 800000
-#define MAX_PACKET_SIZE 4000
-
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -39,12 +25,13 @@ using grpc::ClientWriter;
 using grpc::Status;
 using gamingstreaming::InputCommand;
 
+using namespace std;
 
 FrameSubPacket MakeFrame(const int frame_number,
                          const int packet_number,
                          const int size,
-                         const int pts,
-                         const int dts,
+                         const int64_t pts,
+                         const int64_t dts,
                          const int flags,
                          const char* data) {
     FrameSubPacket f;
@@ -72,7 +59,7 @@ public:
         InputCommand cmd;
 
         while (!se->finishing) {
-            packet_data *pkt_d = (packet_data *) simple_queue_pop(se->packet_sender_thread_queue);
+            auto pkt_d = (packet_data *) simple_queue_pop(se->packet_sender_thread_queue);
 
 
             FrameSubPacket subPacket = MakeFrame(pkt_d->frame_number,
@@ -108,7 +95,7 @@ InputCommand MakeInputCommand(const std::string& command) {
 class GamingStreamingServiceClient {
 public:
     StreamingEnvironment* se;
-    GamingStreamingServiceClient(std::shared_ptr<Channel> channel, StreamingEnvironment* se)
+    GamingStreamingServiceClient(const std::shared_ptr<Channel> &channel, StreamingEnvironment* se)
             : stub_(gamingstreaming::GamingStreamingService::NewStub(channel)) {
         this->se = se;
     }
@@ -117,7 +104,8 @@ public:
     void GamingChannel() {
         ClientContext context;
 
-        std::shared_ptr<ClientReaderWriter<InputCommand, FrameSubPacket> > stream(
+        std::shared_ptr<ClientReaderWriter<InputCommand, FrameSubPacket> >
+                stream(
                 stub_->GamingChannel(&context));
 
         std::thread writer([stream]() {
@@ -130,10 +118,9 @@ public:
 //            std::cout << "Got frame (" << server_frame.frame_number()
 //                      << ", " << server_frame.packet_number() << ") " << std::endl;
 
-            packet_data* new_packet_data = new packet_data();
+            auto new_packet_data = new packet_data();
             new_packet_data->frame_number = server_frame.frame_number();
             new_packet_data->packet_number = server_frame.packet_number();
-//            new_packet_data->data = (uint8_t*) server_frame.data().data();
             new_packet_data->size = server_frame.size();
             new_packet_data->flags = server_frame.flags();
             new_packet_data->dts = server_frame.dts();
@@ -153,13 +140,11 @@ public:
     }
 
 private:
-
-    const float kCoordFactor_ = 10000000.0;
     std::unique_ptr<gamingstreaming::GamingStreamingService::Stub> stub_;
 };
 
 int packet_sender_thread(void *arg) {
-    StreamingEnvironment *se = (StreamingEnvironment*)arg;
+    auto se = (StreamingEnvironment*)arg;
 
     std::string server_address("0.0.0.0:50051");
     GamingStreamingServiceImpl service(se);
@@ -175,15 +160,13 @@ int packet_sender_thread(void *arg) {
 }
 
 int packet_receiver_thread(void *arg) {
-    StreamingEnvironment *se = (StreamingEnvironment*)arg;
+    auto se = (StreamingEnvironment*) arg;
 
     GamingStreamingServiceClient client(
             grpc::CreateChannel("localhost:50051",
                                 grpc::InsecureChannelCredentials()),
             se
     );
-
-    std::cout << "-------------- GetFeature --------------" << std::endl;
     client.GamingChannel();
 
     return 0;

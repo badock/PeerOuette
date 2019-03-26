@@ -356,7 +356,6 @@ int done_with_frame(CaptureContext* cc) {
 
 
 int get_pixels(CaptureContext* cc, FrameData* ffmpeg_frame_data) {
-	int               result;
 	D3D11_MAPPED_SUBRESOURCE mapping;
 	ID3D11Texture2D* m_ftexture;
 
@@ -410,27 +409,6 @@ int get_pixels(CaptureContext* cc, FrameData* ffmpeg_frame_data) {
 	//log_info("RGBA(%i, %i, %i, %i)", r, g, b, a);
 
 	return 1;
-
-	uint8_t* buffer = (uint8_t *) malloc(sizeof(uint8_t) * 1920 * 1080 * 4);
-	int pitch = cc->m_width * 4;
-	int stride = cc->m_width;
-
-	
-	if (pitch == mapping.RowPitch)
-		memcpy
-		(buffer, mapping.pData, pitch * cc->m_height);
-	else
-		for (unsigned int y = 0; y < cc->m_height; ++y)
-			memcpy(
-			(uint8_t *)buffer + (pitch      * y),
-				(uint8_t *)mapping.pData + (mapping.RowPitch * y),
-				pitch
-			);
-
-	cc->context->Unmap(cc->m_AcquiredDesktopImage, 0);
-	free(buffer);
-
-	return 0;
 }
 
 // The following function is inspired by https://github.com/brichard19/memcpy_sse

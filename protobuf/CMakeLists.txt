@@ -19,8 +19,6 @@
 
 cmake_minimum_required(VERSION 2.8)
 
-message(">>>> ${CMAKE_CURRENT_SOURCE_DIR}")
-
 #if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/../CMakeModules)
 #    set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../CMakeModules)
 #endif()
@@ -40,11 +38,11 @@ project(grpc_example)
 #hunter_add_package(Beast)
 #find_package(Beast CONFIG REQUIRED)
 
-hunter_add_package(Boost)
-find_package(Boost CONFIG REQUIRED)
+#hunter_add_package(Boost)
+#find_package(Boost CONFIG REQUIRED)
 
-hunter_add_package(nlohmann_fifo_map)
-find_package(nlohmann_fifo_map CONFIG REQUIRED)
+#hunter_add_package(nlohmann_fifo_map)
+#find_package(nlohmann_fifo_map CONFIG REQUIRED)
 
 
 hunter_add_package(Protobuf)
@@ -101,25 +99,11 @@ add_custom_command(
 
 # Include generated *.pb.h files
 include_directories("${CMAKE_CURRENT_BINARY_DIR}")
-message("TOTOTOTTOTO222 = __${hw_proto_srcs}__ __${hw_grpc_srcs}__ __${hw_proto}__")
-message("atchoum ${CMAKE_CURRENT_BINARY_DIR}")
 
-MESSAGE(CUICUICICICICI>>> ${hw_proto_srcs} ${hw_grpc_srcs})
-
-message(TATATA __${_GRPC_GRPCPP_UNSECURE}__ __${_PROTOBUF_LIBPROTOBUF}__)
 add_executable(route_guide_client "route_guide_client.cc" ${hw_proto_srcs} ${hw_grpc_srcs})
 
 target_link_libraries(route_guide_client ${_GRPC_GRPCPP_UNSECURE} ${_PROTOBUF_LIBPROTOBUF} gRPC::grpc gRPC::grpc++_unsecure protobuf::libprotobuf)
 
-add_custom_target(CopyGeneratedProtocolBufferFiles
-        # todo: check if debug and release folder exist
-        # debug version
-#        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/route_guide.grpc.pb.cc ${CMAKE_BINARY_DIR}/Debug
-
-        )
-add_dependencies(route_guide_client CopyGeneratedProtocolBufferFiles)
-
-message(I will include ${CMAKE_CURRENT_BINARY_DIR})
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 if(EXISTS ${CMAKE_BINARY_DIR}/../src/network/grpc)

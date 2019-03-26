@@ -6,7 +6,7 @@
 #include <stdlib.h>
 
 SimpleQueue* simple_queue_create() {
-    SimpleQueue* new_simple_queue = (SimpleQueue*) malloc(sizeof(SimpleQueue));
+    auto new_simple_queue = new SimpleQueue();
     new_simple_queue->mutex = SDL_CreateMutex();
     new_simple_queue->cond = SDL_CreateCond();
     new_simple_queue->next = NULL;
@@ -14,7 +14,7 @@ SimpleQueue* simple_queue_create() {
 }
 
 int simple_queue_destroy(SimpleQueue *simple_queue) {
-    free(simple_queue);
+    delete simple_queue;
     return 1;
 }
 
@@ -34,7 +34,7 @@ void* simple_queue_pop(SimpleQueue *simple_queue) {
     // Second element of the queue (or NULL) is now first
     simple_queue->next = current_queue_node->next_queue_node;
     // Release the memory of the popped element
-    free(current_queue_node);
+    delete current_queue_node;
     // Release the lock on the queue
     SDL_UnlockMutex(simple_queue->mutex);
     return result;
@@ -44,7 +44,7 @@ void simple_queue_push(SimpleQueue *simple_queue, void *element) {
     // Acquire the queue's lock
     SDL_LockMutex(simple_queue->mutex);
     // Allocate memory to store a new element of the queue
-    QueueNode* new_queue_node = (QueueNode*) malloc(sizeof(QueueNode));
+    auto new_queue_node = new QueueNode();
     new_queue_node->ptr = element;
     new_queue_node->next_queue_node = NULL;
     // Add the new element at the end of the queue
