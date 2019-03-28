@@ -155,7 +155,7 @@ int frame_extractor_thread(void *arg) {
         // Is this a packet from the video stream?
         if (packet.stream_index == se->videoStream) {
             // [FFMPEG] Grab a frame data structure from the frame pool
-            auto frame_data = (FrameData *)simple_queue_pop(se->frame_extractor_pframe_pool);
+            auto frame_data = se->frame_extractor_pframe_pool.pop();
 
             // Decode video frame
             avcodec_decode_video2(se->frameExtractorDecodingContext,
@@ -168,7 +168,7 @@ int frame_extractor_thread(void *arg) {
                 // Push frame to the output_video thread
                 AVFrame* old_pframe = frame_data->pFrame;
                 frame_data->pFrame = av_frame_clone(frame_data->pFrame);
-                simple_queue_push(se->frame_sender_thread_queue, frame_data);
+                se->frame_sender_thread_queue.push(frame_data);
 
                 av_free(old_pframe);
                 counter++;

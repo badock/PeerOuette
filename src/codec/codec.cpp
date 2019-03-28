@@ -1,4 +1,5 @@
 #include "codec.h"
+#include <memory>
 
 #define USE_NETWORK true
 
@@ -54,6 +55,10 @@ static void encode(AVCodecContext *enc_ctx, AVFrame *frame, AVPacket *pkt, Strea
         }
 
         auto network_packet_data = new packet_data();
+//        auto network_packet_data = std::make_unique<packet_data>();
+//        se->packet_sender_thread_queue.emplace_back();
+//        auto &network_packet_data = se->packet_sender_thread_queue.back();
+
         // fields related to ffmpeg
         network_packet_data->size = pkt->size;
         network_packet_data->data = new uint8_t[pkt->size];
@@ -66,9 +71,9 @@ static void encode(AVCodecContext *enc_ctx, AVFrame *frame, AVPacket *pkt, Strea
         memcpy(network_packet_data->data, pkt->data, sizeof(uint8_t) * pkt->size);
 
         if (!USE_NETWORK) {
-            simple_queue_push(se->network_simulated_queue, network_packet_data);
+            se->network_simulated_queue.push(network_packet_data);
         } else {
-            simple_queue_push(se->packet_sender_thread_queue, network_packet_data);
+            se->packet_sender_thread_queue.push(network_packet_data);
         }
         av_packet_unref(pkt);
         packet_number++;
@@ -153,7 +158,7 @@ int video_encode_thread(void *arg) {
     while (se->finishing != 1) {
 
         std::chrono::system_clock::time_point before = std::chrono::system_clock::now();
-        auto frame_data = (FrameData*) simple_queue_pop(se->frame_sender_thread_queue);
+        auto frame_data = se->frame_sender_thread_queue.pop();
         frame_data->pFrame->pts = image_count;
 
         /* encode the image */
@@ -163,7 +168,7 @@ int video_encode_thread(void *arg) {
         float frame_encode_duration = std::chrono::duration_cast<std::chrono::microseconds>(after - before).count() / 1000.0;
         // log_info(" encoding duration (packet: %d): %f", image_count, frame_encode_duration);
         
-        simple_queue_push(se->frame_extractor_pframe_pool, frame_data);
+        se->frame_extractor_pframe_pool.push(frame_data);
         image_count++;
 
         // int clean_frames = 1;
@@ -273,7 +278,7 @@ int video_decode_thread(void *arg) {
     if (!pkt)
         exit(1);
 
-    auto frame_data = (FrameData*)simple_queue_pop(se->frame_extractor_pframe_pool);
+    auto frame_data = se->frame_extractor_pframe_pool.pop();
 
     std::chrono::system_clock::time_point before = std::chrono::system_clock::now();
 
@@ -283,7 +288,7 @@ int video_decode_thread(void *arg) {
     long nb_img = 0;
     while (se->finishing != 1) {
 
-        auto network_packet_data = (packet_data*) simple_queue_pop(se->network_simulated_queue);
+        auto network_packet_data = se->network_simulated_queue.pop();
 
         pkt->data = network_packet_data->data;
         pkt->size = network_packet_data->size;
@@ -314,9 +319,9 @@ int video_decode_thread(void *arg) {
             // log_info(" decoding duration (packet:%d): %f", nb_img, frame_encode_duration);
             nb_img++;
 
-            simple_queue_push(se->frame_output_thread_queue, frame_data);
+            se->frame_output_thread_queue.push(frame_data);
 
-            frame_data = (FrameData*)simple_queue_pop(se->frame_extractor_pframe_pool);
+            frame_data = se->frame_extractor_pframe_pool.pop();
             before = std::chrono::system_clock::now();
         }
 

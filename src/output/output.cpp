@@ -65,7 +65,7 @@ int frame_output_thread(void *arg) {
     int i = 0;
     while(se->finishing != 1) {
         //log_info("frame_output_thread: %i elements in queue", simple_queue_length(se->frame_output_thread_queue));
-        auto frame_data = (FrameData*) simple_queue_pop(se->frame_output_thread_queue);
+        auto frame_data = (FrameData*) se->frame_output_thread_queue.pop();
         frame_data->sdl_received_time_point = std::chrono::system_clock::now();
 
         // [SDL] Create an AV Picture
@@ -106,12 +106,12 @@ int frame_output_thread(void *arg) {
         i++;
 
         frame_data_debug(frame_data);
-        simple_queue_push(se->frame_extractor_pframe_pool, frame_data);
+        se->frame_extractor_pframe_pool.push(frame_data);
 
         // Put processed frames back in the extractor pool
-        while (simple_queue_length(se->frame_output_thread_queue) > 0) {
-            auto* processed_frame_data = (FrameData*) simple_queue_pop(se->frame_output_thread_queue);
-            simple_queue_push(se->frame_extractor_pframe_pool, processed_frame_data);
+        while (se->frame_output_thread_queue.size() > 0) {
+            auto* processed_frame_data = se->frame_output_thread_queue.pop();
+            se->frame_extractor_pframe_pool.push(processed_frame_data);
         }
     }
 

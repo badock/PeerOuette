@@ -8,14 +8,6 @@
 #define av_frame_free avcodec_free_frame
 #endif
 
-#include "src/network/network.h"
-#include "src/codec/codec.h"
-#if defined(WIN32)
-
-#else
-#include <unistd.h>
-#endif
-
 #undef main
 
 int FRAME_POOL_SIZE = 45;
@@ -32,7 +24,6 @@ void my_log_callback(void *ptr, int level, const char *fmt, va_list vargs)
 int main(int argc, char* argv[]){
     log_info("Simple GameClient has started");
 
-
 	// [FFMPEG] Registering file formats and codecs
 	log_info("Registering file formats and codecs");
 	av_register_all();
@@ -43,16 +34,9 @@ int main(int argc, char* argv[]){
     // Initialize streaming environment and threads
     log_info("Initializing streaming environment");
     auto se = new StreamingEnvironment();
-    se->frame_extractor_pframe_pool = simple_queue_create();
-    se->frame_output_thread_queue = simple_queue_create();
-	se->frame_sender_thread_queue = simple_queue_create();
-	se->frame_receiver_thread_queue = simple_queue_create();
-    se->packet_sender_thread_queue = simple_queue_create();
-    se->network_simulated_queue = simple_queue_create();
-    se->incoming_asio_buffer_queue = simple_queue_create();
 
 	se->frame_output_thread = SDL_CreateThread(frame_output_thread, "frame_output_thread", se);
-     se->frame_extractor_thread = SDL_CreateThread(frame_extractor_thread, "frame_extractor_thread", se);
+    se->frame_extractor_thread = SDL_CreateThread(frame_extractor_thread, "frame_extractor_thread", se);
     #if defined(WIN32)
    se->gpu_frame_extractor_thread = SDL_CreateThread(gpu_frame_extractor_thread, "gpu_frame_extractor_thread", se);
     #endif
@@ -114,7 +98,7 @@ int main(int argc, char* argv[]){
 	for (int i = 0; i < FRAME_POOL_SIZE; i++) {
 		FrameData* frame_data = frame_data_create(se);
 		frame_data->id = i;
-		simple_queue_push(se->frame_extractor_pframe_pool, frame_data);
+		se->frame_extractor_pframe_pool.push(frame_data);
 	}
 
     SDL_Event event;
@@ -140,8 +124,8 @@ int main(int argc, char* argv[]){
     }
 
     // [FFMPEG] Free the RGB image
-    while (! simple_queue_is_empty(se->frame_extractor_pframe_pool)) {
-        auto frame_data = (FrameData *) simple_queue_pop(se->frame_extractor_pframe_pool);
+    while (! se->frame_extractor_pframe_pool.isEmpty()) {
+        auto frame_data = se->frame_extractor_pframe_pool.pop();
         frame_data_destroy(frame_data);
     }
 

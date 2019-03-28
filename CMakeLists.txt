@@ -17,7 +17,7 @@ HunterGate(
 add_subdirectory(protobuf)
 
 project(GameClientSDL)
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 
 #hunter_add_package(Beast)
 #find_package(Beast CONFIG REQUIRED)
@@ -39,7 +39,7 @@ find_package(gRPC CONFIG REQUIRED)
 
 if(WIN32)
     add_executable(GameClientSDL
-            main.cpp
+			src/bin/peerouette.cpp
             src/streaming/streaming.cpp
             src/streaming/streaming.h
             src/log/log.cpp
@@ -77,7 +77,7 @@ if(WIN32)
 
 else()
     add_executable(GameClientSDL
-            main.cpp
+			src/bin/peerouette.cpp
             src/streaming/streaming.cpp
             src/streaming/streaming.h
             src/log/log.cpp

@@ -59,8 +59,8 @@ public:
         InputCommand cmd;
 
         while (!se->finishing) {
-            auto pkt_d = (packet_data *) simple_queue_pop(se->packet_sender_thread_queue);
-
+//            auto pkt_d = (packet_data *) simple_queue_pop(se->packet_sender_thread_queue);
+            const auto pkt_d = se->packet_sender_thread_queue.pop();
 
             FrameSubPacket subPacket = MakeFrame(pkt_d->frame_number,
                                                  pkt_d->packet_number,
@@ -71,8 +71,9 @@ public:
                                                  (char*) pkt_d->data);
             stream->Write(subPacket);
 
-            free(pkt_d->data);
-            free(pkt_d);
+//            free(pkt_d->data);
+//            se->packet_sender_thread_queue.pop_back();
+//            free(pkt_d);
 
             while (stream->Read(&cmd)) {
                 std::cout << "Received an input command" << cmd.command() << std::endl;
@@ -130,7 +131,7 @@ public:
             new_packet_data->data = new uint8_t[new_packet_data->size];
             memcpy(new_packet_data->data, server_frame.data().data(), new_packet_data->size);
 
-            simple_queue_push(se->network_simulated_queue, new_packet_data);
+            se->network_simulated_queue.push(new_packet_data);
         }
 //        writer.join();
         Status status = stream->Finish();
