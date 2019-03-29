@@ -30,7 +30,7 @@ int gpu_frame_extractor_thread(void *arg) {
 	ID3D11Texture2D* CopyBuffer = nullptr;
     int64_t framecount = 0;
     while(1) {
-		FrameData* ffmpeg_frame_data = (FrameData *) simple_queue_pop(se->frame_extractor_pframe_pool);
+		FrameData* ffmpeg_frame_data = se->frame_extractor_pframe_pool.pop();
 
         std::chrono::system_clock::time_point before = std::chrono::system_clock::now();
 		frame_data_reset_time_points(ffmpeg_frame_data);
@@ -46,10 +46,10 @@ int gpu_frame_extractor_thread(void *arg) {
 		int frame_release_result = done_with_frame(&cc);
 
 		if (true) {
-			simple_queue_push(se->frame_sender_thread_queue, ffmpeg_frame_data);
+			se->frame_sender_thread_queue.push(ffmpeg_frame_data);
 		}
 		else {
-			simple_queue_push(se->frame_output_thread_queue, ffmpeg_frame_data);
+			se->frame_output_thread_queue.push(ffmpeg_frame_data);
 		}
 
         std::chrono::system_clock::time_point after = std::chrono::system_clock::now();

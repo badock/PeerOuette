@@ -20,7 +20,7 @@
 //#define DECODER_NAME "hevc"
 
 #define WIDTH 1920
-#define HEIGHT 816
+#define HEIGHT 1080
 #define BITRATE 10 * 1024 * 1024
 #define CRF "20"
 #define GOP_SIZE 30 * 60
@@ -296,6 +296,11 @@ int video_decode_thread(void *arg) {
         if (pkt->size > max_packet_size) {
             max_packet_size = pkt->size;
         }
+        
+        // fields related to frame management
+        pkt->dts = network_packet_data->dts;
+        pkt->pts = network_packet_data->pts;
+        pkt->flags = network_packet_data->flags;
 
         // avg_packet_size = (avg_packet_size * nb_packet + pkt->size) / ++nb_packet;
 

@@ -1,6 +1,9 @@
-#include "src/streaming/streaming.h"
+
 #include "src/output/output.h"
 #include "src/extractors/extractors.h"
+#include "src/streaming/streaming.h"
+// #include "src/output/output.h"
+// #include "src/extractors/extractors.h"
 
 // compatibility with newer API
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(55,28,1)
@@ -14,7 +17,7 @@ int FRAME_POOL_SIZE = 45;
 int SDL_WINDOW_WIDTH = 1280;
 int SDL_WINDOW_HEIGHT = 720;
 int CAPTURE_WINDOW_WIDTH = 1920;
-int CAPTURE_WINDOW_HEIGHT = 816;
+int CAPTURE_WINDOW_HEIGHT = 1080;
 
 void my_log_callback(void *ptr, int level, const char *fmt, va_list vargs)
 {
@@ -36,9 +39,9 @@ int main(int argc, char* argv[]){
     auto se = new StreamingEnvironment();
 
 	se->frame_output_thread = SDL_CreateThread(frame_output_thread, "frame_output_thread", se);
-    se->frame_extractor_thread = SDL_CreateThread(frame_extractor_thread, "frame_extractor_thread", se);
+    //se->frame_extractor_thread = SDL_CreateThread(frame_extractor_thread, "frame_extractor_thread", se);
     #if defined(WIN32)
-   se->gpu_frame_extractor_thread = SDL_CreateThread(gpu_frame_extractor_thread, "gpu_frame_extractor_thread", se);
+    se->gpu_frame_extractor_thread = SDL_CreateThread(gpu_frame_extractor_thread, "gpu_frame_extractor_thread", se);
     #endif
 
 	se->frame_sender_thread = SDL_CreateThread(video_decode_thread, "frame_sender_thread", se);
