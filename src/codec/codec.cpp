@@ -83,7 +83,7 @@ static void encode(AVCodecContext *enc_ctx, AVFrame *frame, AVPacket *pkt, Strea
 int video_encode_thread(void *arg) {
     auto se = (StreamingEnvironment *) arg;
 
-    while(! se->screen_is_initialized) {
+    while(! se->client_connected) {
         usleep(30 * 1000);
     }
 
@@ -116,7 +116,7 @@ int video_encode_thread(void *arg) {
     encodingContext->width = WIDTH;
     encodingContext->height = HEIGHT;
     encodingContext->bit_rate = BITRATE;
-   encodingContext->gop_size = GOP_SIZE;
+    encodingContext->gop_size = GOP_SIZE;
 //    encodingContext->max_b_frames = 0;
     encodingContext->time_base.num = 1;
     encodingContext->time_base.den = 60;
@@ -340,4 +340,6 @@ int video_decode_thread(void *arg) {
     av_free(decodingContext);
     av_free(&frame);
     log_info("\n");
+
+    return 1;
 }

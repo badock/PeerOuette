@@ -35,18 +35,43 @@ int main(int argc, char* argv[]){
     log_info("Initializing streaming environment");
     auto se = new StreamingEnvironment();
 
-	se->frame_output_thread = SDL_CreateThread(frame_output_thread, "frame_output_thread", se);
-    se->frame_extractor_thread = SDL_CreateThread(frame_extractor_thread, "frame_extractor_thread", se);
-    #if defined(WIN32)
-   se->gpu_frame_extractor_thread = SDL_CreateThread(gpu_frame_extractor_thread, "gpu_frame_extractor_thread", se);
-    #endif
+    // Analyse arguments passed to the program
+    if (argc == 1) {
+        se->is_all_in_one = true;
+        se->is_server = true;
+        se->is_client = true;
+        se->listen_address = std::string("0.0.0.0:50051");
+        se->server_address = std::string("localhost:50051");
+    } else {
+        std::string role(argv[1]);
+        if (role.compare("--server") == 0) {
+            se->is_server = true;
+            se->listen_address = std::string("0.0.0.0:50051");
+        } else if (role.compare("--client") == 0) {
+            se->is_client = true;
+            se->server_address = std::string("localhost:50051");
+        }
+    }
+//    se->is_all_in_one = true;
+//    se->server_address = std::string("localhost:50051");
+    // Create threads
 
-	se->frame_sender_thread = SDL_CreateThread(video_decode_thread, "frame_sender_thread", se);
- 	se->frame_receiver_thread = SDL_CreateThread(video_encode_thread, "frame_receiver_thread", se);
+    // a) server threads
+    if (se->is_all_in_one || se->is_server) {
+        se->frame_extractor_thread = SDL_CreateThread(frame_extractor_thread, "frame_extractor_thread", se);
+#if defined(WIN32)
+        se->gpu_frame_extractor_thread = SDL_CreateThread(gpu_frame_extractor_thread, "gpu_frame_extractor_thread", se);
+#endif
+        se->video_encode_thread = SDL_CreateThread(video_encode_thread, "video_encode_thread", se);
+        se->packet_sender_thread = SDL_CreateThread(packet_sender_thread, "packet_sender_thread", se);
+    }
 
-    se->packet_sender_thread = SDL_CreateThread(packet_sender_thread, "packet_sender_thread", se);
-    se->packet_receiver_thread = SDL_CreateThread(packet_receiver_thread, "packet_receiver_thread", se);
-
+    // b) Client threads
+    if (se->is_all_in_one || se->is_client) {
+        se->packet_receiver_thread = SDL_CreateThread(packet_receiver_thread, "packet_receiver_thread", se);
+        se->video_decode_thread = SDL_CreateThread(video_decode_thread, "video_decode_thread", se);
+        se->frame_output_thread = SDL_CreateThread(frame_output_thread, "frame_output_thread", se);
+    }
     se->finishing = 0;
     se->initialized = 0;
 	se->network_initialized = 0;
@@ -55,40 +80,46 @@ int main(int argc, char* argv[]){
     se->height = CAPTURE_WINDOW_HEIGHT;
 	se->format = AV_PIX_FMT_YUV420P;
 
-    // [SDL] Initializing SDL library
-    log_info("Initializing SDL library");
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER)) {
-        fprintf(stderr, "Could not initialize SDL - %s\n", SDL_GetError());
-        exit(1);
-    }
+    if (se->is_client || se->is_all_in_one) {
 
-    // [SDL] Creating a display
-    log_info("Creating a SDL display");
-    Uint32 screen_flags = SDL_WINDOW_OPENGL;
-    if (0) {
-        screen_flags = SDL_WINDOW_FULLSCREEN | SDL_WINDOW_OPENGL;
-    }
-	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "best");
-    SDL_Window *screen = SDL_CreateWindow(
-            "FFmpeg Tutorial",
-            SDL_WINDOWPOS_UNDEFINED,
-            SDL_WINDOWPOS_UNDEFINED,
-			SDL_WINDOW_WIDTH,
-			SDL_WINDOW_HEIGHT,
-            screen_flags
-    );
-    SDL_ShowWindow(screen);
-    se->screen = screen;
+        // [SDL] Initializing SDL library
+        log_info("Initializing SDL library");
+        if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER)) {
+            fprintf(stderr, "Could not initialize SDL - %s\n", SDL_GetError());
+            exit(1);
+        }
 
-    if (!se->screen) {
-        fprintf(stderr, "SDL: could not create window - exiting\n");
-        exit(1);
-    }
 
-    se->renderer = SDL_CreateRenderer(se->screen, -1, 0);
-    if (!se->renderer) {
-        fprintf(stderr, "SDL: could not create renderer - exiting\n");
-        exit(1);
+        // [SDL] Creating a display
+        log_info("Creating a SDL display");
+        Uint32 screen_flags = SDL_WINDOW_OPENGL;
+        if (0) {
+            screen_flags = SDL_WINDOW_FULLSCREEN | SDL_WINDOW_OPENGL;
+        }
+        SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "best");
+        SDL_Window *screen = SDL_CreateWindow(
+                "FFmpeg Tutorial",
+                SDL_WINDOWPOS_UNDEFINED,
+                SDL_WINDOWPOS_UNDEFINED,
+                SDL_WINDOW_WIDTH,
+                SDL_WINDOW_HEIGHT,
+                screen_flags
+        );
+
+        SDL_ShowWindow(screen);
+        se->screen = screen;
+
+        if (!se->screen) {
+            fprintf(stderr, "SDL: could not create window - exiting\n");
+            exit(1);
+        }
+
+
+        se->renderer = SDL_CreateRenderer(se->screen, -1, 0);
+        if (!se->renderer) {
+            fprintf(stderr, "SDL: could not create renderer - exiting\n");
+            exit(1);
+        }
     }
 
     // Application is ready to read frame and display frames
@@ -101,26 +132,33 @@ int main(int argc, char* argv[]){
 		se->frame_extractor_pframe_pool.push(frame_data);
 	}
 
-    SDL_Event event;
+    if (se->is_client || se->is_all_in_one) {
 
-    while(! se->screen_is_initialized) {
-        usleep(30 * 1000);
-    }
+        SDL_Event event;
 
-    while(!se->finishing) {
-        // [SDL] handle events
-        while (SDL_PollEvent(&event)) {
-            switch (event.type) {
-                case SDL_QUIT:
-                    se->finishing = 1;
-                    SDL_Quit();
-                    break;
-                default:
-                    break;
-            }
+        while(! se->screen_is_initialized) {
+            usleep(30 * 1000);
         }
-        // Prevent high CPU usage
-        SDL_Delay(1);
+
+        while(!se->finishing) {
+            // [SDL] handle events
+            while (SDL_PollEvent(&event)) {
+                switch (event.type) {
+                    case SDL_QUIT:
+                        se->finishing = 1;
+                        SDL_Quit();
+                        break;
+                    default:
+                        break;
+                }
+            }
+            // Prevent high CPU usage
+            SDL_Delay(1);
+        }
+    } else {
+        while (true) {
+            usleep(30 * 1000);
+        }
     }
 
     // [FFMPEG] Free the RGB image
@@ -130,6 +168,6 @@ int main(int argc, char* argv[]){
     }
 
     log_info("Simple GameClient is exiting");
-    
+
 	return 0;
 }

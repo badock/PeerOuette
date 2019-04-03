@@ -145,9 +145,9 @@ int frame_extractor_thread(void *arg) {
     log_info("Reading frames");
     AVPacket packet;
 
-    while (!se->screen_is_initialized) {
-        usleep(30 * 1000);
-    }
+//    while (!se->screen_is_initialized) {
+//        usleep(30 * 1000);
+//    }
 
     int frameFinished;
     int counter = 0;

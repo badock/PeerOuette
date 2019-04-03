@@ -1,5 +1,8 @@
 #include <SDL.h>
 #include <SDL_thread.h>
+#include <string>
+#include <sstream>
+#include <iostream>
 
 #if defined(WIN32)
 #define _CRTDBG_MAP_ALLOC  
@@ -63,8 +66,8 @@ typedef struct _StreamingEnvironment {
 	SDL_Thread *frame_encoder_thread;
 	SDL_Thread *frame_decoder_thread;
 	SDL_Thread *frame_output_thread;
-	SDL_Thread *frame_receiver_thread;
-	SDL_Thread *frame_sender_thread;
+	SDL_Thread *video_encode_thread;
+	SDL_Thread *video_decode_thread;
 	SDL_Thread *packet_sender_thread;
     SDL_Thread *asio_udp_listener;
 	SDL_Thread *packet_receiver_thread;
@@ -97,6 +100,15 @@ typedef struct _StreamingEnvironment {
 	int network_initialized;
 	int screen_is_initialized;
 	int finishing;
+
+	bool client_connected = false;
+	bool is_all_in_one = false;
+	bool is_client = false;
+	bool is_server = false;
+
+	std::string listen_address;
+    std::string server_address;
+//    int server_port;
 } StreamingEnvironment;
 
 void frame_data_reset_time_points(FrameData* frame_data);

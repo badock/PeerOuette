@@ -58,8 +58,17 @@ public:
                          ServerReaderWriter<FrameSubPacket, InputCommand> *stream) override {
         InputCommand cmd;
 
-        while (!se->finishing) {
-//            auto pkt_d = (packet_data *) simple_queue_pop(se->packet_sender_thread_queue);
+        se->client_connected = true;
+        bool can_begin_stream = false;
+
+        while (!can_begin_stream) {
+            stream->Read(&cmd);
+            if (cmd.command().compare("BEGIN_STREAM") == 0) {
+                can_begin_stream = true;
+            }
+        }
+
+        while (!se->finishing && se->client_connected) {
             const auto pkt_d = se->packet_sender_thread_queue.pop();
 
             FrameSubPacket subPacket = MakeFrame(pkt_d->frame_number,
@@ -71,9 +80,8 @@ public:
                                                  (char*) pkt_d->data);
             stream->Write(subPacket);
 
-//            free(pkt_d->data);
-//            se->packet_sender_thread_queue.pop_back();
-//            free(pkt_d);
+            free(pkt_d->data);
+            free(pkt_d);
 
             while (stream->Read(&cmd)) {
                 std::cout << "Received an input command" << cmd.command() << std::endl;
@@ -110,7 +118,7 @@ public:
                 stub_->GamingChannel(&context));
 
         std::thread writer([stream]() {
-            stream->Write(MakeInputCommand("START STREAMING PACKETS!"));
+            stream->Write(MakeInputCommand("BEGIN_STREAM"));
             stream->WritesDone();
         });
 
@@ -147,7 +155,7 @@ private:
 int packet_sender_thread(void *arg) {
     auto se = (StreamingEnvironment*)arg;
 
-    std::string server_address("0.0.0.0:50051");
+    std::string server_address(se->listen_address);
     GamingStreamingServiceImpl service(se);
 
     ServerBuilder builder;
@@ -164,7 +172,7 @@ int packet_receiver_thread(void *arg) {
     auto se = (StreamingEnvironment*) arg;
 
     GamingStreamingServiceClient client(
-            grpc::CreateChannel("localhost:50051",
+            grpc::CreateChannel(se->server_address,
                                 grpc::InsecureChannelCredentials()),
             se
     );
