@@ -4,6 +4,7 @@
 #include <sstream>
 #include <iostream>
 
+
 #if defined(WIN32)
 #define _CRTDBG_MAP_ALLOC  
 #include <stdlib.h>
@@ -18,7 +19,6 @@
 #define GAMECLIENTSDL_STREAMING_H
 
 #include "src/codec/codec.h"
-
 
 extern "C" {
 #include <libavformat/avformat.h>
@@ -60,6 +60,7 @@ typedef struct _FrameData {
     std::chrono::system_clock::time_point sdl_avframe_rescale_time_point;
     std::chrono::system_clock::time_point sdl_displayed_time_point;
 } FrameData;
+
 
 typedef struct _StreamingEnvironment {
 	SDL_Thread *frame_extractor_thread;

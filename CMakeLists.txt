@@ -56,6 +56,12 @@ if(WIN32)
 			src/network/network.h
             src/codec/codec.cpp
             src/codec/codec.h
+			src/extractors/extractors.cpp
+			src/extractors/extractors.h
+			src/output/output.cpp
+			src/output/output.h
+            src/codec/codec.cpp
+            src/codec/codec.h
             src/texture_converter/TextureConverter.cpp
             src/texture_converter/TextureConverter.h
 			src/texture_converter/shaders/Pixel.hlsl

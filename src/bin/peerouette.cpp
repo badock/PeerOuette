@@ -1,6 +1,9 @@
-#include "src/streaming/streaming.h"
+
 #include "src/output/output.h"
 #include "src/extractors/extractors.h"
+#include "src/streaming/streaming.h"
+// #include "src/output/output.h"
+// #include "src/extractors/extractors.h"
 
 // compatibility with newer API
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(55,28,1)
@@ -65,6 +68,7 @@ int main(int argc, char* argv[]){
         se->video_encode_thread = SDL_CreateThread(video_encode_thread, "video_encode_thread", se);
         se->packet_sender_thread = SDL_CreateThread(packet_sender_thread, "packet_sender_thread", se);
     }
+
 
     // b) Client threads
     if (se->is_all_in_one || se->is_client) {
