@@ -66,7 +66,7 @@ if(WIN32)
             src/texture_converter/TextureConverter.h
 			src/texture_converter/shaders/Pixel.hlsl
 			src/texture_converter/shaders/Vertex.hlsl
-			src/texture_converter/shaders/RGBtoYUV.hlsl)
+			src/texture_converter/shaders/RGBtoYUV.hlsl src/inputs/inputs.cpp src/inputs/inputs.h)
 
 			set(PIXELSHADER_FILES
 			  src/texture_converter/shaders/Pixel.hlsl
@@ -101,7 +101,7 @@ else()
             src/codec/codec.cpp
             src/codec/codec.h
             src/queue/queue.cpp
-            src/queue/queue.h src/extractors/extractors.cpp src/extractors/extractors.h src/output/output.cpp src/output/output.h)
+            src/queue/queue.h src/extractors/extractors.cpp src/extractors/extractors.h src/output/output.cpp src/output/output.h src/inputs/inputs.cpp src/inputs/inputs.h)
 endif()
 INCLUDE(FindPkgConfig)
 

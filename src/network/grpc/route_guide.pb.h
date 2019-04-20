@@ -317,11 +317,46 @@ class InputCommand : public ::google::protobuf::Message /* @@protoc_insertion_po
   ::std::string* release_command();
   void set_allocated_command(::std::string* command);
 
+  // int32 event_type = 2;
+  void clear_event_type();
+  static const int kEventTypeFieldNumber = 2;
+  ::google::protobuf::int32 event_type() const;
+  void set_event_type(::google::protobuf::int32 value);
+
+  // int32 key_code = 3;
+  void clear_key_code();
+  static const int kKeyCodeFieldNumber = 3;
+  ::google::protobuf::int32 key_code() const;
+  void set_key_code(::google::protobuf::int32 value);
+
+  // int32 x = 4;
+  void clear_x();
+  static const int kXFieldNumber = 4;
+  ::google::protobuf::int32 x() const;
+  void set_x(::google::protobuf::int32 value);
+
+  // int32 y = 5;
+  void clear_y();
+  static const int kYFieldNumber = 5;
+  ::google::protobuf::int32 y() const;
+  void set_y(::google::protobuf::int32 value);
+
+  // int32 mouse_button = 6;
+  void clear_mouse_button();
+  static const int kMouseButtonFieldNumber = 6;
+  ::google::protobuf::int32 mouse_button() const;
+  void set_mouse_button(::google::protobuf::int32 value);
+
   // @@protoc_insertion_point(class_scope:gamingstreaming.InputCommand)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   ::google::protobuf::internal::ArenaStringPtr command_;
+  ::google::protobuf::int32 event_type_;
+  ::google::protobuf::int32 key_code_;
+  ::google::protobuf::int32 x_;
+  ::google::protobuf::int32 y_;
+  ::google::protobuf::int32 mouse_button_;
   mutable ::google::protobuf::internal::CachedSize _cached_size_;
   friend struct ::protobuf_route_5fguide_2eproto::TableStruct;
 };
@@ -528,6 +563,76 @@ inline void InputCommand::set_allocated_command(::std::string* command) {
   }
   command_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), command);
   // @@protoc_insertion_point(field_set_allocated:gamingstreaming.InputCommand.command)
+}
+
+// int32 event_type = 2;
+inline void InputCommand::clear_event_type() {
+  event_type_ = 0;
+}
+inline ::google::protobuf::int32 InputCommand::event_type() const {
+  // @@protoc_insertion_point(field_get:gamingstreaming.InputCommand.event_type)
+  return event_type_;
+}
+inline void InputCommand::set_event_type(::google::protobuf::int32 value) {
+  
+  event_type_ = value;
+  // @@protoc_insertion_point(field_set:gamingstreaming.InputCommand.event_type)
+}
+
+// int32 key_code = 3;
+inline void InputCommand::clear_key_code() {
+  key_code_ = 0;
+}
+inline ::google::protobuf::int32 InputCommand::key_code() const {
+  // @@protoc_insertion_point(field_get:gamingstreaming.InputCommand.key_code)
+  return key_code_;
+}
+inline void InputCommand::set_key_code(::google::protobuf::int32 value) {
+  
+  key_code_ = value;
+  // @@protoc_insertion_point(field_set:gamingstreaming.InputCommand.key_code)
+}
+
+// int32 x = 4;
+inline void InputCommand::clear_x() {
+  x_ = 0;
+}
+inline ::google::protobuf::int32 InputCommand::x() const {
+  // @@protoc_insertion_point(field_get:gamingstreaming.InputCommand.x)
+  return x_;
+}
+inline void InputCommand::set_x(::google::protobuf::int32 value) {
+  
+  x_ = value;
+  // @@protoc_insertion_point(field_set:gamingstreaming.InputCommand.x)
+}
+
+// int32 y = 5;
+inline void InputCommand::clear_y() {
+  y_ = 0;
+}
+inline ::google::protobuf::int32 InputCommand::y() const {
+  // @@protoc_insertion_point(field_get:gamingstreaming.InputCommand.y)
+  return y_;
+}
+inline void InputCommand::set_y(::google::protobuf::int32 value) {
+  
+  y_ = value;
+  // @@protoc_insertion_point(field_set:gamingstreaming.InputCommand.y)
+}
+
+// int32 mouse_button = 6;
+inline void InputCommand::clear_mouse_button() {
+  mouse_button_ = 0;
+}
+inline ::google::protobuf::int32 InputCommand::mouse_button() const {
+  // @@protoc_insertion_point(field_get:gamingstreaming.InputCommand.mouse_button)
+  return mouse_button_;
+}
+inline void InputCommand::set_mouse_button(::google::protobuf::int32 value) {
+  
+  mouse_button_ = value;
+  // @@protoc_insertion_point(field_set:gamingstreaming.InputCommand.mouse_button)
 }
 
 #ifdef __GNUC__

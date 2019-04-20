@@ -42,7 +42,11 @@ extern "C" {
 void usleep(unsigned int usec);
 #else
 #include <unistd.h>
+#include "src/network/grpc/route_guide.pb.h"
+
 #endif
+
+using gamingstreaming::InputCommand;
 
 typedef struct _FrameData {
     AVFrame *pFrame;
@@ -82,6 +86,7 @@ typedef struct _StreamingEnvironment {
 //	SimpleQueue *packet_sender_thread_queue;
     SimpleQueue<packet_data*> packet_sender_thread_queue;
 	SimpleQueue<FrameData*> frame_output_thread_queue;
+    SimpleQueue<InputCommand*> input_command_queue;
 //    SimpleQueue incoming_asio_buffer_queue;
 	AVPixelFormat format;
 
@@ -90,6 +95,9 @@ typedef struct _StreamingEnvironment {
 
 	int width;
 	int height;
+
+    int client_width;
+    int client_height;
 
 	AVCodec* encoder;
 	AVCodec* decoder;

@@ -38,4 +38,9 @@ message FrameSubPacket {
 
 message InputCommand {
         string command = 1;
+        int32 event_type = 2; // 0 -> mouse; 1 -> keyboard
+        int32 key_code = 3; // for keyboard
+        int32 x = 4; // for mouse
+        int32 y = 5; // for mouse
+        int32 mouse_button = 6; // for mouse
 }

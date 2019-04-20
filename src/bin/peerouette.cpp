@@ -1,6 +1,7 @@
 
 #include "src/output/output.h"
 #include "src/extractors/extractors.h"
+#include "src/inputs/inputs.h"
 #include "src/streaming/streaming.h"
 // #include "src/output/output.h"
 // #include "src/extractors/extractors.h"
@@ -52,12 +53,13 @@ int main(int argc, char* argv[]){
             se->listen_address = std::string("0.0.0.0:50051");
         } else if (role.compare("--client") == 0) {
             se->is_client = true;
-            se->server_address = std::string("localhost:50051");
+            se->server_address = std::string("192.168.1.14:50051");
         }
     }
-//    se->is_all_in_one = true;
-//    se->server_address = std::string("localhost:50051");
-    // Create threads
+
+    /////////////////////////
+    /// Create threads
+    /////////////////////////
 
     // a) server threads
     if (se->is_all_in_one || se->is_server) {
@@ -82,6 +84,8 @@ int main(int argc, char* argv[]){
     se->screen_is_initialized = 0;
     se->width = CAPTURE_WINDOW_WIDTH;
     se->height = CAPTURE_WINDOW_HEIGHT;
+    se->client_width = SDL_WINDOW_WIDTH;
+    se->client_height = SDL_WINDOW_HEIGHT;
 	se->format = AV_PIX_FMT_YUV420P;
 
     if (se->is_client || se->is_all_in_one) {
@@ -153,6 +157,7 @@ int main(int argc, char* argv[]){
                         SDL_Quit();
                         break;
                     default:
+                        handle_sdl_input(se, event);
                         break;
                 }
             }

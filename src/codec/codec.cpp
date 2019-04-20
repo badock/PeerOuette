@@ -21,8 +21,8 @@
 
 #define WIDTH 1920
 #define HEIGHT 816
-#define BITRATE 10 * 1024 * 1024
-#define CRF "20"
+#define BITRATE 3 * 1024 * 1024
+#define CRF "27"
 #define GOP_SIZE 30 * 60
 
 #if defined(WIN32)

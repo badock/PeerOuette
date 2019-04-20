@@ -6,6 +6,7 @@
 #include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
 #include "grpc/route_guide.grpc.pb.h"
+#include "src/inputs/inputs.h"
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -126,6 +127,12 @@ public:
         while (stream->Read(&server_frame) && !se->finishing) {
 //            std::cout << "Got frame (" << server_frame.frame_number()
 //                      << ", " << server_frame.packet_number() << ") " << std::endl;
+
+            if (se->input_command_queue.size() > 0) {
+                InputCommand* ci = se->input_command_queue.pop();
+                simulate_input_event(ci);
+                free(ci);
+            }
 
             auto new_packet_data = new packet_data();
             new_packet_data->frame_number = server_frame.frame_number();
