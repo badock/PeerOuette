@@ -42,9 +42,9 @@ extern "C" {
 void usleep(unsigned int usec);
 #else
 #include <unistd.h>
-#include "src/network/grpc/route_guide.pb.h"
-
 #endif
+
+#include "src/network/grpc/route_guide.pb.h"
 
 using gamingstreaming::InputCommand;
 

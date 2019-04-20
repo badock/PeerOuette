@@ -20,7 +20,7 @@
 //#define DECODER_NAME "hevc"
 
 #define WIDTH 1920
-#define HEIGHT 816
+#define HEIGHT 1080
 #define BITRATE 3 * 1024 * 1024
 #define CRF "27"
 #define GOP_SIZE 30 * 60

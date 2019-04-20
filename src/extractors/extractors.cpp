@@ -38,6 +38,11 @@ int gpu_frame_extractor_thread(void *arg) {
 		int capture_result = capture_frame(&cc, d3d_frame_data, ffmpeg_frame_data);
 		ffmpeg_frame_data->dxframe_processed_time_point = std::chrono::system_clock::now();
 
+        if (capture_result != 0) {
+            se->frame_extractor_pframe_pool.push(ffmpeg_frame_data);
+            continue;
+        }  
+
 		int result = get_pixels_yuv420p(&cc, ffmpeg_frame_data);
 
 		ffmpeg_frame_data->pFrame->format = AV_PIX_FMT_YUV420P;
@@ -45,11 +50,12 @@ int gpu_frame_extractor_thread(void *arg) {
 
 		int frame_release_result = done_with_frame(&cc);
 
-		if (true) {
+		if (frame_release_result == 0) {
 			se->frame_sender_thread_queue.push(ffmpeg_frame_data);
 		}
 		else {
-			se->frame_output_thread_queue.push(ffmpeg_frame_data);
+            se->frame_extractor_pframe_pool.push(ffmpeg_frame_data);
+            continue;
 		}
 
         std::chrono::system_clock::time_point after = std::chrono::system_clock::now();
