@@ -111,6 +111,7 @@ typedef struct _StreamingEnvironment {
 	int finishing;
 
 	bool client_connected = false;
+	bool can_begin_stream = false;
 	bool is_all_in_one = false;
 	bool is_client = false;
 	bool is_server = false;

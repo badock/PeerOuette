@@ -60,17 +60,26 @@ public:
         InputCommand cmd;
 
         se->client_connected = true;
-        bool can_begin_stream = false;
 
-        while (!can_begin_stream) {
-            stream->Read(&cmd);
-            if (cmd.command().compare("BEGIN_STREAM") == 0) {
-                can_begin_stream = true;
+        StreamingEnvironment * streaming_environment = se;
+
+        std::thread writer([stream, streaming_environment]() {
+            InputCommand cmd;
+            while (stream->Read(&cmd)) {
+                if (cmd.command().compare("BEGIN_STREAM") == 0) {
+                    streaming_environment->can_begin_stream = true;
+                } else {
+                    simulate_input_event(&cmd);
+                }
             }
+        });
+
+        while (!se->can_begin_stream) {
+            usleep(30 * 1000);
         }
 
-        while (!se->finishing && se->client_connected) {
-            const auto pkt_d = se->packet_sender_thread_queue.pop();
+        while (!streaming_environment->finishing && streaming_environment->client_connected) {
+            const auto pkt_d = streaming_environment->packet_sender_thread_queue.pop();
 
             FrameSubPacket subPacket = MakeFrame(pkt_d->frame_number,
                                                  pkt_d->packet_number,
@@ -83,10 +92,6 @@ public:
 
             free(pkt_d->data);
             free(pkt_d);
-
-            while (stream->Read(&cmd)) {
-                std::cout << "Received an input command" << cmd.command() << std::endl;
-            }
         }
 
         return Status::OK;
@@ -114,25 +119,21 @@ public:
     void GamingChannel() {
         ClientContext context;
 
-        std::shared_ptr<ClientReaderWriter<InputCommand, FrameSubPacket> >
-                stream(
-                stub_->GamingChannel(&context));
+        std::shared_ptr<ClientReaderWriter<InputCommand, FrameSubPacket>> stream(stub_->GamingChannel(&context));
 
-        std::thread writer([stream]() {
+        StreamingEnvironment* streaming_environment = se;
+        std::thread writer([stream, streaming_environment]() {
             stream->Write(MakeInputCommand("BEGIN_STREAM"));
-            stream->WritesDone();
+            while (!streaming_environment->finishing) {
+                InputCommand* ci = streaming_environment->input_command_queue.pop();
+                stream->Write(*ci);
+                free(ci);
+
+            }
         });
 
         FrameSubPacket server_frame;
         while (stream->Read(&server_frame) && !se->finishing) {
-//            std::cout << "Got frame (" << server_frame.frame_number()
-//                      << ", " << server_frame.packet_number() << ") " << std::endl;
-
-            if (se->input_command_queue.size() > 0) {
-                InputCommand* ci = se->input_command_queue.pop();
-                simulate_input_event(ci);
-                free(ci);
-            }
 
             auto new_packet_data = new packet_data();
             new_packet_data->frame_number = server_frame.frame_number();
@@ -148,7 +149,7 @@ public:
 
             se->network_simulated_queue.push(new_packet_data);
         }
-//        writer.join();
+
         Status status = stream->Finish();
         if (!status.ok()) {
             std::cout << "GamingStreaming rpc failed." << std::endl;
