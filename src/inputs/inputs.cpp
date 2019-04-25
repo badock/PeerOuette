@@ -19,12 +19,12 @@ int simulate_input_event(InputCommand* cmd) {
     if(cmd->event_type() == SDL_MOUSEBUTTONDOWN || cmd->event_type() == SDL_MOUSEBUTTONUP || cmd->event_type() == SDL_MOUSEWHEEL || cmd->event_type() == SDL_MOUSEMOTION) {
         log_info("mouse event");
         if (! is_cursor_initialized) {
-            SetCursorPos(cmd->x(), cmd->y());
+            //SetCursorPos(cmd->x(), cmd->y());
             is_cursor_initialized = true;
         } else {
 
-            int dx = cmd->x() - last_x;
-            int dy = cmd->y() - last_y;
+            int dx = cmd->x();// - last_x;
+            int dy = cmd->y();// - last_y;
 
             INPUT* Inputs = new INPUT();
             Inputs->type = INPUT_MOUSE;
