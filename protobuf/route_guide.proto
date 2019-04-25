@@ -34,6 +34,9 @@ message FrameSubPacket {
         int64 flags = 6;
         // field related to frame management
         bytes data = 7;
+        // field related to mouse position
+        int32 x = 8; // for mouse
+        int32 y = 9; // for mouse
 }
 
 message InputCommand {
