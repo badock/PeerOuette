@@ -80,6 +80,8 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_PROTOBUF_ATTRIBUT
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::gamingstreaming::FrameSubPacket, dts_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::gamingstreaming::FrameSubPacket, flags_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::gamingstreaming::FrameSubPacket, data_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::gamingstreaming::FrameSubPacket, x_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::gamingstreaming::FrameSubPacket, y_),
   ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::gamingstreaming::InputCommand, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -94,7 +96,7 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_PROTOBUF_ATTRIBUT
 };
 static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
   { 0, -1, sizeof(::gamingstreaming::FrameSubPacket)},
-  { 12, -1, sizeof(::gamingstreaming::InputCommand)},
+  { 14, -1, sizeof(::gamingstreaming::InputCommand)},
 };
 
 static ::google::protobuf::Message const * const file_default_instances[] = {
@@ -123,20 +125,20 @@ void protobuf_RegisterTypes(const ::std::string&) {
 void AddDescriptorsImpl() {
   InitDefaults();
   static const char descriptor[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
-      "\n\021route_guide.proto\022\017gamingstreaming\"\202\001\n"
+      "\n\021route_guide.proto\022\017gamingstreaming\"\230\001\n"
       "\016FrameSubPacket\022\024\n\014frame_number\030\001 \001(\005\022\025\n"
       "\rpacket_number\030\002 \001(\005\022\014\n\004size\030\003 \001(\005\022\013\n\003pt"
       "s\030\004 \001(\003\022\013\n\003dts\030\005 \001(\003\022\r\n\005flags\030\006 \001(\003\022\014\n\004d"
-      "ata\030\007 \001(\014\"q\n\014InputCommand\022\017\n\007command\030\001 \001"
-      "(\t\022\022\n\nevent_type\030\002 \001(\005\022\020\n\010key_code\030\003 \001(\005"
-      "\022\t\n\001x\030\004 \001(\005\022\t\n\001y\030\005 \001(\005\022\024\n\014mouse_button\030\006"
-      " \001(\0052o\n\026GamingStreamingService\022U\n\rGaming"
-      "Channel\022\035.gamingstreaming.InputCommand\032\037"
-      ".gamingstreaming.FrameSubPacket\"\000(\0010\001b\006p"
-      "roto3"
+      "ata\030\007 \001(\014\022\t\n\001x\030\010 \001(\005\022\t\n\001y\030\t \001(\005\"q\n\014Input"
+      "Command\022\017\n\007command\030\001 \001(\t\022\022\n\nevent_type\030\002"
+      " \001(\005\022\020\n\010key_code\030\003 \001(\005\022\t\n\001x\030\004 \001(\005\022\t\n\001y\030\005"
+      " \001(\005\022\024\n\014mouse_button\030\006 \001(\0052o\n\026GamingStre"
+      "amingService\022U\n\rGamingChannel\022\035.gamingst"
+      "reaming.InputCommand\032\037.gamingstreaming.F"
+      "rameSubPacket\"\000(\0010\001b\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 405);
+      descriptor, 427);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "route_guide.proto", &protobuf_RegisterTypes);
 }
@@ -166,6 +168,8 @@ const int FrameSubPacket::kPtsFieldNumber;
 const int FrameSubPacket::kDtsFieldNumber;
 const int FrameSubPacket::kFlagsFieldNumber;
 const int FrameSubPacket::kDataFieldNumber;
+const int FrameSubPacket::kXFieldNumber;
+const int FrameSubPacket::kYFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 FrameSubPacket::FrameSubPacket()
@@ -184,16 +188,16 @@ FrameSubPacket::FrameSubPacket(const FrameSubPacket& from)
     data_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.data_);
   }
   ::memcpy(&frame_number_, &from.frame_number_,
-    static_cast<size_t>(reinterpret_cast<char*>(&size_) -
-    reinterpret_cast<char*>(&frame_number_)) + sizeof(size_));
+    static_cast<size_t>(reinterpret_cast<char*>(&y_) -
+    reinterpret_cast<char*>(&frame_number_)) + sizeof(y_));
   // @@protoc_insertion_point(copy_constructor:gamingstreaming.FrameSubPacket)
 }
 
 void FrameSubPacket::SharedCtor() {
   data_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   ::memset(&frame_number_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&size_) -
-      reinterpret_cast<char*>(&frame_number_)) + sizeof(size_));
+      reinterpret_cast<char*>(&y_) -
+      reinterpret_cast<char*>(&frame_number_)) + sizeof(y_));
 }
 
 FrameSubPacket::~FrameSubPacket() {
@@ -227,8 +231,8 @@ void FrameSubPacket::Clear() {
 
   data_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   ::memset(&frame_number_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&size_) -
-      reinterpret_cast<char*>(&frame_number_)) + sizeof(size_));
+      reinterpret_cast<char*>(&y_) -
+      reinterpret_cast<char*>(&frame_number_)) + sizeof(y_));
   _internal_metadata_.Clear();
 }
 
@@ -338,6 +342,34 @@ bool FrameSubPacket::MergePartialFromCodedStream(
         break;
       }
 
+      // int32 x = 8;
+      case 8: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(64u /* 64 & 0xFF */)) {
+
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                 input, &x_)));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // int32 y = 9;
+      case 9: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(72u /* 72 & 0xFF */)) {
+
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                 input, &y_)));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
       default: {
       handle_unusual:
         if (tag == 0) {
@@ -400,6 +432,16 @@ void FrameSubPacket::SerializeWithCachedSizes(
       7, this->data(), output);
   }
 
+  // int32 x = 8;
+  if (this->x() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(8, this->x(), output);
+  }
+
+  // int32 y = 9;
+  if (this->y() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(9, this->y(), output);
+  }
+
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
@@ -449,6 +491,16 @@ void FrameSubPacket::SerializeWithCachedSizes(
     target =
       ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
         7, this->data(), target);
+  }
+
+  // int32 x = 8;
+  if (this->x() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(8, this->x(), target);
+  }
+
+  // int32 y = 9;
+  if (this->y() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(9, this->y(), target);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -503,6 +555,20 @@ size_t FrameSubPacket::ByteSizeLong() const {
         this->dts());
   }
 
+  // int32 size = 3;
+  if (this->size() != 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::Int32Size(
+        this->size());
+  }
+
+  // int32 x = 8;
+  if (this->x() != 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::Int32Size(
+        this->x());
+  }
+
   // int64 flags = 6;
   if (this->flags() != 0) {
     total_size += 1 +
@@ -510,11 +576,11 @@ size_t FrameSubPacket::ByteSizeLong() const {
         this->flags());
   }
 
-  // int32 size = 3;
-  if (this->size() != 0) {
+  // int32 y = 9;
+  if (this->y() != 0) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::Int32Size(
-        this->size());
+        this->y());
   }
 
   int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
@@ -560,11 +626,17 @@ void FrameSubPacket::MergeFrom(const FrameSubPacket& from) {
   if (from.dts() != 0) {
     set_dts(from.dts());
   }
+  if (from.size() != 0) {
+    set_size(from.size());
+  }
+  if (from.x() != 0) {
+    set_x(from.x());
+  }
   if (from.flags() != 0) {
     set_flags(from.flags());
   }
-  if (from.size() != 0) {
-    set_size(from.size());
+  if (from.y() != 0) {
+    set_y(from.y());
   }
 }
 
@@ -598,8 +670,10 @@ void FrameSubPacket::InternalSwap(FrameSubPacket* other) {
   swap(packet_number_, other->packet_number_);
   swap(pts_, other->pts_);
   swap(dts_, other->dts_);
-  swap(flags_, other->flags_);
   swap(size_, other->size_);
+  swap(x_, other->x_);
+  swap(flags_, other->flags_);
+  swap(y_, other->y_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
 }
 

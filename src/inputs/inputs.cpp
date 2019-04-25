@@ -12,6 +12,7 @@ int last_x = -1;
 int last_y = -1;
 
 int simulate_input_event(InputCommand* cmd) {
+#if defined(WIN32)
     if(cmd->event_type() == SDL_KEYDOWN || cmd->event_type() == SDL_KEYUP) {
         log_info("keyboard event");
     } else
@@ -58,7 +59,7 @@ int simulate_input_event(InputCommand* cmd) {
     } else {
         log_info("unhandled event %i", cmd->event_type());
     }
-
+#endif
     return 0;
 }
 

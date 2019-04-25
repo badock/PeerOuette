@@ -188,17 +188,29 @@ class FrameSubPacket : public ::google::protobuf::Message /* @@protoc_insertion_
   ::google::protobuf::int64 dts() const;
   void set_dts(::google::protobuf::int64 value);
 
+  // int32 size = 3;
+  void clear_size();
+  static const int kSizeFieldNumber = 3;
+  ::google::protobuf::int32 size() const;
+  void set_size(::google::protobuf::int32 value);
+
+  // int32 x = 8;
+  void clear_x();
+  static const int kXFieldNumber = 8;
+  ::google::protobuf::int32 x() const;
+  void set_x(::google::protobuf::int32 value);
+
   // int64 flags = 6;
   void clear_flags();
   static const int kFlagsFieldNumber = 6;
   ::google::protobuf::int64 flags() const;
   void set_flags(::google::protobuf::int64 value);
 
-  // int32 size = 3;
-  void clear_size();
-  static const int kSizeFieldNumber = 3;
-  ::google::protobuf::int32 size() const;
-  void set_size(::google::protobuf::int32 value);
+  // int32 y = 9;
+  void clear_y();
+  static const int kYFieldNumber = 9;
+  ::google::protobuf::int32 y() const;
+  void set_y(::google::protobuf::int32 value);
 
   // @@protoc_insertion_point(class_scope:gamingstreaming.FrameSubPacket)
  private:
@@ -209,8 +221,10 @@ class FrameSubPacket : public ::google::protobuf::Message /* @@protoc_insertion_
   ::google::protobuf::int32 packet_number_;
   ::google::protobuf::int64 pts_;
   ::google::protobuf::int64 dts_;
-  ::google::protobuf::int64 flags_;
   ::google::protobuf::int32 size_;
+  ::google::protobuf::int32 x_;
+  ::google::protobuf::int64 flags_;
+  ::google::protobuf::int32 y_;
   mutable ::google::protobuf::internal::CachedSize _cached_size_;
   friend struct ::protobuf_route_5fguide_2eproto::TableStruct;
 };
@@ -506,6 +520,34 @@ inline void FrameSubPacket::set_allocated_data(::std::string* data) {
   }
   data_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), data);
   // @@protoc_insertion_point(field_set_allocated:gamingstreaming.FrameSubPacket.data)
+}
+
+// int32 x = 8;
+inline void FrameSubPacket::clear_x() {
+  x_ = 0;
+}
+inline ::google::protobuf::int32 FrameSubPacket::x() const {
+  // @@protoc_insertion_point(field_get:gamingstreaming.FrameSubPacket.x)
+  return x_;
+}
+inline void FrameSubPacket::set_x(::google::protobuf::int32 value) {
+  
+  x_ = value;
+  // @@protoc_insertion_point(field_set:gamingstreaming.FrameSubPacket.x)
+}
+
+// int32 y = 9;
+inline void FrameSubPacket::clear_y() {
+  y_ = 0;
+}
+inline ::google::protobuf::int32 FrameSubPacket::y() const {
+  // @@protoc_insertion_point(field_get:gamingstreaming.FrameSubPacket.y)
+  return y_;
+}
+inline void FrameSubPacket::set_y(::google::protobuf::int32 value) {
+  
+  y_ = value;
+  // @@protoc_insertion_point(field_set:gamingstreaming.FrameSubPacket.y)
 }
 
 // -------------------------------------------------------------------
