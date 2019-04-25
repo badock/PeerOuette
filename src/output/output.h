@@ -18,7 +18,6 @@
 
 //#undef main
 
-
 int frame_output_thread(void *arg);
 
 #endif //GAMECLIENTSDL_OUTPUT_H

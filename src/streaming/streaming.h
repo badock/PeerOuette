@@ -118,6 +118,11 @@ typedef struct _StreamingEnvironment {
 
 	std::string listen_address;
     std::string server_address;
+
+	// field relate to mouse cursor
+	int client_mouse_x = 0;
+	int client_mouse_y = 0;
+	int client_mouse_is_visible = 0;
 //    int server_port;
 } StreamingEnvironment;
 
