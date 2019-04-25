@@ -157,6 +157,11 @@ public:
             new_packet_data->dts = server_frame.dts();
             new_packet_data->pts = server_frame.pts();
 
+            // refresh mouse cursor position
+            se->client_mouse_x = server_frame.mouse_x();
+            se->client_mouse_y = server_frame.mouse_y();
+            se->client_mouse_is_visible = server_frame.mouse_is_visible();
+
             // Copy data
             new_packet_data->data = new uint8_t[new_packet_data->size];
             memcpy(new_packet_data->data, server_frame.data().data(), new_packet_data->size);

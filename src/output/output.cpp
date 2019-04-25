@@ -29,6 +29,21 @@ int frame_output_thread(void *arg) {
         exit(1);
     }
 
+    // Create the mouse cursor display on the SDL client
+    SDL_Surface* image = SDL_LoadBMP("assets/cursor.bmp");
+    if(!image)
+    {
+        printf("Error while loading the image: %s",SDL_GetError());
+        return -1;
+    }
+    image->h = 20;
+    image->w = 20;
+    SDL_Texture* mouse_cursor_icon_texture = SDL_CreateTextureFromSurface(se->renderer, image);
+    // let's say the texture is 16*16px
+    // If SDL_SetHint was called properly, it will scale without blurring.
+//    SDL_RenderCopy(se->renderer, mouse_cursor_icon_texture, nullptr, &dest);
+    SDL_FreeSurface(image);
+
     // initialize SWS context for software scaling
     sws_ctx = sws_getContext(se->width,
                              se->height,
@@ -57,6 +72,10 @@ int frame_output_thread(void *arg) {
     }
 
     uvPitch = se->width / 2;
+
+    // Grab mouse
+    SDL_SetRelativeMouseMode(SDL_TRUE);
+    SDL_SetWindowGrab(se->screen, SDL_TRUE);
 
     // Screen is ready
     log_info("[SDL] screen is ready");
@@ -100,6 +119,17 @@ int frame_output_thread(void *arg) {
         );
         SDL_RenderClear(se->renderer);
         SDL_RenderCopy(se->renderer, texture, nullptr, nullptr);
+
+        float ratio_height = 1.0 * se->client_height / se->height;
+        float ratio_width = 1.0 * se->client_width / se->width;
+
+        SDL_Rect dest = {
+                .x = int(se->client_mouse_x * ratio_width),
+                .y = int(se->client_mouse_y * ratio_height),
+                .w = 20,
+                .h = 20
+        };
+        SDL_RenderCopy(se->renderer, mouse_cursor_icon_texture, nullptr, &dest);
         SDL_RenderPresent(se->renderer);
         frame_data->sdl_displayed_time_point = std::chrono::system_clock::now();
 

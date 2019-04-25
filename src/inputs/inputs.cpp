@@ -124,28 +124,18 @@ int handle_sdl_input(StreamingEnvironment* se, SDL_Event event) {
         send_event = true;
     }
     else if (event.type == SDL_MOUSEBUTTONDOWN || event.type == SDL_MOUSEBUTTONUP || event.type == SDL_MOUSEWHEEL || event.type == SDL_MOUSEMOTION){
-        int local_window_x, local_window_y;
 
-        SDL_GetMouseState(&local_window_x, &local_window_y);
+        int mouse_x_rel = 0;
+        int mouse_y_rel = 0;
 
-        int remote_window_x = local_window_x * se->width / se->client_width;
-        int remote_window_y = local_window_y * se->height / se->client_height;
+        if (event.type == SDL_MOUSEMOTION) {
+            mouse_x_rel = event.motion.xrel * se->width / se->client_width;
+            mouse_y_rel = event.motion.yrel * se->height / se->client_height;;
+        }
 
-        c->set_x(remote_window_x);
-        c->set_y(remote_window_y);
+        c->set_x(mouse_x_rel);
+        c->set_y(mouse_y_rel);
         c->set_mouse_button(event.button.button);
-
-//        if (event.type == SDL_MOUSEBUTTONDOWN) {
-//            auto button_mouse = (event.button.button == SDL_BUTTON_LEFT)? "left" : "right";
-//            printf("> button mouse (%s) down at: (%d,%d) local:(%d,%d)\n", button_mouse, remote_window_x, remote_window_y, local_window_x, local_window_y);
-//        }
-//        else if (event.type == SDL_MOUSEBUTTONUP) {
-//            auto button_mouse = (event.button.button == SDL_BUTTON_LEFT)? "left" : "right";
-//            printf("> button mouse (%s) up at: (%d,%d) local:(%d,%d)\n", button_mouse, remote_window_x, remote_window_y, local_window_x, local_window_y);
-//        }
-//        else if(event.type == SDL_MOUSEMOTION) {
-//            printf("> mouse moved at: (%d,%d) local:(%d,%d)\n", remote_window_x, remote_window_y, local_window_x, local_window_y);
-//        }
 
         send_event = true;
     } else {
