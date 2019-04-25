@@ -339,6 +339,24 @@ int capture_frame(CaptureContext* cc, D3D_FRAME_DATA* Data, FrameData* ffmpeg_fr
     Data->Frame = cc->m_AcquiredDesktopImage;
     Data->FrameInfo = FrameInfo;
 
+	//cursor.shape.buffer     = new char[frameInfo.PointerShapeBufferSize];
+    //cursor.shape.bufferSize = frameInfo.PointerShapeBufferSize;
+      
+
+    //cursor.shape.pointerSize = 0;
+    //int ret                     |= GRAB_STATUS_CURSOR;
+
+    DXGI_OUTDUPL_POINTER_SHAPE_INFO shapeInfo;
+	int buffer_size = 10 * 1024;
+	UINT* buffer = new UINT[buffer_size];
+	UINT pointerSize = 0;
+	
+    hr = cc->m_dup->GetFramePointerShape(buffer_size, buffer, &pointerSize, &shapeInfo);
+    if (FAILED(hr)) {
+        log_error("Failed to get the new pointer shape\n");
+        return -1;
+	}
+
 
 	return 0;
 }

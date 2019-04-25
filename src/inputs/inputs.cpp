@@ -7,30 +7,54 @@
 
 using gamingstreaming::InputCommand;
 
+bool is_cursor_initialized = false;
+int last_x = -1;
+int last_y = -1;
+
 int simulate_input_event(InputCommand* cmd) {
     if(cmd->event_type() == SDL_KEYDOWN || cmd->event_type() == SDL_KEYUP) {
         log_info("keyboard event");
     } else
     if(cmd->event_type() == SDL_MOUSEBUTTONDOWN || cmd->event_type() == SDL_MOUSEBUTTONUP || cmd->event_type() == SDL_MOUSEWHEEL || cmd->event_type() == SDL_MOUSEMOTION) {
         log_info("mouse event");
-        SetCursorPos(cmd->x(), cmd->y());
-        if (cmd->event_type() == SDL_MOUSEBUTTONDOWN) {
-           printf("> button mouse (%d) down at: (%d,%d)\n", cmd->mouse_button(), cmd->x(), cmd->y());
-           INPUT Inputs[1] = {0};
-           Inputs[1].type = INPUT_MOUSE;
-           Inputs[1].mi.dwFlags = MOUSEEVENTF_LEFTDOWN;
+        if (! is_cursor_initialized) {
+            SetCursorPos(cmd->x(), cmd->y());
+            is_cursor_initialized = true;
+        } else {
+
+            int dx = cmd->x() - last_x;
+            int dy = cmd->y() - last_y;
+
+            INPUT* Inputs = new INPUT();
+            Inputs->type = INPUT_MOUSE;
+            Inputs->mi.dx = dx;
+            Inputs->mi.dy = dy;
+            Inputs->mi.dwFlags = (MOUSEEVENTF_MOVE);
+
+            SendInput(1, Inputs, sizeof(INPUT));
+        }
+
+        last_x = cmd->x();
+        last_y = cmd->y();
+
+        printf("> mouse moved at: (%d,%d)\n", cmd->x(), cmd->y());
+
+        if (cmd->event_type() != SDL_MOUSEMOTION) {
+
+           INPUT* Inputs = new INPUT();
+           Inputs->type = INPUT_MOUSE;
+
+            if (cmd->event_type() == SDL_MOUSEBUTTONDOWN) {
+                printf("> button mouse (%d) down at: (%d,%d)\n", cmd->mouse_button(), cmd->x(), cmd->y());
+                Inputs->mi.dwFlags = MOUSEEVENTF_LEFTDOWN;
+            }
+            else if (cmd->event_type() == SDL_MOUSEBUTTONUP) {
+                printf("> button mouse (%d) up at: (%d,%d)\n", cmd->mouse_button(), cmd->x(), cmd->y());
+                Inputs->mi.dwFlags = MOUSEEVENTF_LEFTUP;
+            }
+
            SendInput(3, Inputs, sizeof(INPUT));
-       }
-       else if (cmd->event_type() == SDL_MOUSEBUTTONUP) {
-           printf("> button mouse (%d) up at: (%d,%d)\n", cmd->mouse_button(), cmd->x(), cmd->y());
-           INPUT Inputs[1] = {0};
-           Inputs[1].type = INPUT_MOUSE;
-           Inputs[1].mi.dwFlags = MOUSEEVENTF_LEFTUP;
-           SendInput(3, Inputs, sizeof(INPUT));
-       }
-       else if(cmd->event_type() == SDL_MOUSEMOTION) {
-           printf("> mouse moved at: (%d,%d)\n", cmd->x(), cmd->y());
-       }
+        }
     } else {
         log_info("unhandled event %i", cmd->event_type());
     }
