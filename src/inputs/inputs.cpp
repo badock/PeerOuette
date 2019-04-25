@@ -63,6 +63,27 @@ int simulate_input_event(InputCommand* cmd) {
     return 0;
 }
 
+mouse_info* get_mouse_info() {
+    mouse_info* mouse_info_ptr = new mouse_info();
+
+    #if defined(WIN32)
+    // detect position of mouse cursor
+    POINT p;
+    if (GetCursorPos(&p)) {
+        mouse_info_ptr->x = p.x;
+        mouse_info_ptr->y = p.y;
+    }
+    // detect if mouse cursor is visible
+    CURSORINFO cursorInfo = { 0 };
+    cursorInfo.cbSize = sizeof(cursorInfo);
+    if (GetCursorInfo(&cursorInfo)) {
+        mouse_info_ptr->visible = (cursorInfo.flags == 1);
+    }
+    #endif
+
+    return mouse_info_ptr;
+}
+
 int handle_sdl_input(StreamingEnvironment* se, SDL_Event event) {
 
 

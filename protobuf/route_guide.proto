@@ -35,8 +35,9 @@ message FrameSubPacket {
         // field related to frame management
         bytes data = 7;
         // field related to mouse position
-        int32 x = 8; // for mouse
-        int32 y = 9; // for mouse
+        int32 mouse_x = 8; // for mouse
+        int32 mouse_y = 9; // for mouse
+        bool mouse_is_visible = 10; // for mouse
 }
 
 message InputCommand {

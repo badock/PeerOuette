@@ -194,11 +194,11 @@ class FrameSubPacket : public ::google::protobuf::Message /* @@protoc_insertion_
   ::google::protobuf::int32 size() const;
   void set_size(::google::protobuf::int32 value);
 
-  // int32 x = 8;
-  void clear_x();
-  static const int kXFieldNumber = 8;
-  ::google::protobuf::int32 x() const;
-  void set_x(::google::protobuf::int32 value);
+  // int32 mouse_x = 8;
+  void clear_mouse_x();
+  static const int kMouseXFieldNumber = 8;
+  ::google::protobuf::int32 mouse_x() const;
+  void set_mouse_x(::google::protobuf::int32 value);
 
   // int64 flags = 6;
   void clear_flags();
@@ -206,11 +206,17 @@ class FrameSubPacket : public ::google::protobuf::Message /* @@protoc_insertion_
   ::google::protobuf::int64 flags() const;
   void set_flags(::google::protobuf::int64 value);
 
-  // int32 y = 9;
-  void clear_y();
-  static const int kYFieldNumber = 9;
-  ::google::protobuf::int32 y() const;
-  void set_y(::google::protobuf::int32 value);
+  // int32 mouse_y = 9;
+  void clear_mouse_y();
+  static const int kMouseYFieldNumber = 9;
+  ::google::protobuf::int32 mouse_y() const;
+  void set_mouse_y(::google::protobuf::int32 value);
+
+  // bool mouse_is_visible = 10;
+  void clear_mouse_is_visible();
+  static const int kMouseIsVisibleFieldNumber = 10;
+  bool mouse_is_visible() const;
+  void set_mouse_is_visible(bool value);
 
   // @@protoc_insertion_point(class_scope:gamingstreaming.FrameSubPacket)
  private:
@@ -222,9 +228,10 @@ class FrameSubPacket : public ::google::protobuf::Message /* @@protoc_insertion_
   ::google::protobuf::int64 pts_;
   ::google::protobuf::int64 dts_;
   ::google::protobuf::int32 size_;
-  ::google::protobuf::int32 x_;
+  ::google::protobuf::int32 mouse_x_;
   ::google::protobuf::int64 flags_;
-  ::google::protobuf::int32 y_;
+  ::google::protobuf::int32 mouse_y_;
+  bool mouse_is_visible_;
   mutable ::google::protobuf::internal::CachedSize _cached_size_;
   friend struct ::protobuf_route_5fguide_2eproto::TableStruct;
 };
@@ -522,32 +529,46 @@ inline void FrameSubPacket::set_allocated_data(::std::string* data) {
   // @@protoc_insertion_point(field_set_allocated:gamingstreaming.FrameSubPacket.data)
 }
 
-// int32 x = 8;
-inline void FrameSubPacket::clear_x() {
-  x_ = 0;
+// int32 mouse_x = 8;
+inline void FrameSubPacket::clear_mouse_x() {
+  mouse_x_ = 0;
 }
-inline ::google::protobuf::int32 FrameSubPacket::x() const {
-  // @@protoc_insertion_point(field_get:gamingstreaming.FrameSubPacket.x)
-  return x_;
+inline ::google::protobuf::int32 FrameSubPacket::mouse_x() const {
+  // @@protoc_insertion_point(field_get:gamingstreaming.FrameSubPacket.mouse_x)
+  return mouse_x_;
 }
-inline void FrameSubPacket::set_x(::google::protobuf::int32 value) {
+inline void FrameSubPacket::set_mouse_x(::google::protobuf::int32 value) {
   
-  x_ = value;
-  // @@protoc_insertion_point(field_set:gamingstreaming.FrameSubPacket.x)
+  mouse_x_ = value;
+  // @@protoc_insertion_point(field_set:gamingstreaming.FrameSubPacket.mouse_x)
 }
 
-// int32 y = 9;
-inline void FrameSubPacket::clear_y() {
-  y_ = 0;
+// int32 mouse_y = 9;
+inline void FrameSubPacket::clear_mouse_y() {
+  mouse_y_ = 0;
 }
-inline ::google::protobuf::int32 FrameSubPacket::y() const {
-  // @@protoc_insertion_point(field_get:gamingstreaming.FrameSubPacket.y)
-  return y_;
+inline ::google::protobuf::int32 FrameSubPacket::mouse_y() const {
+  // @@protoc_insertion_point(field_get:gamingstreaming.FrameSubPacket.mouse_y)
+  return mouse_y_;
 }
-inline void FrameSubPacket::set_y(::google::protobuf::int32 value) {
+inline void FrameSubPacket::set_mouse_y(::google::protobuf::int32 value) {
   
-  y_ = value;
-  // @@protoc_insertion_point(field_set:gamingstreaming.FrameSubPacket.y)
+  mouse_y_ = value;
+  // @@protoc_insertion_point(field_set:gamingstreaming.FrameSubPacket.mouse_y)
+}
+
+// bool mouse_is_visible = 10;
+inline void FrameSubPacket::clear_mouse_is_visible() {
+  mouse_is_visible_ = false;
+}
+inline bool FrameSubPacket::mouse_is_visible() const {
+  // @@protoc_insertion_point(field_get:gamingstreaming.FrameSubPacket.mouse_is_visible)
+  return mouse_is_visible_;
+}
+inline void FrameSubPacket::set_mouse_is_visible(bool value) {
+  
+  mouse_is_visible_ = value;
+  // @@protoc_insertion_point(field_set:gamingstreaming.FrameSubPacket.mouse_is_visible)
 }
 
 // -------------------------------------------------------------------

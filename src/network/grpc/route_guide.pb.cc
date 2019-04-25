@@ -80,8 +80,9 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_PROTOBUF_ATTRIBUT
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::gamingstreaming::FrameSubPacket, dts_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::gamingstreaming::FrameSubPacket, flags_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::gamingstreaming::FrameSubPacket, data_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::gamingstreaming::FrameSubPacket, x_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::gamingstreaming::FrameSubPacket, y_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::gamingstreaming::FrameSubPacket, mouse_x_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::gamingstreaming::FrameSubPacket, mouse_y_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::gamingstreaming::FrameSubPacket, mouse_is_visible_),
   ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::gamingstreaming::InputCommand, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -96,7 +97,7 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_PROTOBUF_ATTRIBUT
 };
 static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
   { 0, -1, sizeof(::gamingstreaming::FrameSubPacket)},
-  { 14, -1, sizeof(::gamingstreaming::InputCommand)},
+  { 15, -1, sizeof(::gamingstreaming::InputCommand)},
 };
 
 static ::google::protobuf::Message const * const file_default_instances[] = {
@@ -125,20 +126,21 @@ void protobuf_RegisterTypes(const ::std::string&) {
 void AddDescriptorsImpl() {
   InitDefaults();
   static const char descriptor[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
-      "\n\021route_guide.proto\022\017gamingstreaming\"\230\001\n"
+      "\n\021route_guide.proto\022\017gamingstreaming\"\276\001\n"
       "\016FrameSubPacket\022\024\n\014frame_number\030\001 \001(\005\022\025\n"
       "\rpacket_number\030\002 \001(\005\022\014\n\004size\030\003 \001(\005\022\013\n\003pt"
       "s\030\004 \001(\003\022\013\n\003dts\030\005 \001(\003\022\r\n\005flags\030\006 \001(\003\022\014\n\004d"
-      "ata\030\007 \001(\014\022\t\n\001x\030\010 \001(\005\022\t\n\001y\030\t \001(\005\"q\n\014Input"
-      "Command\022\017\n\007command\030\001 \001(\t\022\022\n\nevent_type\030\002"
-      " \001(\005\022\020\n\010key_code\030\003 \001(\005\022\t\n\001x\030\004 \001(\005\022\t\n\001y\030\005"
-      " \001(\005\022\024\n\014mouse_button\030\006 \001(\0052o\n\026GamingStre"
-      "amingService\022U\n\rGamingChannel\022\035.gamingst"
-      "reaming.InputCommand\032\037.gamingstreaming.F"
-      "rameSubPacket\"\000(\0010\001b\006proto3"
+      "ata\030\007 \001(\014\022\017\n\007mouse_x\030\010 \001(\005\022\017\n\007mouse_y\030\t "
+      "\001(\005\022\030\n\020mouse_is_visible\030\n \001(\010\"q\n\014InputCo"
+      "mmand\022\017\n\007command\030\001 \001(\t\022\022\n\nevent_type\030\002 \001"
+      "(\005\022\020\n\010key_code\030\003 \001(\005\022\t\n\001x\030\004 \001(\005\022\t\n\001y\030\005 \001"
+      "(\005\022\024\n\014mouse_button\030\006 \001(\0052o\n\026GamingStream"
+      "ingService\022U\n\rGamingChannel\022\035.gamingstre"
+      "aming.InputCommand\032\037.gamingstreaming.Fra"
+      "meSubPacket\"\000(\0010\001b\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 427);
+      descriptor, 465);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "route_guide.proto", &protobuf_RegisterTypes);
 }
@@ -168,8 +170,9 @@ const int FrameSubPacket::kPtsFieldNumber;
 const int FrameSubPacket::kDtsFieldNumber;
 const int FrameSubPacket::kFlagsFieldNumber;
 const int FrameSubPacket::kDataFieldNumber;
-const int FrameSubPacket::kXFieldNumber;
-const int FrameSubPacket::kYFieldNumber;
+const int FrameSubPacket::kMouseXFieldNumber;
+const int FrameSubPacket::kMouseYFieldNumber;
+const int FrameSubPacket::kMouseIsVisibleFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 FrameSubPacket::FrameSubPacket()
@@ -188,16 +191,16 @@ FrameSubPacket::FrameSubPacket(const FrameSubPacket& from)
     data_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.data_);
   }
   ::memcpy(&frame_number_, &from.frame_number_,
-    static_cast<size_t>(reinterpret_cast<char*>(&y_) -
-    reinterpret_cast<char*>(&frame_number_)) + sizeof(y_));
+    static_cast<size_t>(reinterpret_cast<char*>(&mouse_is_visible_) -
+    reinterpret_cast<char*>(&frame_number_)) + sizeof(mouse_is_visible_));
   // @@protoc_insertion_point(copy_constructor:gamingstreaming.FrameSubPacket)
 }
 
 void FrameSubPacket::SharedCtor() {
   data_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   ::memset(&frame_number_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&y_) -
-      reinterpret_cast<char*>(&frame_number_)) + sizeof(y_));
+      reinterpret_cast<char*>(&mouse_is_visible_) -
+      reinterpret_cast<char*>(&frame_number_)) + sizeof(mouse_is_visible_));
 }
 
 FrameSubPacket::~FrameSubPacket() {
@@ -231,8 +234,8 @@ void FrameSubPacket::Clear() {
 
   data_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   ::memset(&frame_number_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&y_) -
-      reinterpret_cast<char*>(&frame_number_)) + sizeof(y_));
+      reinterpret_cast<char*>(&mouse_is_visible_) -
+      reinterpret_cast<char*>(&frame_number_)) + sizeof(mouse_is_visible_));
   _internal_metadata_.Clear();
 }
 
@@ -342,28 +345,42 @@ bool FrameSubPacket::MergePartialFromCodedStream(
         break;
       }
 
-      // int32 x = 8;
+      // int32 mouse_x = 8;
       case 8: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(64u /* 64 & 0xFF */)) {
 
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
-                 input, &x_)));
+                 input, &mouse_x_)));
         } else {
           goto handle_unusual;
         }
         break;
       }
 
-      // int32 y = 9;
+      // int32 mouse_y = 9;
       case 9: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(72u /* 72 & 0xFF */)) {
 
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
-                 input, &y_)));
+                 input, &mouse_y_)));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // bool mouse_is_visible = 10;
+      case 10: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(80u /* 80 & 0xFF */)) {
+
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   bool, ::google::protobuf::internal::WireFormatLite::TYPE_BOOL>(
+                 input, &mouse_is_visible_)));
         } else {
           goto handle_unusual;
         }
@@ -432,14 +449,19 @@ void FrameSubPacket::SerializeWithCachedSizes(
       7, this->data(), output);
   }
 
-  // int32 x = 8;
-  if (this->x() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt32(8, this->x(), output);
+  // int32 mouse_x = 8;
+  if (this->mouse_x() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(8, this->mouse_x(), output);
   }
 
-  // int32 y = 9;
-  if (this->y() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt32(9, this->y(), output);
+  // int32 mouse_y = 9;
+  if (this->mouse_y() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(9, this->mouse_y(), output);
+  }
+
+  // bool mouse_is_visible = 10;
+  if (this->mouse_is_visible() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteBool(10, this->mouse_is_visible(), output);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -493,14 +515,19 @@ void FrameSubPacket::SerializeWithCachedSizes(
         7, this->data(), target);
   }
 
-  // int32 x = 8;
-  if (this->x() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(8, this->x(), target);
+  // int32 mouse_x = 8;
+  if (this->mouse_x() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(8, this->mouse_x(), target);
   }
 
-  // int32 y = 9;
-  if (this->y() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(9, this->y(), target);
+  // int32 mouse_y = 9;
+  if (this->mouse_y() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(9, this->mouse_y(), target);
+  }
+
+  // bool mouse_is_visible = 10;
+  if (this->mouse_is_visible() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteBoolToArray(10, this->mouse_is_visible(), target);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -562,11 +589,11 @@ size_t FrameSubPacket::ByteSizeLong() const {
         this->size());
   }
 
-  // int32 x = 8;
-  if (this->x() != 0) {
+  // int32 mouse_x = 8;
+  if (this->mouse_x() != 0) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::Int32Size(
-        this->x());
+        this->mouse_x());
   }
 
   // int64 flags = 6;
@@ -576,11 +603,16 @@ size_t FrameSubPacket::ByteSizeLong() const {
         this->flags());
   }
 
-  // int32 y = 9;
-  if (this->y() != 0) {
+  // int32 mouse_y = 9;
+  if (this->mouse_y() != 0) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::Int32Size(
-        this->y());
+        this->mouse_y());
+  }
+
+  // bool mouse_is_visible = 10;
+  if (this->mouse_is_visible() != 0) {
+    total_size += 1 + 1;
   }
 
   int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
@@ -629,14 +661,17 @@ void FrameSubPacket::MergeFrom(const FrameSubPacket& from) {
   if (from.size() != 0) {
     set_size(from.size());
   }
-  if (from.x() != 0) {
-    set_x(from.x());
+  if (from.mouse_x() != 0) {
+    set_mouse_x(from.mouse_x());
   }
   if (from.flags() != 0) {
     set_flags(from.flags());
   }
-  if (from.y() != 0) {
-    set_y(from.y());
+  if (from.mouse_y() != 0) {
+    set_mouse_y(from.mouse_y());
+  }
+  if (from.mouse_is_visible() != 0) {
+    set_mouse_is_visible(from.mouse_is_visible());
   }
 }
 
@@ -671,9 +706,10 @@ void FrameSubPacket::InternalSwap(FrameSubPacket* other) {
   swap(pts_, other->pts_);
   swap(dts_, other->dts_);
   swap(size_, other->size_);
-  swap(x_, other->x_);
+  swap(mouse_x_, other->mouse_x_);
   swap(flags_, other->flags_);
-  swap(y_, other->y_);
+  swap(mouse_y_, other->mouse_y_);
+  swap(mouse_is_visible_, other->mouse_is_visible_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
 }
 

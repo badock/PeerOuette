@@ -34,7 +34,10 @@ FrameSubPacket MakeFrame(const int frame_number,
                          const int64_t pts,
                          const int64_t dts,
                          const int flags,
-                         const char* data) {
+                         const char* data,
+                         const int mouse_x,
+                         const int mouse_y,
+                         const bool mouse_is_visible) {
     FrameSubPacket f;
     f.set_frame_number(frame_number);
     f.set_packet_number(packet_number);
@@ -43,6 +46,10 @@ FrameSubPacket MakeFrame(const int frame_number,
     f.set_dts(dts);
     f.set_flags(flags);
     f.set_data(data, size);
+    // fields related to mouse
+    f.set_mouse_x(mouse_x);
+    f.set_mouse_y(mouse_y);
+    f.set_mouse_is_visible(mouse_is_visible);
 
     return f;
 }
@@ -81,14 +88,21 @@ public:
         while (!streaming_environment->finishing && streaming_environment->client_connected) {
             const auto pkt_d = streaming_environment->packet_sender_thread_queue.pop();
 
+            mouse_info* mouse_info_ptr = get_mouse_info();
+
             FrameSubPacket subPacket = MakeFrame(pkt_d->frame_number,
                                                  pkt_d->packet_number,
                                                  pkt_d->size,
                                                  pkt_d->pts,
                                                  pkt_d->dts,
                                                  pkt_d->flags,
-                                                 (char*) pkt_d->data);
+                                                 (char*) pkt_d->data,
+                                                 mouse_info_ptr->x,
+                                                 mouse_info_ptr->y,
+                                                 mouse_info_ptr->visible);
             stream->Write(subPacket);
+
+            free(mouse_info_ptr);
 
             free(pkt_d->data);
             free(pkt_d);
