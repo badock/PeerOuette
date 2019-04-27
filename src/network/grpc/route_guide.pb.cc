@@ -91,6 +91,7 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_PROTOBUF_ATTRIBUT
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::gamingstreaming::InputCommand, command_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::gamingstreaming::InputCommand, event_type_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::gamingstreaming::InputCommand, key_code_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::gamingstreaming::InputCommand, scan_code_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::gamingstreaming::InputCommand, key_event_type_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::gamingstreaming::InputCommand, x_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::gamingstreaming::InputCommand, y_),
@@ -132,17 +133,17 @@ void AddDescriptorsImpl() {
       "\rpacket_number\030\002 \001(\005\022\014\n\004size\030\003 \001(\005\022\013\n\003pt"
       "s\030\004 \001(\003\022\013\n\003dts\030\005 \001(\003\022\r\n\005flags\030\006 \001(\003\022\014\n\004d"
       "ata\030\007 \001(\014\022\017\n\007mouse_x\030\010 \001(\005\022\017\n\007mouse_y\030\t "
-      "\001(\005\022\030\n\020mouse_is_visible\030\n \001(\010\"\211\001\n\014InputC"
+      "\001(\005\022\030\n\020mouse_is_visible\030\n \001(\010\"\234\001\n\014InputC"
       "ommand\022\017\n\007command\030\001 \001(\t\022\022\n\nevent_type\030\002 "
-      "\001(\005\022\020\n\010key_code\030\003 \001(\005\022\026\n\016key_event_type\030"
-      "\004 \001(\005\022\t\n\001x\030\005 \001(\005\022\t\n\001y\030\006 \001(\005\022\024\n\014mouse_but"
-      "ton\030\007 \001(\0052o\n\026GamingStreamingService\022U\n\rG"
-      "amingChannel\022\035.gamingstreaming.InputComm"
-      "and\032\037.gamingstreaming.FrameSubPacket\"\000(\001"
-      "0\001b\006proto3"
+      "\001(\005\022\020\n\010key_code\030\003 \001(\005\022\021\n\tscan_code\030\004 \001(\005"
+      "\022\026\n\016key_event_type\030\005 \001(\005\022\t\n\001x\030\006 \001(\005\022\t\n\001y"
+      "\030\007 \001(\005\022\024\n\014mouse_button\030\010 \001(\0052o\n\026GamingSt"
+      "reamingService\022U\n\rGamingChannel\022\035.gaming"
+      "streaming.InputCommand\032\037.gamingstreaming"
+      ".FrameSubPacket\"\000(\0010\001b\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 490);
+      descriptor, 509);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "route_guide.proto", &protobuf_RegisterTypes);
 }
@@ -729,6 +730,7 @@ void InputCommand::InitAsDefaultInstance() {
 const int InputCommand::kCommandFieldNumber;
 const int InputCommand::kEventTypeFieldNumber;
 const int InputCommand::kKeyCodeFieldNumber;
+const int InputCommand::kScanCodeFieldNumber;
 const int InputCommand::kKeyEventTypeFieldNumber;
 const int InputCommand::kXFieldNumber;
 const int InputCommand::kYFieldNumber;
@@ -853,10 +855,24 @@ bool InputCommand::MergePartialFromCodedStream(
         break;
       }
 
-      // int32 key_event_type = 4;
+      // int32 scan_code = 4;
       case 4: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(32u /* 32 & 0xFF */)) {
+
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
+                 input, &scan_code_)));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // int32 key_event_type = 5;
+      case 5: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(40u /* 40 & 0xFF */)) {
 
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
@@ -867,10 +883,10 @@ bool InputCommand::MergePartialFromCodedStream(
         break;
       }
 
-      // int32 x = 5;
-      case 5: {
+      // int32 x = 6;
+      case 6: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(40u /* 40 & 0xFF */)) {
+            static_cast< ::google::protobuf::uint8>(48u /* 48 & 0xFF */)) {
 
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
@@ -881,10 +897,10 @@ bool InputCommand::MergePartialFromCodedStream(
         break;
       }
 
-      // int32 y = 6;
-      case 6: {
+      // int32 y = 7;
+      case 7: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(48u /* 48 & 0xFF */)) {
+            static_cast< ::google::protobuf::uint8>(56u /* 56 & 0xFF */)) {
 
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
@@ -895,10 +911,10 @@ bool InputCommand::MergePartialFromCodedStream(
         break;
       }
 
-      // int32 mouse_button = 7;
-      case 7: {
+      // int32 mouse_button = 8;
+      case 8: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(56u /* 56 & 0xFF */)) {
+            static_cast< ::google::protobuf::uint8>(64u /* 64 & 0xFF */)) {
 
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
@@ -955,24 +971,29 @@ void InputCommand::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteInt32(3, this->key_code(), output);
   }
 
-  // int32 key_event_type = 4;
+  // int32 scan_code = 4;
+  if (this->scan_code() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(4, this->scan_code(), output);
+  }
+
+  // int32 key_event_type = 5;
   if (this->key_event_type() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt32(4, this->key_event_type(), output);
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(5, this->key_event_type(), output);
   }
 
-  // int32 x = 5;
+  // int32 x = 6;
   if (this->x() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt32(5, this->x(), output);
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(6, this->x(), output);
   }
 
-  // int32 y = 6;
+  // int32 y = 7;
   if (this->y() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt32(6, this->y(), output);
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(7, this->y(), output);
   }
 
-  // int32 mouse_button = 7;
+  // int32 mouse_button = 8;
   if (this->mouse_button() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt32(7, this->mouse_button(), output);
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(8, this->mouse_button(), output);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -1010,24 +1031,29 @@ void InputCommand::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(3, this->key_code(), target);
   }
 
-  // int32 key_event_type = 4;
+  // int32 scan_code = 4;
+  if (this->scan_code() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(4, this->scan_code(), target);
+  }
+
+  // int32 key_event_type = 5;
   if (this->key_event_type() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(4, this->key_event_type(), target);
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(5, this->key_event_type(), target);
   }
 
-  // int32 x = 5;
+  // int32 x = 6;
   if (this->x() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(5, this->x(), target);
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(6, this->x(), target);
   }
 
-  // int32 y = 6;
+  // int32 y = 7;
   if (this->y() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(6, this->y(), target);
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(7, this->y(), target);
   }
 
-  // int32 mouse_button = 7;
+  // int32 mouse_button = 8;
   if (this->mouse_button() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(7, this->mouse_button(), target);
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(8, this->mouse_button(), target);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -1068,28 +1094,35 @@ size_t InputCommand::ByteSizeLong() const {
         this->key_code());
   }
 
-  // int32 key_event_type = 4;
+  // int32 scan_code = 4;
+  if (this->scan_code() != 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::Int32Size(
+        this->scan_code());
+  }
+
+  // int32 key_event_type = 5;
   if (this->key_event_type() != 0) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::Int32Size(
         this->key_event_type());
   }
 
-  // int32 x = 5;
+  // int32 x = 6;
   if (this->x() != 0) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::Int32Size(
         this->x());
   }
 
-  // int32 y = 6;
+  // int32 y = 7;
   if (this->y() != 0) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::Int32Size(
         this->y());
   }
 
-  // int32 mouse_button = 7;
+  // int32 mouse_button = 8;
   if (this->mouse_button() != 0) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::Int32Size(
@@ -1133,6 +1166,9 @@ void InputCommand::MergeFrom(const InputCommand& from) {
   if (from.key_code() != 0) {
     set_key_code(from.key_code());
   }
+  if (from.scan_code() != 0) {
+    set_scan_code(from.scan_code());
+  }
   if (from.key_event_type() != 0) {
     set_key_event_type(from.key_event_type());
   }
@@ -1175,6 +1211,7 @@ void InputCommand::InternalSwap(InputCommand* other) {
     GetArenaNoVirtual());
   swap(event_type_, other->event_type_);
   swap(key_code_, other->key_code_);
+  swap(scan_code_, other->scan_code_);
   swap(key_event_type_, other->key_event_type_);
   swap(x_, other->x_);
   swap(y_, other->y_);

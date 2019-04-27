@@ -94,6 +94,7 @@ int handle_sdl_input(StreamingEnvironment* se, SDL_Event event) {
 
     if(event.type == SDL_KEYDOWN || event.type == SDL_KEYUP) {
         c->set_key_code(event.key.keysym.sym);
+        c->set_scan_code(event.key.keysym.scancode);
         c->set_event_type(event.type);
     }
     else if (event.type == SDL_MOUSEBUTTONDOWN || event.type == SDL_MOUSEBUTTONUP || event.type == SDL_MOUSEWHEEL || event.type == SDL_MOUSEMOTION){
