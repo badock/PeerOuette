@@ -14,8 +14,45 @@ int last_y = -1;
 int simulate_input_event(InputCommand* cmd) {
 #if defined(WIN32)
     if(cmd->event_type() == SDL_KEYDOWN || cmd->event_type() == SDL_KEYUP) {
+        int key_up_down_code = cmd->event_type() == SDL_KEYUP ? KEYEVENTF_KEYUP : 0;
         int virtual_key_code = VkKeyScanA(cmd->key_code());
-        keybd_event(virtual_key_code, 0, cmd->event_type() == SDL_KEYUP ? KEYEVENTF_KEYUP : 0, 0);
+
+        // ALT
+               if (cmd->scan_code() == SDL_SCANCODE_LALT) {
+            virtual_key_code = VK_LMENU;
+        } else if (cmd->scan_code() == SDL_SCANCODE_RALT) {
+            virtual_key_code = VK_RMENU;
+        }
+        // SHIFT
+          else if (cmd->scan_code() == SDL_SCANCODE_LSHIFT) {
+            virtual_key_code = VK_LSHIFT;
+        } else if (cmd->scan_code() == SDL_SCANCODE_RSHIFT) {
+            virtual_key_code = VK_RSHIFT;
+        }
+        // CONTROL
+          else if (cmd->scan_code() == SDL_SCANCODE_LCTRL) {
+            virtual_key_code = VK_LCONTROL;
+        } else if (cmd->scan_code() == SDL_SCANCODE_RCTRL) {
+            virtual_key_code = VK_RCONTROL;
+        }
+        // WINDOWS
+          else if (cmd->scan_code() == SDL_SCANCODE_LGUI) {
+            virtual_key_code = VK_LWIN;
+        } else if (cmd->scan_code() == SDL_SCANCODE_RGUI) {
+           virtual_key_code = VK_RWIN;
+        }
+        // ARROWS
+          else if (cmd->scan_code() == SDL_SCANCODE_DOWN) {
+            virtual_key_code = VK_DOWN;
+        } else if (cmd->scan_code() == SDL_SCANCODE_UP) {
+            virtual_key_code = VK_UP;
+        } else if (cmd->scan_code() == SDL_SCANCODE_LEFT) {
+            virtual_key_code = VK_LEFT;
+        } else if(cmd->scan_code() == SDL_SCANCODE_RIGHT) {
+            virtual_key_code = VK_RIGHT;
+        }
+
+        keybd_event(virtual_key_code, 0, key_up_down_code, 0);
     } else
     if(cmd->event_type() == SDL_MOUSEBUTTONDOWN || cmd->event_type() == SDL_MOUSEBUTTONUP || cmd->event_type() == SDL_MOUSEWHEEL || cmd->event_type() == SDL_MOUSEMOTION) {
         if (! is_cursor_initialized) {
