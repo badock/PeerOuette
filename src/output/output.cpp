@@ -128,7 +128,7 @@ int frame_output_thread(void *arg) {
         dest.y = int(se->client_mouse_y * ratio_height);
         dest.w = 20;
         dest.h = 20;
-        
+
         SDL_RenderCopy(se->renderer, mouse_cursor_icon_texture, nullptr, &dest);
         SDL_RenderPresent(se->renderer);
         frame_data->sdl_displayed_time_point = std::chrono::system_clock::now();

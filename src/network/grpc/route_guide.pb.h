@@ -350,21 +350,27 @@ class InputCommand : public ::google::protobuf::Message /* @@protoc_insertion_po
   ::google::protobuf::int32 key_code() const;
   void set_key_code(::google::protobuf::int32 value);
 
-  // int32 x = 4;
+  // int32 key_event_type = 4;
+  void clear_key_event_type();
+  static const int kKeyEventTypeFieldNumber = 4;
+  ::google::protobuf::int32 key_event_type() const;
+  void set_key_event_type(::google::protobuf::int32 value);
+
+  // int32 x = 5;
   void clear_x();
-  static const int kXFieldNumber = 4;
+  static const int kXFieldNumber = 5;
   ::google::protobuf::int32 x() const;
   void set_x(::google::protobuf::int32 value);
 
-  // int32 y = 5;
+  // int32 y = 6;
   void clear_y();
-  static const int kYFieldNumber = 5;
+  static const int kYFieldNumber = 6;
   ::google::protobuf::int32 y() const;
   void set_y(::google::protobuf::int32 value);
 
-  // int32 mouse_button = 6;
+  // int32 mouse_button = 7;
   void clear_mouse_button();
-  static const int kMouseButtonFieldNumber = 6;
+  static const int kMouseButtonFieldNumber = 7;
   ::google::protobuf::int32 mouse_button() const;
   void set_mouse_button(::google::protobuf::int32 value);
 
@@ -375,6 +381,7 @@ class InputCommand : public ::google::protobuf::Message /* @@protoc_insertion_po
   ::google::protobuf::internal::ArenaStringPtr command_;
   ::google::protobuf::int32 event_type_;
   ::google::protobuf::int32 key_code_;
+  ::google::protobuf::int32 key_event_type_;
   ::google::protobuf::int32 x_;
   ::google::protobuf::int32 y_;
   ::google::protobuf::int32 mouse_button_;
@@ -656,7 +663,21 @@ inline void InputCommand::set_key_code(::google::protobuf::int32 value) {
   // @@protoc_insertion_point(field_set:gamingstreaming.InputCommand.key_code)
 }
 
-// int32 x = 4;
+// int32 key_event_type = 4;
+inline void InputCommand::clear_key_event_type() {
+  key_event_type_ = 0;
+}
+inline ::google::protobuf::int32 InputCommand::key_event_type() const {
+  // @@protoc_insertion_point(field_get:gamingstreaming.InputCommand.key_event_type)
+  return key_event_type_;
+}
+inline void InputCommand::set_key_event_type(::google::protobuf::int32 value) {
+  
+  key_event_type_ = value;
+  // @@protoc_insertion_point(field_set:gamingstreaming.InputCommand.key_event_type)
+}
+
+// int32 x = 5;
 inline void InputCommand::clear_x() {
   x_ = 0;
 }
@@ -670,7 +691,7 @@ inline void InputCommand::set_x(::google::protobuf::int32 value) {
   // @@protoc_insertion_point(field_set:gamingstreaming.InputCommand.x)
 }
 
-// int32 y = 5;
+// int32 y = 6;
 inline void InputCommand::clear_y() {
   y_ = 0;
 }
@@ -684,7 +705,7 @@ inline void InputCommand::set_y(::google::protobuf::int32 value) {
   // @@protoc_insertion_point(field_set:gamingstreaming.InputCommand.y)
 }
 
-// int32 mouse_button = 6;
+// int32 mouse_button = 7;
 inline void InputCommand::clear_mouse_button() {
   mouse_button_ = 0;
 }

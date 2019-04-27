@@ -91,37 +91,11 @@ int handle_sdl_input(StreamingEnvironment* se, SDL_Event event) {
     c->set_command("command");
     c->set_event_type(event.type);
 
-    bool send_event = false;
-//    return c;
+    bool send_event = true;
 
-    if(event.type == SDL_KEYDOWN ) {
+    if(event.type == SDL_KEYDOWN || event.type == SDL_KEYUP) {
         c->set_key_code(event.key.keysym.sym);
-
-//        switch( event.key.keysym.sym ) {
-//            case SDLK_UP:
-//                puts("up arrow");
-//                break;
-//            case SDLK_DOWN://for full list of key names, http://www.libsdl.org/release/SDL-1.2.15/docs/html/sdlkey.html
-//                puts("down arrow");
-//
-//                SDL_KeyboardEvent event2;
-//                SDL_KeyboardEvent* e = (SDL_KeyboardEvent*) &event;
-//
-//                event2.type = SDL_KEYDOWN;
-//                event2.timestamp = e->timestamp + 1;
-//                event2.windowID = e->windowID;
-//                event2.state = SDL_PRESSED;
-//
-//                event2.keysym.scancode = e->keysym.scancode; // from SDL_Keysym
-//                event2.keysym.sym = SDLK_UP;
-//                event2.keysym.mod = 0; // from SDL_Keymod
-//
-//                SDL_PushEvent((SDL_Event*) &event2);
-//
-//                break;
-//        }
-
-        send_event = true;
+        c->set_event_type(event.type);
     }
     else if (event.type == SDL_MOUSEBUTTONDOWN || event.type == SDL_MOUSEBUTTONUP || event.type == SDL_MOUSEWHEEL || event.type == SDL_MOUSEMOTION){
 
@@ -136,10 +110,8 @@ int handle_sdl_input(StreamingEnvironment* se, SDL_Event event) {
         c->set_x(mouse_x_rel);
         c->set_y(mouse_y_rel);
         c->set_mouse_button(event.button.button);
-
-        send_event = true;
     } else {
-
+        send_event = false;
     }
 
     if (send_event) {
