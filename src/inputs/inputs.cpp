@@ -14,7 +14,8 @@ int last_y = -1;
 int simulate_input_event(InputCommand* cmd) {
 #if defined(WIN32)
     if(cmd->event_type() == SDL_KEYDOWN || cmd->event_type() == SDL_KEYUP) {
-        log_info("keyboard event");
+        int virtual_key_code = VkKeyScanA(cmd->key_code());
+        keybd_event(virtual_key_code, 0, cmd->event_type() == SDL_KEYUP ? KEYEVENTF_KEYUP : 0, 0);
     } else
     if(cmd->event_type() == SDL_MOUSEBUTTONDOWN || cmd->event_type() == SDL_MOUSEBUTTONUP || cmd->event_type() == SDL_MOUSEWHEEL || cmd->event_type() == SDL_MOUSEMOTION) {
         if (! is_cursor_initialized) {
