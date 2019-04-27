@@ -44,8 +44,9 @@ message InputCommand {
         string command = 1;
         int32 event_type = 2; // 0 -> mouse; 1 -> keyboard
         int32 key_code = 3; // for keyboard
-        int32 key_event_type = 4; // for keyboard
-        int32 x = 5; // for mouse
-        int32 y = 6; // for mouse
-        int32 mouse_button = 7; // for mouse
+        int32 scan_code = 4; // for keyboard
+        int32 key_event_type = 5; // for keyboard
+        int32 x = 6; // for mouse
+        int32 y = 7; // for mouse
+        int32 mouse_button = 8; // for mouse
 }
