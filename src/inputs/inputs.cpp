@@ -17,7 +17,6 @@ int simulate_input_event(InputCommand* cmd) {
         log_info("keyboard event");
     } else
     if(cmd->event_type() == SDL_MOUSEBUTTONDOWN || cmd->event_type() == SDL_MOUSEBUTTONUP || cmd->event_type() == SDL_MOUSEWHEEL || cmd->event_type() == SDL_MOUSEMOTION) {
-        log_info("mouse event");
         if (! is_cursor_initialized) {
             //SetCursorPos(cmd->x(), cmd->y());
             is_cursor_initialized = true;
@@ -38,7 +37,7 @@ int simulate_input_event(InputCommand* cmd) {
         last_x = cmd->x();
         last_y = cmd->y();
 
-        printf("> mouse moved at: (%d,%d)\n", cmd->x(), cmd->y());
+        //printf("> mouse moved at: (%d,%d)\n", cmd->x(), cmd->y());
 
         if (cmd->event_type() != SDL_MOUSEMOTION) {
 
