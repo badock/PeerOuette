@@ -3,7 +3,7 @@
 //
 
 #include "inputs.h"
-#include "src/network/grpc/route_guide.grpc.pb.h"
+#include "protos/route_guide.grpc.pb.h"
 
 using gamingstreaming::InputCommand;
 

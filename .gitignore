@@ -1,3 +1,6 @@
+protos/*.cc
+protos/*.h
+
 *.db
 tmp
 deps

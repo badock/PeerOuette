@@ -4,6 +4,7 @@
 
 #ifndef GAMECLIENTSDL_CAPTURE_H
 #define GAMECLIENTSDL_CAPTURE_H
+#define NOMINMAX
 #include <windows.h>
 #include <d3d11.h>
 #include <dxgi1_2.h>

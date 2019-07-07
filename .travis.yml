@@ -3,29 +3,45 @@ language: cpp
 matrix:
   include:
     - os: osx
-      env: WORDSIZE=64 CONFIGURATION=Debug
-      osx_image: xcode9.4
-      compiler: clang
+      osx_image: xcode10.1
+#      compiler: clang
     - os: linux
-      dist: xenial
-      compiler: gcc
+      dist: bionic
       addons:
         apt:
           sources:
             - ubuntu-toolchain-r-test
-            - llvm-toolchain-precise-3.7
+#          packages:
+#            - gcc-7
+#            - g++-7
           packages:
             - libsdl1.2-dev
             - libsdl2-dev
             - libav-tools
             - libavformat-dev
-            - libavdevice-dev
-      env: COMPILER=g++-6 WORDSIZE=64 CONFIGURATION=Release AUDIO=Alsa
+      env: WORDSIZE=64 CONFIGURATION=Release AUDIO=Alsa
+
 before_install:
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install ffmpeg; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install sdl sdl_image sdl_mixer sdl_ttf portmidi; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install sdl2; fi
+  # MACOS
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+      bash $TRAVIS_BUILD_DIR/scripts/install_deps_macos.sh;
+    fi
+  # LINUX
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+      bash $TRAVIS_BUILD_DIR/scripts/install_deps_linux.sh;
+    fi
 script:
-  - cmake .
-  - make all
+  - mkdir -p build
+  - cd build
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+      export TOOLCHAIN_ARG="-DCMAKE_TOOLCHAIN_FILE=/Users/travis/vcpkg/scripts/buildsystems/vcpkg.cmake";
+    fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+      export TOOLCHAIN_ARG="";
+    fi
+  - cmake "-DCMAKE_TOOLCHAIN_FILE=/Users/travis/vcpkg/scripts/buildsystems/vcpkg.cmake" ..
+  - cmake --build .
+
+cache:
+  directories:
+  - $HOME/travis_cache

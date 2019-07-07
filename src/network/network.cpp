@@ -5,7 +5,7 @@
 
 #include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
-#include "grpc/route_guide.grpc.pb.h"
+#include "protos/route_guide.grpc.pb.h"
 #include "src/inputs/inputs.h"
 
 using grpc::Server;

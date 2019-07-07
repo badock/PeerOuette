@@ -1,7 +1,7 @@
 //
 // Created by jonathan on 11/20/2018.
 //
-
+#define NOMINMAX
 #include "capture.h"
 #include <windows.h>
 #include <d3d11.h>

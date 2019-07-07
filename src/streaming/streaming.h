@@ -1,3 +1,5 @@
+#define NOMINMAX
+
 #include <SDL.h>
 #include <SDL_thread.h>
 #include <string>
@@ -44,7 +46,7 @@ void usleep(unsigned int usec);
 #include <unistd.h>
 #endif
 
-#include "src/network/grpc/route_guide.pb.h"
+#include "protos/route_guide.pb.h"
 
 using gamingstreaming::InputCommand;
 

@@ -1,41 +1,52 @@
 cmake_minimum_required(VERSION 3.9)
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/CMakeModules)
 
-
-include("HunterGate")
-#HunterGate(
-#        URL "https://github.com/ruslo/hunter/archive/v0.23.31.tar.gz"
-#        SHA1 "3d94b8522541c4c8eaac606f4c47d09322a8019c"
-#)
-HunterGate(
-		URL "https://github.com/ruslo/hunter/archive/v0.23.114.tar.gz"
-		SHA1 "712b3f5ea467fbddd4769a7800a060fbd6a31ab5"
-)
-
-
-# add_subdirectory(src/network/grpc)
-add_subdirectory(protobuf)
-
 project(GameClientSDL)
 set(CMAKE_CXX_STANDARD 14)
 
-#hunter_add_package(Beast)
-#find_package(Beast CONFIG REQUIRED)
-
-#hunter_add_package(Boost)
-#find_package(Boost CONFIG REQUIRED)
-
-#hunter_add_package(nlohmann_fifo_map)
-#find_package(nlohmann_fifo_map CONFIG REQUIRED)
-
-hunter_add_package(Protobuf)
 find_package(Protobuf CONFIG REQUIRED)
 
-hunter_add_package(gRPC)
 find_package(gRPC CONFIG REQUIRED)
 
-###########
-###########
+message(STATUS "Using protobuf ${protobuf_VERSION}")
+message(STATUS "Using gRPC ${gRPC_VERSION}")
+
+##########################################################
+# Compile protos/route_guide.proto file
+##########################################################
+
+# Proto file
+get_filename_component(hw_proto "${CMAKE_CURRENT_SOURCE_DIR}/protos/route_guide.proto" ABSOLUTE)
+get_filename_component(hw_proto_path "${hw_proto}" PATH)
+
+# Generated sources
+set(hw_proto_srcs "${CMAKE_CURRENT_SOURCE_DIR}/protos/route_guide.pb.cc")
+set(hw_proto_hdrs "${CMAKE_CURRENT_SOURCE_DIR}/protos/route_guide.pb.h")
+set(hw_grpc_srcs "${CMAKE_CURRENT_SOURCE_DIR}/protos/route_guide.grpc.pb.cc")
+set(hw_grpc_hdrs "${CMAKE_CURRENT_SOURCE_DIR}/protos/route_guide.grpc.pb.h")
+
+find_program(GRPC_CPP_PLUGIN NAMES grpc_cpp_plugin)
+find_program(PROTOC_PATH NAMES protoc)
+
+#get_cmake_property(_variableNames VARIABLES)
+#foreach (_variableName ${_variableNames})
+#	message(STATUS "${_variableName}=${${_variableName}}")
+#endforeach()
+
+add_custom_command(
+		OUTPUT "${hw_proto_srcs}" "${hw_proto_hdrs}" "${hw_grpc_srcs}" "${hw_grpc_hdrs}"
+		COMMAND ${PROTOC_PATH}
+		ARGS --grpc_out=${CMAKE_CURRENT_SOURCE_DIR}/protos
+		--cpp_out=${CMAKE_CURRENT_SOURCE_DIR}/protos
+		-I ${CMAKE_CURRENT_SOURCE_DIR}/protos
+		--plugin=protoc-gen-grpc=${GRPC_CPP_PLUGIN}
+		${hw_proto}
+		DEPENDS "${hw_proto}"
+)
+
+##########################################################
+# Compile Peerouette
+##########################################################
 
 if(WIN32)
     add_executable(GameClientSDL
@@ -48,10 +59,10 @@ if(WIN32)
             src/queue/queue.h
             src/dxcapture/capture.cpp
             src/dxcapture/capture.h
-            src/network/grpc/route_guide.grpc.pb.cc
-            src/network/grpc/route_guide.grpc.pb.h
-            src/network/grpc/route_guide.pb.cc
-            src/network/grpc/route_guide.pb.h
+            protos/route_guide.grpc.pb.cc
+            protos/route_guide.grpc.pb.h
+            protos/route_guide.pb.cc
+            protos/route_guide.pb.h
 			src/network/network.cpp
 			src/network/network.h
             src/codec/codec.cpp
@@ -88,10 +99,10 @@ else()
             src/streaming/streaming.h
             src/log/log.cpp
             src/log/log.h
-            src/network/grpc/route_guide.grpc.pb.cc
-            src/network/grpc/route_guide.grpc.pb.h
-            src/network/grpc/route_guide.pb.cc
-            src/network/grpc/route_guide.pb.h
+			protos/route_guide.grpc.pb.cc
+			protos/route_guide.grpc.pb.h
+			protos/route_guide.pb.cc
+			protos/route_guide.pb.h
 			src/network/network.cpp
 			src/network/network.h
 			src/extractors/extractors.cpp
@@ -177,7 +188,7 @@ endif()
 if(WIN32)
     target_link_libraries(${PROJECT_NAME} ${FFMPEG_LIBRARIES} ${SDL2_LIBRARY} ${DirectX11_LIBRARIES} gRPC::grpc gRPC::grpc++_unsecure protobuf::libprotobuf)
 else()
-    target_link_libraries(${PROJECT_NAME} ${FFMPEG_LIBRARIES} ${SDL2_LIBRARY} gRPC::grpc gRPC::grpc++_unsecure protobuf::libprotobuf)
+    target_link_libraries(${PROJECT_NAME} ${FFMPEG_LIBRARIES} ${SDL2_LIBRARY} gRPC::grpc gRPC::grpc++_unsecure protobuf::libprotobuf "-framework AudioToolbox" "-framework AudioToolbox")
 endif()
 
 if(WIN32)
@@ -194,4 +205,4 @@ if(WIN32)
     add_dependencies(GameClientSDL DLLCopyBinaries)
 endif()
 
-add_dependencies(GameClientSDL CopyGeneratedFiles)
+#add_dependencies(GameClientSDL CopyGeneratedFiles)
