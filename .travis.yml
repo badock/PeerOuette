@@ -7,19 +7,6 @@ matrix:
 #      compiler: clang
     - os: linux
       dist: bionic
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-#          packages:
-#            - gcc-7
-#            - g++-7
-          packages:
-            - libsdl1.2-dev
-            - libsdl2-dev
-            - libav-tools
-            - libavformat-dev
-      env: WORDSIZE=64 CONFIGURATION=Release AUDIO=Alsa
 
 before_install:
   # MACOS
