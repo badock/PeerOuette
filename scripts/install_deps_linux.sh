@@ -1,7 +1,7 @@
 #!/bin/bash
 
 sudo apt update;
-sudo apt install -y gcc-6;
+sudo apt install -y gcc-6 g++-6 python3 python3-pip;
 export CC=gcc-6;
 export CXX=g++-6;
 export CC_FOR_BUILD=gcc-6;
