@@ -25,7 +25,7 @@
 #define CRF "27"
 #define GOP_SIZE 30 * 60
 
-#if defined(WIN32)
+#if defined(WIN32) || defined(__linux__)
 char* make_av_error_string(int errnum) {
     auto buffer = new char[AV_ERROR_MAX_STRING_SIZE];
     return av_make_error_string(buffer, AV_ERROR_MAX_STRING_SIZE, errnum);
