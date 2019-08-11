@@ -1,12 +1,12 @@
 //
 // Created by jonathan on 11/20/2018.
 //
-
+#define NOMINMAX
 #include "capture.h"
 #include <windows.h>
 #include <d3d11.h>
 #include <dxgi1_2.h>
-#include <src/log/log.h>
+//#include <src/log/log.h>
 #include <dxgi1_3.h>
 #include <dxgi.h>
 #include <wrl.h>
@@ -262,82 +262,100 @@ int capture_frame(CaptureContext* cc, D3D_FRAME_DATA* Data, FrameData* ffmpeg_fr
 	hr = DesktopResource->QueryInterface(__uuidof(ID3D11Texture2D), reinterpret_cast<void **>(&cc->m_AcquiredDesktopImage));
 	DesktopResource->Release();
 	
-	DesktopResource = nullptr;
-	if (FAILED(hr))
-	{
-		log_error("Failed to QI for ID3D11Texture2D from acquired IDXGIResource in DUPLICATIONMANAGER");
-		return -1;
-	}
+	//DesktopResource = nullptr;
+	//if (FAILED(hr))
+	//{
+	//	log_error("Failed to QI for ID3D11Texture2D from acquired IDXGIResource in DUPLICATIONMANAGER");
+	//	return -1;
+	//}
 
-	// Get metadata
-    if (FrameInfo.TotalMetadataBufferSize)
-    {
-        // Old buffer too small
-        if (FrameInfo.TotalMetadataBufferSize > cc->m_MetaDataSize)
-        {
-            if (cc->m_MetaDataBuffer)
-            {
-                delete [] cc->m_MetaDataBuffer;
-                cc->m_MetaDataBuffer = nullptr;
-            }
-            cc->m_MetaDataBuffer = new BYTE[FrameInfo.TotalMetadataBufferSize];
-            if (!cc->m_MetaDataBuffer)
-            {
-                cc->m_MetaDataSize = 0;
-                Data->MoveCount = 0;
-                Data->DirtyCount = 0;
-				log_error("Failed to allocate memory for metadata in DUPLICATIONMANAGER");
-                return -1;
-            }
-            cc->m_MetaDataSize = FrameInfo.TotalMetadataBufferSize;
-        }
+	//// Get metadata
+ //   if (FrameInfo.TotalMetadataBufferSize)
+ //   {
+ //       // Old buffer too small
+ //       if (FrameInfo.TotalMetadataBufferSize > cc->m_MetaDataSize)
+ //       {
+ //           if (cc->m_MetaDataBuffer)
+ //           {
+ //               delete [] cc->m_MetaDataBuffer;
+ //               cc->m_MetaDataBuffer = nullptr;
+ //           }
+ //           cc->m_MetaDataBuffer = new BYTE[FrameInfo.TotalMetadataBufferSize];
+ //           if (!cc->m_MetaDataBuffer)
+ //           {
+ //               cc->m_MetaDataSize = 0;
+ //               Data->MoveCount = 0;
+ //               Data->DirtyCount = 0;
+	//			log_error("Failed to allocate memory for metadata in DUPLICATIONMANAGER");
+ //               return -1;
+ //           }
+ //           cc->m_MetaDataSize = FrameInfo.TotalMetadataBufferSize;
+ //       }
 
-        UINT BufSize = FrameInfo.TotalMetadataBufferSize;
+ //       UINT BufSize = FrameInfo.TotalMetadataBufferSize;
 
-        // Get move rectangles
-        hr = cc->m_dup->GetFrameMoveRects(BufSize, reinterpret_cast<DXGI_OUTDUPL_MOVE_RECT*>(cc->m_MetaDataBuffer), &BufSize);
-        if (FAILED(hr))
-        {
-            Data->MoveCount = 0;
-            Data->DirtyCount = 0;
-			log_error("Failed to get frame move rects in DUPLICATIONMANAGER");
-            return -1;
-        }
-        Data->MoveCount = BufSize / sizeof(DXGI_OUTDUPL_MOVE_RECT);
+ //       // Get move rectangles
+ //       hr = cc->m_dup->GetFrameMoveRects(BufSize, reinterpret_cast<DXGI_OUTDUPL_MOVE_RECT*>(cc->m_MetaDataBuffer), &BufSize);
+ //       if (FAILED(hr))
+ //       {
+ //           Data->MoveCount = 0;
+ //           Data->DirtyCount = 0;
+	//		log_error("Failed to get frame move rects in DUPLICATIONMANAGER");
+ //           return -1;
+ //       }
+ //       Data->MoveCount = BufSize / sizeof(DXGI_OUTDUPL_MOVE_RECT);
 
-        BYTE* DirtyRects = cc->m_MetaDataBuffer + BufSize;
-        BufSize = FrameInfo.TotalMetadataBufferSize - BufSize;
+ //       BYTE* DirtyRects = cc->m_MetaDataBuffer + BufSize;
+ //       BufSize = FrameInfo.TotalMetadataBufferSize - BufSize;
 
-        // Get dirty rectangles
-        hr = cc->m_dup->GetFrameDirtyRects(BufSize, reinterpret_cast<RECT*>(DirtyRects), &BufSize);
-        if (FAILED(hr))
-        {
-            Data->MoveCount = 0;
-            Data->DirtyCount = 0;
+ //       // Get dirty rectangles
+ //       hr = cc->m_dup->GetFrameDirtyRects(BufSize, reinterpret_cast<RECT*>(DirtyRects), &BufSize);
+ //       if (FAILED(hr))
+ //       {
+ //           Data->MoveCount = 0;
+ //           Data->DirtyCount = 0;
 
-			if (hr == DXGI_ERROR_ACCESS_LOST) {
-				log_error("Failed to get frame dirty rects in DUPLICATIONMANAGER (DXGI_ERROR_ACCESS_LOST)");
-			}
-			if (hr == DXGI_ERROR_MORE_DATA) {
-				log_error("Failed to get frame dirty rects in DUPLICATIONMANAGER (DXGI_ERROR_MORE_DATA)");
-			}
-			if (hr == DXGI_ERROR_INVALID_CALL) {
-				log_error("Failed to get frame dirty rects in DUPLICATIONMANAGER (DXGI_ERROR_INVALID_CALL)");
-			}
-			if (hr == E_INVALIDARG) {
-				log_error("Failed to get frame dirty rects in DUPLICATIONMANAGER (E_INVALIDARG)");
-			}
+	//		if (hr == DXGI_ERROR_ACCESS_LOST) {
+	//			log_error("Failed to get frame dirty rects in DUPLICATIONMANAGER (DXGI_ERROR_ACCESS_LOST)");
+	//		}
+	//		if (hr == DXGI_ERROR_MORE_DATA) {
+	//			log_error("Failed to get frame dirty rects in DUPLICATIONMANAGER (DXGI_ERROR_MORE_DATA)");
+	//		}
+	//		if (hr == DXGI_ERROR_INVALID_CALL) {
+	//			log_error("Failed to get frame dirty rects in DUPLICATIONMANAGER (DXGI_ERROR_INVALID_CALL)");
+	//		}
+	//		if (hr == E_INVALIDARG) {
+	//			log_error("Failed to get frame dirty rects in DUPLICATIONMANAGER (E_INVALIDARG)");
+	//		}
 
-			log_error("Failed to get frame dirty rects in DUPLICATIONMANAGER");
-            return -1;
-        }
-        Data->DirtyCount = BufSize / sizeof(RECT);
+	//		log_error("Failed to get frame dirty rects in DUPLICATIONMANAGER");
+ //           return -1;
+ //       }
+ //       Data->DirtyCount = BufSize / sizeof(RECT);
 
-        Data->MetaData = cc->m_MetaDataBuffer;
-    }
+ //       Data->MetaData = cc->m_MetaDataBuffer;
+ //   }
 
     Data->Frame = cc->m_AcquiredDesktopImage;
     Data->FrameInfo = FrameInfo;
+
+	//cursor.shape.buffer     = new char[frameInfo.PointerShapeBufferSize];
+    //cursor.shape.bufferSize = frameInfo.PointerShapeBufferSize;
+      
+
+    //cursor.shape.pointerSize = 0;
+    //int ret                     |= GRAB_STATUS_CURSOR;
+
+    DXGI_OUTDUPL_POINTER_SHAPE_INFO shapeInfo;
+	int buffer_size = 10 * 1024;
+	UINT* buffer = new UINT[buffer_size];
+	UINT pointerSize = 0;
+	
+    hr = cc->m_dup->GetFramePointerShape(buffer_size, buffer, &pointerSize, &shapeInfo);
+    if (FAILED(hr)) {
+        log_error("Failed to get the new pointer shape\n");
+        return -1;
+	}
 
 
 	return 0;
@@ -356,7 +374,6 @@ int done_with_frame(CaptureContext* cc) {
 
 
 int get_pixels(CaptureContext* cc, FrameData* ffmpeg_frame_data) {
-	int               result;
 	D3D11_MAPPED_SUBRESOURCE mapping;
 	ID3D11Texture2D* m_ftexture;
 
@@ -410,27 +427,6 @@ int get_pixels(CaptureContext* cc, FrameData* ffmpeg_frame_data) {
 	//log_info("RGBA(%i, %i, %i, %i)", r, g, b, a);
 
 	return 1;
-
-	uint8_t* buffer = (uint8_t *) malloc(sizeof(uint8_t) * 1920 * 1080 * 4);
-	int pitch = cc->m_width * 4;
-	int stride = cc->m_width;
-
-	
-	if (pitch == mapping.RowPitch)
-		memcpy
-		(buffer, mapping.pData, pitch * cc->m_height);
-	else
-		for (unsigned int y = 0; y < cc->m_height; ++y)
-			memcpy(
-			(uint8_t *)buffer + (pitch      * y),
-				(uint8_t *)mapping.pData + (mapping.RowPitch * y),
-				pitch
-			);
-
-	cc->context->Unmap(cc->m_AcquiredDesktopImage, 0);
-	free(buffer);
-
-	return 0;
 }
 
 // The following function is inspired by https://github.com/brichard19/memcpy_sse
@@ -474,7 +470,6 @@ int get_pixels_yuv420p(CaptureContext* cc, FrameData* ffmpeg_frame_data) {
 		HRESULT                  status;
 		D3D11_MAPPED_SUBRESOURCE mapping;
 		D3D11_TEXTURE2D_DESC     desc;
-
 		cc->m_ftextures_yuv420p[i]->GetDesc(&desc);
 		status = cc->context->Map(cc->m_ftextures_yuv420p[i], 0, D3D11_MAP_READ, 0, &mapping);
 
@@ -487,9 +482,8 @@ int get_pixels_yuv420p(CaptureContext* cc, FrameData* ffmpeg_frame_data) {
 
 		const unsigned int size = desc.Height * desc.Width;
 
-		//memcpy_sse(ffmpeg_frame_data->pFrame->data[i], (uint8_t *) mapping.pData, size);
-		//memcpy(ffmpeg_frame_data->pFrame->data[i], (uint8_t *)mapping.pData, size);
-		ffmpeg_frame_data->pFrame->data[i] = (uint8_t *)mapping.pData;
+		ffmpeg_frame_data->pFrame->data[i] = (uint8_t *) mapping.pData;
+		ffmpeg_frame_data->pFrame->linesize[i] = mapping.RowPitch;
 
 		cc->context->Unmap(cc->m_ftextures_yuv420p[i], 0);
 	}

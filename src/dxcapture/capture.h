@@ -4,13 +4,13 @@
 
 #ifndef GAMECLIENTSDL_CAPTURE_H
 #define GAMECLIENTSDL_CAPTURE_H
+#define NOMINMAX
 #include <windows.h>
 #include <d3d11.h>
 #include <dxgi1_2.h>
 #include <wrl.h>
 #include <DirectXMath.h>
 #include "src/streaming/streaming.h"
-#include "src/I420effect/I420effect.h"
 #include "src/texture_converter/TextureConverter.h"
 
 #define NUMVERTICES 6

@@ -4,14 +4,13 @@ https://github.com/gnif/LookingGlass/blob/master/host/TextureConverter.h
 */
 
 #pragma once
-
+#define NOMINMAX
 #include <windows.h>
 #include <d3d11.h>
 #include <dxgi1_2.h>
 #include <wrl.h>
 #include <DirectXMath.h>
 #include "src/streaming/streaming.h"
-#include "src/I420effect/I420effect.h"
 
 #include <DirectXMath.h>
 #include <vector>
