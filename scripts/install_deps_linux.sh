@@ -1,6 +1,6 @@
 #!/bin/bash
 
-apt install -y gcc-6;
+sudo apt install -y gcc-6;
 export CC=gcc-6;
 export CXX=g++-6;
 export CC_FOR_BUILD=gcc-6;
@@ -43,8 +43,8 @@ popd
 #export CC_FOR_BUILD=gcc;
 #export CXX_FOR_BUILD=g++;
 
-apt install -y ffmpeg;
-apt install -y sdl sdl_image sdl_mixer sdl_ttf portmidi;
-apt install -y sdl2;
+sudo apt install -y ffmpeg;
+sudo apt install -y sdl sdl_image sdl_mixer sdl_ttf portmidi;
+sudo apt install -y sdl2;
 
 exit 0
