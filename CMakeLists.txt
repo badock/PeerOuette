@@ -28,11 +28,6 @@ set(hw_grpc_hdrs "${CMAKE_CURRENT_SOURCE_DIR}/protos/route_guide.grpc.pb.h")
 find_program(GRPC_CPP_PLUGIN NAMES grpc_cpp_plugin)
 find_program(PROTOC_PATH NAMES protoc)
 
-get_cmake_property(_variableNames VARIABLES)
-foreach (_variableName ${_variableNames})
-	message(STATUS "${_variableName}=${${_variableName}}")
-endforeach()
-
 add_custom_command(
 		OUTPUT "${hw_proto_srcs}" "${hw_proto_hdrs}" "${hw_grpc_srcs}" "${hw_grpc_hdrs}"
 		COMMAND ${PROTOC_PATH}
@@ -133,6 +128,11 @@ if(FFMPEG_FOUND)
 else()
     message(FATAL_ERROR "FFMPEG not found")
 endif()
+
+get_cmake_property(_variableNames VARIABLES)
+foreach (_variableName ${_variableNames})
+	message(STATUS "${_variableName}=${${_variableName}}")
+endforeach()
 
 include_directories(".")
 INCLUDE_DIRECTORIES(${SDL2_INCLUDE_DIR} ${FFMPEG_INCLUDE_DIR})
