@@ -24,7 +24,7 @@ script:
       export TOOLCHAIN_ARG="-DCMAKE_TOOLCHAIN_FILE=/Users/travis/vcpkg/scripts/buildsystems/vcpkg.cmake";
     fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-      export TOOLCHAIN_ARG="";
+      export TOOLCHAIN_ARG="-DCMAKE_TOOLCHAIN_FILE=/home/travis/vcpkg/scripts/buildsystems/vcpkg.cmake";
     fi
   - cmake "-DCMAKE_TOOLCHAIN_FILE=/Users/travis/vcpkg/scripts/buildsystems/vcpkg.cmake" ..
   - cmake --build .
