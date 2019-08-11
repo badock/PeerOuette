@@ -45,7 +45,7 @@ popd
 #export CXX_FOR_BUILD=g++;
 
 #sudo apt install -y ffmpeg;
-sudo apt install -y libavcodec-dev libavformat-dev libavutil-dev libswresample-dev libswscale-dev;
+sudo apt install -y libavcodec-dev libavdevice-dev libavformat-dev libavutil-dev libswresample-dev libswscale-dev;
 sudo apt install -y libsdl1.2-dev libsdl-image1.2 libsdl-image1.2-dev libsdl-ttf2.0-0 libsdl-ttf2.0-dev libsdl-mixer1.2 libsdl-mixer1.2-dev
 sudo apt install -y libsdl2-dev;
 
