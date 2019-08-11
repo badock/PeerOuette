@@ -1,5 +1,6 @@
 #!/bin/bash
 
+sudo apt update;
 sudo apt install -y gcc-6;
 export CC=gcc-6;
 export CXX=g++-6;
