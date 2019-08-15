@@ -1,5 +1,6 @@
 protos/*.cc
 protos/*.h
+cmake-build-default/
 
 *.db
 tmp
