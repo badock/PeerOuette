@@ -18,7 +18,7 @@ int FRAME_POOL_SIZE = 45;
 int SDL_WINDOW_WIDTH = 1280;
 int SDL_WINDOW_HEIGHT = 720;
 int CAPTURE_WINDOW_WIDTH = 1920;
-int CAPTURE_WINDOW_HEIGHT = 816;
+int CAPTURE_WINDOW_HEIGHT = 1080;
 
 void my_log_callback(void *ptr, int level, const char *fmt, va_list vargs)
 {
@@ -53,7 +53,7 @@ int main(int argc, char* argv[]){
             se->listen_address = std::string("0.0.0.0:50051");
         } else if (role.compare("--client") == 0) {
             se->is_client = true;
-            se->server_address = std::string("192.168.1.14:50051");
+            se->server_address = std::string("192.168.1.29:50051");
         }
     }
 
