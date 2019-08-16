@@ -3,8 +3,6 @@
 #include "src/extractors/extractors.h"
 #include "src/inputs/inputs.h"
 #include "src/streaming/streaming.h"
-// #include "src/output/output.h"
-// #include "src/extractors/extractors.h"
 
 // compatibility with newer API
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(55,28,1)
@@ -71,6 +69,12 @@ int main(int argc, char* argv[]){
         se->packet_sender_thread = SDL_CreateThread(packet_sender_thread, "packet_sender_thread", se);
     }
 
+    if(se->is_all_in_one) {
+        while (! se->server_initialized) {
+            usleep(1 * 1000);
+        }
+    }
+
 
     // b) Client threads
     if (se->is_all_in_one || se->is_client) {
@@ -87,6 +91,10 @@ int main(int argc, char* argv[]){
     se->client_width = SDL_WINDOW_WIDTH;
     se->client_height = SDL_WINDOW_HEIGHT;
 	se->format = AV_PIX_FMT_YUV420P;
+
+	if (se->is_all_in_one) {
+	    se->cursor_disabled = true;
+	}
 
     if (se->is_client || se->is_all_in_one) {
 
@@ -122,7 +130,6 @@ int main(int argc, char* argv[]){
             exit(1);
         }
 
-
         se->renderer = SDL_CreateRenderer(se->screen, -1, 0);
         if (!se->renderer) {
             fprintf(stderr, "SDL: could not create renderer - exiting\n");
@@ -140,7 +147,7 @@ int main(int argc, char* argv[]){
 		se->frame_extractor_pframe_pool.push(frame_data);
 	}
 
-    if (se->is_client || se->is_all_in_one) {
+    if (se->is_client) {
 
         SDL_Event event;
 

@@ -38,6 +38,10 @@ message FrameSubPacket {
         int32 mouse_x = 8; // for mouse
         int32 mouse_y = 9; // for mouse
         bool mouse_is_visible = 10; // for mouse
+        // screen resolution
+        int32 width = 11;
+        int32 height = 12;
+        int32 flow_id = 13;
 }
 
 message InputCommand {

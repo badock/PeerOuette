@@ -39,9 +39,9 @@
 
 #define WIDTH 1920
 #define HEIGHT 1080
-#define BITRATE 1 * 1024 * 1024
-#define CRF "30"
-#define GOP_SIZE 300 * 60
+#define BITRATE 3 * 1024 * 1024
+#define CRF "34"
+#define GOP_SIZE 30 * 60
 
 #if defined(WIN32) || defined(__linux__)
 char* make_av_error_string(int errnum) {

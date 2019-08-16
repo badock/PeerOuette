@@ -113,10 +113,14 @@ typedef struct _StreamingEnvironment {
 	int finishing;
 
 	bool client_connected = false;
+	bool server_initialized = false;
 	bool can_begin_stream = false;
 	bool is_all_in_one = false;
 	bool is_client = false;
 	bool is_server = false;
+
+	bool cursor_disabled = false;
+    SDL_Texture* mouse_cursor_icon_texture;
 
 	std::string listen_address;
     std::string server_address;
