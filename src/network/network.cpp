@@ -141,8 +141,7 @@ public:
             while (!streaming_environment->finishing) {
                 InputCommand* ci = streaming_environment->input_command_queue.pop();
                 stream->Write(*ci);
-                free(ci);
-
+                delete ci;
             }
         });
 
@@ -190,6 +189,7 @@ int packet_sender_thread(void *arg) {
     builder.RegisterService(&service);
     std::unique_ptr<Server> server(builder.BuildAndStart());
     std::cout << "Server listening on " << server_address << std::endl;
+    se->server_initialized = true;
     server->Wait();
 
     return 0;

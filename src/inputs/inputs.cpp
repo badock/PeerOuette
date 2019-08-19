@@ -70,6 +70,7 @@ int simulate_input_event(InputCommand* cmd) {
             Inputs->mi.dwFlags = (MOUSEEVENTF_MOVE);
 
             SendInput(1, Inputs, sizeof(INPUT));
+            delete(Inputs);
         }
 
         last_x = cmd->x();
@@ -92,6 +93,7 @@ int simulate_input_event(InputCommand* cmd) {
             }
 
            SendInput(3, Inputs, sizeof(INPUT));
+           delete(Inputs);
         }
     } else {
         log_info("unhandled event %i", cmd->event_type());
@@ -122,7 +124,6 @@ mouse_info* get_mouse_info() {
 }
 
 int handle_sdl_input(StreamingEnvironment* se, SDL_Event event) {
-
 
     InputCommand* c = new InputCommand();
     c->set_command("command");
