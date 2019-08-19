@@ -70,6 +70,7 @@ int simulate_input_event(InputCommand* cmd) {
             Inputs->mi.dwFlags = (MOUSEEVENTF_MOVE);
 
             SendInput(1, Inputs, sizeof(INPUT));
+            delete Inputs;
         }
 
         last_x = cmd->x();
@@ -78,9 +79,9 @@ int simulate_input_event(InputCommand* cmd) {
         //printf("> mouse moved at: (%d,%d)\n", cmd->x(), cmd->y());
 
         if (cmd->event_type() != SDL_MOUSEMOTION) {
-
-           INPUT* Inputs = new INPUT();
-           Inputs->type = INPUT_MOUSE;
+            
+            INPUT* Inputs = new INPUT();
+            Inputs->type = INPUT_MOUSE;
 
             if (cmd->event_type() == SDL_MOUSEBUTTONDOWN) {
                 printf("> button mouse (%d) down at: (%d,%d)\n", cmd->mouse_button(), cmd->x(), cmd->y());
@@ -91,7 +92,8 @@ int simulate_input_event(InputCommand* cmd) {
                 Inputs->mi.dwFlags = MOUSEEVENTF_LEFTUP;
             }
 
-           SendInput(3, Inputs, sizeof(INPUT));
+            SendInput(3, Inputs, sizeof(INPUT));
+            delete Inputs;
         }
     } else {
         log_info("unhandled event %i", cmd->event_type());

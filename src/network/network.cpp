@@ -142,7 +142,6 @@ public:
                 InputCommand* ci = streaming_environment->input_command_queue.pop();
                 stream->Write(*ci);
                 free(ci);
-
             }
         });
 

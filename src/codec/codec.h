@@ -16,7 +16,6 @@ typedef struct packet_data {
     int frame_number;
     int packet_number;
 } packet_data;
-#endif //GAMECLIENTSDL_CODEC_H
 
 #define USE_NETWORK true
 
@@ -59,6 +58,8 @@ typedef struct packet_data {
 #define BITRATE 3 * 1024 * 1024
 #define CRF "34"
 #define GOP_SIZE 30 * 60
+
+#endif //GAMECLIENTSDL_CODEC_H
 
 int video_encode_thread(void *arg);
 int video_decode_thread(void *arg);
