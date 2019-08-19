@@ -60,14 +60,5 @@ typedef struct packet_data {
 #define CRF "34"
 #define GOP_SIZE 30 * 60
 
-#if defined(WIN32) || defined(__linux__)
-char* make_av_error_string(int errnum) {
-    auto buffer = new char[AV_ERROR_MAX_STRING_SIZE];
-    return av_make_error_string(buffer, AV_ERROR_MAX_STRING_SIZE, errnum);
-}
-#else
-#define make_av_error_string av_err2str
-#endif
-
 int video_encode_thread(void *arg);
 int video_decode_thread(void *arg);

@@ -1,6 +1,15 @@
 #include "codec.h"
 #include <memory>
 
+#if defined(WIN32) || defined(__linux__)
+char* make_av_error_string(int errnum) {
+    auto buffer = new char[AV_ERROR_MAX_STRING_SIZE];
+    return av_make_error_string(buffer, AV_ERROR_MAX_STRING_SIZE, errnum);
+}
+#else
+#define make_av_error_string av_err2str
+#endif
+
 int _init_context_video_encode_thread(StreamingEnvironment* se) {
     const char *codec_name;
     const AVCodec *codec;
@@ -29,7 +38,7 @@ int _init_context_video_encode_thread(StreamingEnvironment* se) {
     se->encodingContext->time_base.num = 1;
     se->encodingContext->time_base.den = 60;
     se->encodingContext->pix_fmt = AV_PIX_FMT_YUV420P;
-    se->encodingContext->thread_type   = FF_THREAD_SLICE;
+    se->encodingContext->thread_type = FF_THREAD_SLICE;
 
     AVDictionary *param = nullptr;
     if (strcmp(ENCODER_NAME, "h264_nvenc") != 0) {

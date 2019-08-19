@@ -19,10 +19,9 @@ int gpu_frame_extractor_thread(void *arg) {
 	cc.m_MetaDataBuffer = (BYTE*) malloc(sizeof(BYTE) * 16);
 	cc.m_MetaDataSize = 16;
 	cc.capture_mode = YUV420P;
+    cc.se = se;
 
-    init_directx(&cc);
-    init_capture(&cc);
-	init_video_mode(&cc);
+
 
 	D3D_FRAME_DATA* d3d_frame_data = (D3D_FRAME_DATA*) malloc(sizeof(D3D_FRAME_DATA));
 
@@ -30,42 +29,50 @@ int gpu_frame_extractor_thread(void *arg) {
 	ID3D11Texture2D* CopyBuffer = nullptr;
     int64_t framecount = 0;
     while(1) {
-		FrameData* ffmpeg_frame_data = se->frame_extractor_pframe_pool.pop();
+        int flow_id = se->flow_id;
 
-        std::chrono::system_clock::time_point before = std::chrono::system_clock::now();
-		frame_data_reset_time_points(ffmpeg_frame_data);
+        init_directx(&cc);
+        init_capture(&cc);
+	    init_video_mode(&cc);
 
-		int capture_result = capture_frame(&cc, d3d_frame_data, ffmpeg_frame_data);
-		ffmpeg_frame_data->dxframe_processed_time_point = std::chrono::system_clock::now();
+        while(flow_id == se->flow_id) {            
+            FrameData* ffmpeg_frame_data = se->frame_extractor_pframe_pool.pop();
 
-        if (capture_result != 0) {
-            se->frame_extractor_pframe_pool.push(ffmpeg_frame_data);
-            continue;
-        }  
+            std::chrono::system_clock::time_point before = std::chrono::system_clock::now();
+            frame_data_reset_time_points(ffmpeg_frame_data);
 
-		int result = get_pixels_yuv420p(&cc, ffmpeg_frame_data);
+            int capture_result = capture_frame(&cc, d3d_frame_data, ffmpeg_frame_data);
+            ffmpeg_frame_data->dxframe_processed_time_point = std::chrono::system_clock::now();
 
-		ffmpeg_frame_data->pFrame->format = AV_PIX_FMT_YUV420P;
-		ffmpeg_frame_data->avframe_produced_time_point = std::chrono::system_clock::now();
+            if (capture_result != 0) {
+                se->frame_extractor_pframe_pool.push(ffmpeg_frame_data);
+                continue;
+            }  
 
-		int frame_release_result = done_with_frame(&cc);
+            int result = get_pixels_yuv420p(&cc, ffmpeg_frame_data);
 
-		if (frame_release_result == 0) {
-			se->frame_sender_thread_queue.push(ffmpeg_frame_data);
-		}
-		else {
-            se->frame_extractor_pframe_pool.push(ffmpeg_frame_data);
-            continue;
-		}
+            ffmpeg_frame_data->pFrame->format = AV_PIX_FMT_YUV420P;
+            ffmpeg_frame_data->avframe_produced_time_point = std::chrono::system_clock::now();
 
-        std::chrono::system_clock::time_point after = std::chrono::system_clock::now();
-        float frame_capture_duration = std::chrono::duration_cast<std::chrono::microseconds>(after - before).count() / 1000.0;
+            int frame_release_result = done_with_frame(&cc);
 
-        float wait_duration = 16.6666 - frame_capture_duration;
-        if (wait_duration > 0) {
-            usleep(wait_duration * 1000);
+            if (frame_release_result != 0) {
+                se->frame_extractor_pframe_pool.push(ffmpeg_frame_data);
+                continue;
+            }
+            
+            se->frame_sender_thread_queue.push(ffmpeg_frame_data);
+
+            std::chrono::system_clock::time_point after = std::chrono::system_clock::now();
+            float frame_capture_duration = std::chrono::duration_cast<std::chrono::microseconds>(after - before).count() / 1000.0;
+
+            float wait_duration = 16.6666 - frame_capture_duration;
+            if (wait_duration > 0) {
+                usleep(wait_duration * 1000);
+            }
         }
-
+        flow_id = se->flow_id;
+        usleep(1000);
     }
 
     return 0;

@@ -61,10 +61,13 @@ int main(int argc, char* argv[]){
 
     // a) server threads
     if (se->is_all_in_one || se->is_server) {
-        se->frame_extractor_thread = SDL_CreateThread(frame_extractor_thread, "frame_extractor_thread", se);
+        if (se->is_all_in_one) {
+            se->frame_extractor_thread = SDL_CreateThread(frame_extractor_thread, "frame_extractor_thread", se);
+        } else {
 #if defined(WIN32)
-        se->gpu_frame_extractor_thread = SDL_CreateThread(gpu_frame_extractor_thread, "gpu_frame_extractor_thread", se);
+            se->gpu_frame_extractor_thread = SDL_CreateThread(gpu_frame_extractor_thread, "gpu_frame_extractor_thread", se);
 #endif
+        }
         se->video_encode_thread = SDL_CreateThread(video_encode_thread, "video_encode_thread", se);
         se->packet_sender_thread = SDL_CreateThread(packet_sender_thread, "packet_sender_thread", se);
     }
@@ -91,6 +94,7 @@ int main(int argc, char* argv[]){
     se->client_width = SDL_WINDOW_WIDTH;
     se->client_height = SDL_WINDOW_HEIGHT;
 	se->format = AV_PIX_FMT_YUV420P;
+    se->flow_id = 0;
 
 	if (se->is_all_in_one) {
 	    se->cursor_disabled = true;
