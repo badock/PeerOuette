@@ -16,7 +16,7 @@ int FRAME_POOL_SIZE = 45;
 int SDL_WINDOW_WIDTH = 1280;
 int SDL_WINDOW_HEIGHT = 720;
 int CAPTURE_WINDOW_WIDTH = 1920;
-int CAPTURE_WINDOW_HEIGHT = 816;
+int CAPTURE_WINDOW_HEIGHT = 1080;
 
 void my_log_callback(void *ptr, int level, const char *fmt, va_list vargs)
 {

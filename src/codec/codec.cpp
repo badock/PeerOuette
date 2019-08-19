@@ -38,7 +38,7 @@
 #endif
 
 #define WIDTH 1920
-#define HEIGHT 816
+#define HEIGHT 1080
 #define BITRATE 5 * 1024 * 1024
 #define CRF "28"
 #define GOP_SIZE 30 * 60
