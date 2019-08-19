@@ -244,12 +244,18 @@ int capture_frame(CaptureContext* cc, D3D_FRAME_DATA* Data, FrameData* ffmpeg_fr
 	{
 		if (hr == DXGI_ERROR_ACCESS_LOST) {
 			log_error("Failed to acquire next frame in DUPLICATIONMANAGER (DXGI_ERROR_ACCESS_LOST)");
+			log_error("I think that this is caused by a screen resolution change : I will create a new flow");
+			cc->se->flow_id += 1;
+			log_error("A new flow with ID=%d has been created!", cc->se->flow_id);
 		}
 		if (hr == DXGI_ERROR_WAIT_TIMEOUT) {
 			log_error("Failed to acquire next frame in DUPLICATIONMANAGER (DXGI_ERROR_WAIT_TIMEOUT)");
 		}
 		if (hr == DXGI_ERROR_INVALID_CALL) {
 			log_error("Failed to acquire next frame in DUPLICATIONMANAGER (DXGI_ERROR_INVALID_CALL)");
+			log_error("I think that this is caused by a ctrl+del : I will create a new flow");
+			cc->se->flow_id += 1;
+			log_error("A new flow with ID=%d has been created!", cc->se->flow_id);
 		}
 		if (hr == E_INVALIDARG) {
 			log_error("Failed to acquire next frame in DUPLICATIONMANAGER (E_INVALIDARG)");
@@ -262,89 +268,8 @@ int capture_frame(CaptureContext* cc, D3D_FRAME_DATA* Data, FrameData* ffmpeg_fr
 	hr = DesktopResource->QueryInterface(__uuidof(ID3D11Texture2D), reinterpret_cast<void **>(&cc->m_AcquiredDesktopImage));
 	DesktopResource->Release();
 	
-	//DesktopResource = nullptr;
-	//if (FAILED(hr))
-	//{
-	//	log_error("Failed to QI for ID3D11Texture2D from acquired IDXGIResource in DUPLICATIONMANAGER");
-	//	return -1;
-	//}
-
-	//// Get metadata
- //   if (FrameInfo.TotalMetadataBufferSize)
- //   {
- //       // Old buffer too small
- //       if (FrameInfo.TotalMetadataBufferSize > cc->m_MetaDataSize)
- //       {
- //           if (cc->m_MetaDataBuffer)
- //           {
- //               delete [] cc->m_MetaDataBuffer;
- //               cc->m_MetaDataBuffer = nullptr;
- //           }
- //           cc->m_MetaDataBuffer = new BYTE[FrameInfo.TotalMetadataBufferSize];
- //           if (!cc->m_MetaDataBuffer)
- //           {
- //               cc->m_MetaDataSize = 0;
- //               Data->MoveCount = 0;
- //               Data->DirtyCount = 0;
-	//			log_error("Failed to allocate memory for metadata in DUPLICATIONMANAGER");
- //               return -1;
- //           }
- //           cc->m_MetaDataSize = FrameInfo.TotalMetadataBufferSize;
- //       }
-
- //       UINT BufSize = FrameInfo.TotalMetadataBufferSize;
-
- //       // Get move rectangles
- //       hr = cc->m_dup->GetFrameMoveRects(BufSize, reinterpret_cast<DXGI_OUTDUPL_MOVE_RECT*>(cc->m_MetaDataBuffer), &BufSize);
- //       if (FAILED(hr))
- //       {
- //           Data->MoveCount = 0;
- //           Data->DirtyCount = 0;
-	//		log_error("Failed to get frame move rects in DUPLICATIONMANAGER");
- //           return -1;
- //       }
- //       Data->MoveCount = BufSize / sizeof(DXGI_OUTDUPL_MOVE_RECT);
-
- //       BYTE* DirtyRects = cc->m_MetaDataBuffer + BufSize;
- //       BufSize = FrameInfo.TotalMetadataBufferSize - BufSize;
-
- //       // Get dirty rectangles
- //       hr = cc->m_dup->GetFrameDirtyRects(BufSize, reinterpret_cast<RECT*>(DirtyRects), &BufSize);
- //       if (FAILED(hr))
- //       {
- //           Data->MoveCount = 0;
- //           Data->DirtyCount = 0;
-
-	//		if (hr == DXGI_ERROR_ACCESS_LOST) {
-	//			log_error("Failed to get frame dirty rects in DUPLICATIONMANAGER (DXGI_ERROR_ACCESS_LOST)");
-	//		}
-	//		if (hr == DXGI_ERROR_MORE_DATA) {
-	//			log_error("Failed to get frame dirty rects in DUPLICATIONMANAGER (DXGI_ERROR_MORE_DATA)");
-	//		}
-	//		if (hr == DXGI_ERROR_INVALID_CALL) {
-	//			log_error("Failed to get frame dirty rects in DUPLICATIONMANAGER (DXGI_ERROR_INVALID_CALL)");
-	//		}
-	//		if (hr == E_INVALIDARG) {
-	//			log_error("Failed to get frame dirty rects in DUPLICATIONMANAGER (E_INVALIDARG)");
-	//		}
-
-	//		log_error("Failed to get frame dirty rects in DUPLICATIONMANAGER");
- //           return -1;
- //       }
- //       Data->DirtyCount = BufSize / sizeof(RECT);
-
- //       Data->MetaData = cc->m_MetaDataBuffer;
- //   }
-
     Data->Frame = cc->m_AcquiredDesktopImage;
     Data->FrameInfo = FrameInfo;
-
-	//cursor.shape.buffer     = new char[frameInfo.PointerShapeBufferSize];
-    //cursor.shape.bufferSize = frameInfo.PointerShapeBufferSize;
-      
-
-    //cursor.shape.pointerSize = 0;
-    //int ret                     |= GRAB_STATUS_CURSOR;
 
     DXGI_OUTDUPL_POINTER_SHAPE_INFO shapeInfo;
 	int buffer_size = 10 * 1024;
@@ -362,12 +287,14 @@ int capture_frame(CaptureContext* cc, D3D_FRAME_DATA* Data, FrameData* ffmpeg_fr
 }
 
 int done_with_frame(CaptureContext* cc) {
+	
 	HRESULT hr = cc->m_dup->ReleaseFrame();
 	if (FAILED(hr))
 	{
 		log_error("Failed to release frame in DUPLICATIONMANAGER");
+		log_error("It may be caused by a screen resolution change!");
 		return -1;
-	}
+	}	
 
 	return 0;
 }
@@ -429,23 +356,6 @@ int get_pixels(CaptureContext* cc, FrameData* ffmpeg_frame_data) {
 	return 1;
 }
 
-// The following function is inspired by https://github.com/brichard19/memcpy_sse
-void memcpy_sse(void *dest, const void *src, size_t count)
-{
-	__m128i *srcPtr = (__m128i *)src;
-	__m128i *destPtr = (__m128i *)dest;
-
-	unsigned int index = 0;
-	while (count) {
-
-		__m128i x = _mm_load_si128(&srcPtr[index]);
-		_mm_stream_si128(&destPtr[index], x);
-
-		count -= 16;
-		index++;
-	}
-}
-
 int get_pixels_yuv420p(CaptureContext* cc, FrameData* ffmpeg_frame_data) {
 
 	int               result;
@@ -459,12 +369,6 @@ int get_pixels_yuv420p(CaptureContext* cc, FrameData* ffmpeg_frame_data) {
 		cc->context->CopyResource(cc->m_ftextures_yuv420p[i], t);
 	}
 
-	//result = done_with_frame(cc);
-	//if (result != 0)
-	//	return result;
-	
-	//uint8_t * data = (uint8_t *) ffmpeg_frame_data->buffer;
-	//size_t    remain = ffmpeg_frame_data->numBytes;
 	for (int i = 0; i < 3; ++i)
 	{
 		HRESULT                  status;
@@ -490,6 +394,7 @@ int get_pixels_yuv420p(CaptureContext* cc, FrameData* ffmpeg_frame_data) {
 
 	ffmpeg_frame_data->pitch = cc->m_width;
 	ffmpeg_frame_data->stride = cc->m_width;
+	ffmpeg_frame_data->flow_id = cc->se->flow_id;
 
 	return 0;
 }

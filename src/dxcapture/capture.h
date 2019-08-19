@@ -69,6 +69,8 @@ typedef struct _CaptureContext {
 	ID3D11Texture2D* m_ftexture_rgba;
 	ID3D11Texture2D* m_ftextures_yuv420p[3];
 	CaptureMode capture_mode;
+	
+	StreamingEnvironment* se;
 } CaptureContext;
 
 int init_directx(CaptureContext* cc);

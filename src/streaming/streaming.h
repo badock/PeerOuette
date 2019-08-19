@@ -57,6 +57,7 @@ typedef struct _FrameData {
     int id;
     int pitch;
     int stride;
+	int flow_id;
     // debug field
     std::chrono::system_clock::time_point life_started_time_point;
     std::chrono::system_clock::time_point dxframe_acquired_time_point;
@@ -97,6 +98,7 @@ typedef struct _StreamingEnvironment {
 
 	int width;
 	int height;
+	int flow_id;
 
     int client_width;
     int client_height;
