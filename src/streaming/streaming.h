@@ -84,12 +84,9 @@ typedef struct _StreamingEnvironment {
     SimpleQueue<packet_data*> network_simulated_queue;
 	SimpleQueue<FrameData*> frame_extractor_pframe_pool;
 	SimpleQueue<FrameData*> frame_sender_thread_queue;
-//	SimpleQueue frame_receiver_thread_queue;
-//	SimpleQueue *packet_sender_thread_queue;
     SimpleQueue<packet_data*> packet_sender_thread_queue;
 	SimpleQueue<FrameData*> frame_output_thread_queue;
     SimpleQueue<InputCommand*> input_command_queue;
-//    SimpleQueue incoming_asio_buffer_queue;
 	AVPixelFormat format;
 
 	AVCodecContext* frameExtractorDecodingContext;
@@ -103,6 +100,9 @@ typedef struct _StreamingEnvironment {
 
 	AVCodec* encoder;
 	AVCodec* decoder;
+
+    AVCodecContext *encodingContext;
+    AVCodecContext *decodingContext;
 	
 	SDL_Window *screen;
 	SDL_Renderer *renderer;

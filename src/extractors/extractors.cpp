@@ -73,12 +73,7 @@ int gpu_frame_extractor_thread(void *arg) {
 #endif
 
 
-int frame_extractor_thread(void *arg) {
-    auto se = (StreamingEnvironment*) arg;
-
-    // Initialize streaming environment and threads
-    se->frameExtractorDecodingContext = nullptr;
-
+int _init_context_frame_extractor_extractor_thread(StreamingEnvironment* se) {
     // [FFMPEG] Registering file formats and codecs
     log_info("Registering file formats and codecs");
     av_register_all();
@@ -142,6 +137,30 @@ int frame_extractor_thread(void *arg) {
         return -1;
     }
 
+    return 0;
+}
+
+int _destroy_context_frame_extractor_extractor_thread(StreamingEnvironment* se) {
+
+    avformat_close_input(&se->frameExtractorEncodingFormatContext);
+    avcodec_close(se->frameExtractorDecodingContext);
+
+    return 0;
+}
+
+int frame_extractor_thread(void *arg) {
+    auto se = (StreamingEnvironment*) arg;
+
+    // Initialize streaming environment and threads
+    se->frameExtractorDecodingContext = nullptr;
+
+    int initialisation_result = _init_context_frame_extractor_extractor_thread(se);
+
+    if (initialisation_result != 0) {
+        log_error("Could not initialise context for the 'frame_extractor_thread'");
+        log_error("'_init_context_frame_extractor_extractor_thread' has returned %i", initialisation_result);
+        return initialisation_result;
+    }
 
     while (!se->initialized) {
         usleep(30 * 1000);
