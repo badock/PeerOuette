@@ -21,8 +21,6 @@ int gpu_frame_extractor_thread(void *arg) {
 	cc.capture_mode = YUV420P;
     cc.se = se;
 
-
-
 	D3D_FRAME_DATA* d3d_frame_data = (D3D_FRAME_DATA*) malloc(sizeof(D3D_FRAME_DATA));
 
     int frameFinished;
@@ -35,7 +33,7 @@ int gpu_frame_extractor_thread(void *arg) {
         init_capture(&cc);
 	    init_video_mode(&cc);
 
-        while(flow_id == se->flow_id) {            
+        while(flow_id == se->flow_id) {
             FrameData* ffmpeg_frame_data = se->frame_extractor_pframe_pool.pop();
 
             std::chrono::system_clock::time_point before = std::chrono::system_clock::now();
@@ -47,7 +45,7 @@ int gpu_frame_extractor_thread(void *arg) {
             if (capture_result != 0) {
                 se->frame_extractor_pframe_pool.push(ffmpeg_frame_data);
                 continue;
-            }  
+            }
 
             int result = get_pixels_yuv420p(&cc, ffmpeg_frame_data);
 
@@ -80,12 +78,7 @@ int gpu_frame_extractor_thread(void *arg) {
 #endif
 
 
-int frame_extractor_thread(void *arg) {
-    auto se = (StreamingEnvironment*) arg;
-
-    // Initialize streaming environment and threads
-    se->frameExtractorDecodingContext = nullptr;
-
+int _init_context_frame_extractor_extractor_thread(StreamingEnvironment* se) {
     // [FFMPEG] Registering file formats and codecs
     log_info("Registering file formats and codecs");
     av_register_all();
@@ -149,6 +142,30 @@ int frame_extractor_thread(void *arg) {
         return -1;
     }
 
+    return 0;
+}
+
+int _destroy_context_frame_extractor_extractor_thread(StreamingEnvironment* se) {
+
+    avformat_close_input(&se->frameExtractorEncodingFormatContext);
+    avcodec_close(se->frameExtractorDecodingContext);
+
+    return 0;
+}
+
+int frame_extractor_thread(void *arg) {
+    auto se = (StreamingEnvironment*) arg;
+
+    // Initialize streaming environment and threads
+    se->frameExtractorDecodingContext = nullptr;
+
+    int initialisation_result = _init_context_frame_extractor_extractor_thread(se);
+
+    if (initialisation_result != 0) {
+        log_error("Could not initialise context for the 'frame_extractor_thread'");
+        log_error("'_init_context_frame_extractor_extractor_thread' has returned %i", initialisation_result);
+        return initialisation_result;
+    }
 
     while (!se->initialized) {
         usleep(30 * 1000);
