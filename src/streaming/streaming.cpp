@@ -54,8 +54,8 @@ FrameData* frame_data_create(StreamingEnvironment* se) {
 
 	// [FFMPEG] Determine required buffer size and allocate buffer
 	int numBytes;
-	int width = 1920;
-	int height = 1080;
+	int width = se->width;
+	int height = se->height;
 	//int width = se->pCodecCtx->width;
 	//int height = se->pCodecCtx->height;
 
@@ -96,5 +96,23 @@ int frame_data_destroy(FrameData* frame_data) {
 	av_free(frame_data->buffer);
 	delete frame_data;
 
+	return 0;
+}
+
+int init_frame_pool(int framecount, StreamingEnvironment* se) {
+	for (int i = 0; i < framecount; i++) {
+		FrameData* frame_data = frame_data_create(se);
+		frame_data->id = i;
+		se->frame_extractor_pframe_pool.push(frame_data);
+	}
+	return 0;
+}
+
+int destroy_frame_pool(StreamingEnvironment* se) {
+	while (!se->frame_extractor_pframe_pool.isEmpty()) {
+		FrameData* frame_data = se->frame_extractor_pframe_pool.pop();
+		frame_data_destroy(frame_data);
+	}
+	
 	return 0;
 }

@@ -138,4 +138,6 @@ void frame_data_reset_time_points(FrameData* frame_data);
 void frame_data_debug(FrameData* frame_data);
 FrameData* frame_data_create(StreamingEnvironment* se);
 int frame_data_destroy(FrameData* frame_data);
+int init_frame_pool(int framecount, StreamingEnvironment* se);
+int destroy_frame_pool(StreamingEnvironment* se);
 #endif

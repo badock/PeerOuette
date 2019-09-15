@@ -241,6 +241,7 @@ int video_decode_thread(void *arg) {
 
     int max_packet_size = -1;
     long nb_img = 0;
+
     while (se->finishing != 1) {
 
         auto network_packet_data = se->network_simulated_queue.pop();

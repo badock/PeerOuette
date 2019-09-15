@@ -37,7 +37,10 @@ FrameSubPacket MakeFrame(const int frame_number,
                          const char* data,
                          const int mouse_x,
                          const int mouse_y,
-                         const bool mouse_is_visible) {
+                         const bool mouse_is_visible,
+                         const int flow_id,
+                         const int height,
+                         const int width) {
     FrameSubPacket f;
     f.set_frame_number(frame_number);
     f.set_packet_number(packet_number);
@@ -50,6 +53,9 @@ FrameSubPacket MakeFrame(const int frame_number,
     f.set_mouse_x(mouse_x);
     f.set_mouse_y(mouse_y);
     f.set_mouse_is_visible(mouse_is_visible);
+    f.set_flow_id(flow_id);
+    f.set_height(height);
+    f.set_width(width);
 
     return f;
 }
@@ -99,7 +105,10 @@ public:
                                                  (char*) pkt_d->data,
                                                  mouse_info_ptr->x,
                                                  mouse_info_ptr->y,
-                                                 mouse_info_ptr->visible);
+                                                 mouse_info_ptr->visible,
+                                                 se->flow_id,
+                                                 se->height,
+                                                 se->width);
             stream->Write(subPacket);
 
             free(mouse_info_ptr);

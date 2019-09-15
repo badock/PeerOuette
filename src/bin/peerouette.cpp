@@ -145,11 +145,7 @@ int main(int argc, char* argv[]){
     se->initialized = 1;
 
 	// [FFMPEG] Initialize frame pool
-	for (int i = 0; i < FRAME_POOL_SIZE; i++) {
-		FrameData* frame_data = frame_data_create(se);
-		frame_data->id = i;
-		se->frame_extractor_pframe_pool.push(frame_data);
-	}
+	init_frame_pool(FRAME_POOL_SIZE, se);
 
     if (se->is_client) {
 
