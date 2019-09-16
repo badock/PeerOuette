@@ -132,6 +132,9 @@ int init_capture(CaptureContext* cc) {
 		cc->m_width = outputDesc.DesktopCoordinates.right - outputDesc.DesktopCoordinates.left;
 		cc->m_height = outputDesc.DesktopCoordinates.bottom - outputDesc.DesktopCoordinates.top;
 		log_info("Capture Size     : %u x %u", cc->m_width, cc->m_height);
+
+		cc->se->width = cc->m_width;
+		cc->se->height = cc->m_height;
 	}
 
 	cc->dxgi_device->SetGPUThreadPriority(7);

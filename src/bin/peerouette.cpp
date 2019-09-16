@@ -15,8 +15,8 @@
 int FRAME_POOL_SIZE = 45;
 int SDL_WINDOW_WIDTH = 1280;
 int SDL_WINDOW_HEIGHT = 720;
-int CAPTURE_WINDOW_WIDTH = 1920;
-int CAPTURE_WINDOW_HEIGHT = 1080;
+// int CAPTURE_WINDOW_WIDTH = 1680;
+// int CAPTURE_WINDOW_HEIGHT = 1050;
 
 void my_log_callback(void *ptr, int level, const char *fmt, va_list vargs)
 {
@@ -89,8 +89,8 @@ int main(int argc, char* argv[]){
     se->initialized = 0;
 	se->network_initialized = 0;
     se->screen_is_initialized = 0;
-    se->width = CAPTURE_WINDOW_WIDTH;
-    se->height = CAPTURE_WINDOW_HEIGHT;
+    se->width = -1;
+    se->height = -1;
     se->client_width = SDL_WINDOW_WIDTH;
     se->client_height = SDL_WINDOW_HEIGHT;
 	se->format = AV_PIX_FMT_YUV420P;
@@ -145,7 +145,7 @@ int main(int argc, char* argv[]){
     se->initialized = 1;
 
 	// [FFMPEG] Initialize frame pool
-	init_frame_pool(FRAME_POOL_SIZE, se);
+	//init_frame_pool(FRAME_POOL_SIZE, se);
 
     if (se->is_client) {
 

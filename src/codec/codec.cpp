@@ -30,8 +30,8 @@ int _init_context_video_encode_thread(StreamingEnvironment* se) {
         exit(1);
     }
 
-    se->encodingContext->width = WIDTH;
-    se->encodingContext->height = HEIGHT;
+    se->encodingContext->width = se->width;
+    se->encodingContext->height = se->height;
     se->encodingContext->bit_rate = BITRATE;
     se->encodingContext->gop_size = GOP_SIZE;
 //    encodingContext->max_b_frames = 0;
@@ -69,7 +69,7 @@ static void encode(AVCodecContext *enc_ctx, AVFrame *frame, AVPacket *pkt, Strea
 
     ret = avcodec_send_frame(enc_ctx, frame);
     if (ret < 0) {
-        log_error("Error sending a frame for encoding\n");
+        log_error("Error sending a frame for encoding: %s\n", make_av_error_string(ret));
         exit(1);
     }
 
@@ -184,8 +184,8 @@ int _init_context_video_decode_thread(StreamingEnvironment* se) {
         se->decodingContext->flags |= AV_CODEC_CAP_TRUNCATED; /* we do not send complete frames */
 
     /* put sample parameters */
-    se->decodingContext->width = WIDTH;
-    se->decodingContext->height = HEIGHT;
+    se->decodingContext->width = se->width;
+    se->decodingContext->height = se->height;
     se->decodingContext->bit_rate = BITRATE;
     se->decodingContext->gop_size = GOP_SIZE;
     // decodingContext->max_b_frames = 1;

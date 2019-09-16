@@ -33,6 +33,11 @@ int gpu_frame_extractor_thread(void *arg) {
         init_capture(&cc);
 	    init_video_mode(&cc);
 
+        // if (flow_id > 0) {
+        destroy_frame_pool(se);
+        init_frame_pool(60, se);
+        // }
+
         while(flow_id == se->flow_id) {
             FrameData* ffmpeg_frame_data = se->frame_extractor_pframe_pool.pop();
 
