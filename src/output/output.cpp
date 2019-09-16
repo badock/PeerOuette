@@ -91,6 +91,8 @@ int _destroy_context_frame_output_thread(StreamingEnvironment* se) {
     free(se->yPlane);
     free(se->uPlane);
     free(se->vPlane);
+
+    return 0;
 }
 
 int frame_output_thread(void *arg) {
