@@ -122,25 +122,25 @@ int video_encode_thread(void *arg) {
         exit(1);
     }
     
+    _init_context_video_encode_thread(se);
+
     while (se->finishing != 1) {
 
         int current_flow_id = se->flow_id;
+        auto frame_data = se->frame_sender_thread_queue.pop();
 
-        if (se->flow_id > 0) {
+        if (current_flow_id != se->flow_id) {
             _destroy_context_video_encode_thread(se);
+            _init_context_video_encode_thread(se);
         }
-        _init_context_video_encode_thread(se);
 
-        while (current_flow_id == se->flow_id) {
-            auto frame_data = se->frame_sender_thread_queue.pop();
-            frame_data->pFrame->pts = image_count;
+        frame_data->pFrame->pts = image_count;
 
-            /* encode the image */
-            encode(se->encodingContext, frame_data->pFrame, pkt, se, image_count);
+        /* encode the image */
+        encode(se->encodingContext, frame_data->pFrame, pkt, se, image_count);
 
-            se->frame_extractor_pframe_pool.push(frame_data);
-            image_count++;
-        }
+        se->frame_extractor_pframe_pool.push(frame_data);
+        image_count++;
     }
 
     /* flush the encoder */
