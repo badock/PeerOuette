@@ -132,6 +132,14 @@ typedef struct _StreamingEnvironment {
 	int client_mouse_y = 0;
 	int client_mouse_is_visible = 0;
 //    int server_port;
+
+    // Fields related to SDL client
+    SDL_Texture *texture;;
+    SwsContext *sws_ctx = NULL;
+    Uint8 *yPlane, *uPlane, *vPlane;
+    size_t yPlaneSz, uvPlaneSz;
+    int uvPitch;
+
 } StreamingEnvironment;
 
 void frame_data_reset_time_points(FrameData* frame_data);
