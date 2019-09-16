@@ -110,7 +110,6 @@ int _init_context_frame_extractor_extractor_thread(StreamingEnvironment* se) {
     log_info("Dump information about file");
     av_dump_format(se->frameExtractorEncodingFormatContext, 0, VIDEO_FILE_PATH, 0);
 
-//	int i;
     se->frameExtractorDecodingContext = nullptr;
 
     // [FFMPEG] Find the first video stream
@@ -128,6 +127,10 @@ int _init_context_frame_extractor_extractor_thread(StreamingEnvironment* se) {
 
     // [FFMPEG] Get a pointer to the codec context for the video stream
     se->frameExtractorDecodingContext = se->frameExtractorEncodingFormatContext->streams[se->videoStream]->codec;
+
+    // Set heigth and width
+    se->width = se->frameExtractorEncodingFormatContext->streams[se->videoStream]->codec->width;
+    se->height = se->frameExtractorEncodingFormatContext->streams[se->videoStream]->codec->height;
 
     AVCodec *pCodec = nullptr;
 

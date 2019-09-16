@@ -113,8 +113,6 @@ int video_encode_thread(void *arg) {
         usleep(30 * 1000);
     }
 
-    _init_context_video_encode_thread(se);
-
     /* encode video frames */
     long image_count = 0;
 
@@ -125,14 +123,24 @@ int video_encode_thread(void *arg) {
     }
     
     while (se->finishing != 1) {
-        auto frame_data = se->frame_sender_thread_queue.pop();
-        frame_data->pFrame->pts = image_count;
 
-        /* encode the image */
-        encode(se->encodingContext, frame_data->pFrame, pkt, se, image_count);
-        
-        se->frame_extractor_pframe_pool.push(frame_data);
-        image_count++;
+        int current_flow_id = se->flow_id;
+
+        if (se->flow_id > 0) {
+            _destroy_context_video_encode_thread(se);
+        }
+        _init_context_video_encode_thread(se);
+
+        while (current_flow_id == se->flow_id) {
+            auto frame_data = se->frame_sender_thread_queue.pop();
+            frame_data->pFrame->pts = image_count;
+
+            /* encode the image */
+            encode(se->encodingContext, frame_data->pFrame, pkt, se, image_count);
+
+            se->frame_extractor_pframe_pool.push(frame_data);
+            image_count++;
+        }
     }
 
     /* flush the encoder */
@@ -228,8 +236,6 @@ int video_decode_thread(void *arg) {
         usleep(30 * 1000);
     }
 
-    _init_context_video_decode_thread(se);
-
     AVPacket *pkt;
     pkt = av_packet_alloc();
     if (!pkt) {
@@ -246,43 +252,53 @@ int video_decode_thread(void *arg) {
 
     while (se->finishing != 1) {
 
-        auto network_packet_data = se->network_simulated_queue.pop();
+        int current_flow_id = se->flow_id;
 
-        pkt->data = network_packet_data->data;
-        pkt->size = network_packet_data->size;
-
-        if (pkt->size > max_packet_size) {
-            max_packet_size = pkt->size;
+        if (se->flow_id > 0) {
+            _destroy_context_video_decode_thread(se);
         }
-        
-        // fields related to frame management
-        pkt->dts = network_packet_data->dts;
-        pkt->pts = network_packet_data->pts;
-        pkt->flags = network_packet_data->flags;
+        _init_context_video_decode_thread(se);
 
-        int ret;
+        while (current_flow_id == se->flow_id) {
 
-        if (pkt) {
-            ret = avcodec_send_packet(se->decodingContext, pkt);
-            if (ret < 0) {
-                log_error("Error while decoding: %s\n", make_av_error_string(ret));
-                continue;
+            auto network_packet_data = se->network_simulated_queue.pop();
+
+            pkt->data = network_packet_data->data;
+            pkt->size = network_packet_data->size;
+
+            if (pkt->size > max_packet_size) {
+                max_packet_size = pkt->size;
             }
+
+            // fields related to frame management
+            pkt->dts = network_packet_data->dts;
+            pkt->pts = network_packet_data->pts;
+            pkt->flags = network_packet_data->flags;
+
+            int ret;
+
+            if (pkt) {
+                ret = avcodec_send_packet(se->decodingContext, pkt);
+                if (ret < 0) {
+                    log_error("Error while decoding: %s\n", make_av_error_string(ret));
+                    continue;
+                }
+            }
+
+            ret = avcodec_receive_frame(se->decodingContext, frame_data->pFrame);
+            if (ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF) {
+                continue;
+            } else if (ret >= 0) {
+                nb_img++;
+
+                se->frame_output_thread_queue.push(frame_data);
+                frame_data = se->frame_extractor_pframe_pool.pop();
+            }
+
+            // free packet
+            free(network_packet_data->data);
+            free(network_packet_data);
         }
-
-        ret = avcodec_receive_frame(se->decodingContext, frame_data->pFrame);
-        if (ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF) {
-            continue;
-        } else if (ret >= 0) {
-            nb_img++;
-
-            se->frame_output_thread_queue.push(frame_data);
-            frame_data = se->frame_extractor_pframe_pool.pop();
-        }
-
-        // free packet
-        free(network_packet_data->data);
-        free(network_packet_data);
     }
 
     _destroy_context_video_decode_thread(se);
