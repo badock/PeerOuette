@@ -170,6 +170,11 @@ public:
             se->client_mouse_y = server_frame.mouse_y();
             se->client_mouse_is_visible = server_frame.mouse_is_visible();
 
+            // update captured image resolution
+            se->width = server_frame.width();
+            se->height = server_frame.height();
+            se->flow_id = server_frame.flow_id();
+
             // Copy data
             new_packet_data->data = new uint8_t[new_packet_data->size];
             memcpy(new_packet_data->data, server_frame.data().data(), new_packet_data->size);

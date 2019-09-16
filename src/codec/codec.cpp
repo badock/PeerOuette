@@ -237,6 +237,8 @@ int video_decode_thread(void *arg) {
         exit(1);
     }
 
+    init_frame_pool(60, se);
+
     auto frame_data = se->frame_extractor_pframe_pool.pop();
 
     int max_packet_size = -1;
@@ -263,6 +265,7 @@ int video_decode_thread(void *arg) {
         if (pkt) {
             ret = avcodec_send_packet(se->decodingContext, pkt);
             if (ret < 0) {
+                log_error("Error while decoding: %s\n", make_av_error_string(ret));
                 continue;
             }
         }
