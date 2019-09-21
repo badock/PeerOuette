@@ -151,8 +151,6 @@ int init_capture(CaptureContext* cc) {
 }
 
 int init_video_mode(CaptureContext* cc) {
-	
-	// ComPtr<ID3D11Texture2D> textures[3];
 
 	HRESULT status;
 	D3D11_TEXTURE2D_DESC texDesc = cc->texDesc;
