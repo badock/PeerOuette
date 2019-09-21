@@ -59,6 +59,8 @@ typedef struct _CaptureContext {
 	D3D_FEATURE_LEVEL       m_featureLevel;
 	IDXGIAdapter1 * adapter;
 
+	ComPtr<ID3D11Texture2D> textures[3];
+
 	unsigned int m_width;
 	unsigned int m_height;
 

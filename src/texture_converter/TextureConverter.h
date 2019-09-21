@@ -45,7 +45,7 @@ public:
 
   void DeInitialize();
 
-  bool Convert(ID3D11Texture2D* texture, TextureList & output);
+  bool Convert(ComPtr<ID3D11Texture2D> texture, TextureList& output);
 
 private:
   struct VS_INPUT

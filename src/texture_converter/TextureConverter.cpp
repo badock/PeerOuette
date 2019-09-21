@@ -274,7 +274,7 @@ void TextureConverter::DeInitialize()
   m_psCopy       = NULL;
 }
 
-bool TextureConverter::Convert(ID3D11Texture2D* texture, TextureList & output)
+bool TextureConverter::Convert(ComPtr<ID3D11Texture2D> texture, TextureList & output)
 {
   unsigned int stride;
   unsigned int offset;
@@ -291,7 +291,7 @@ bool TextureConverter::Convert(ID3D11Texture2D* texture, TextureList & output)
   viewDesc.Texture2D.MostDetailedMip = 0;
   viewDesc.Texture2D.MipLevels = 1;
 
-  result = m_device->CreateShaderResourceView(texture, &viewDesc, &textureView);
+  result = m_device->CreateShaderResourceView(texture.Get(), &viewDesc, &textureView);
   if (FAILED(result))
   {
     DeInitialize();
@@ -351,7 +351,7 @@ bool TextureConverter::Convert(ID3D11Texture2D* texture, TextureList & output)
     if (m_texFormats[i] == DXGI_FORMAT_UNKNOWN)
       continue;
 
-    ID3D11Texture2D* src = m_targetTexture[i];
+    ComPtr<ID3D11Texture2D> src = m_targetTexture[i];
 	  ComPtr<ID3D11Texture2D> dest;
     ComPtr<ID3D11RenderTargetView> view;
     D3D11_TEXTURE2D_DESC srcDesc;
@@ -397,10 +397,9 @@ bool TextureConverter::Convert(ID3D11Texture2D* texture, TextureList & output)
     m_deviceContext->DrawIndexed(m_indexCount, 0, 0);
 
     output.push_back(dest);
-    view.Reset();
   }
 
-  // initialised = 1;
   delete[] renderViews;
+
   return true;
 }
