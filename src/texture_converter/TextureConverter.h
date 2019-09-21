@@ -15,6 +15,8 @@ https://github.com/gnif/LookingGlass/blob/master/host/TextureConverter.h
 #include <DirectXMath.h>
 #include <vector>
 
+using namespace Microsoft::WRL;
+
 typedef std::vector<ID3D11Texture2D*> TextureList;
 
 typedef enum FrameType

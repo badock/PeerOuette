@@ -283,7 +283,8 @@ bool TextureConverter::Convert(ID3D11Texture2D* texture, TextureList & output)
   HRESULT                         result;
   D3D11_TEXTURE2D_DESC            texDesc;
   D3D11_SHADER_RESOURCE_VIEW_DESC viewDesc;
-  ID3D11ShaderResourceView*     textureView;
+  ComPtr<ID3D11ShaderResourceView> textureView;
+  
   texture->GetDesc(&texDesc);
   viewDesc.Format                    = texDesc.Format;
   viewDesc.ViewDimension             = D3D11_SRV_DIMENSION_TEXTURE2D;
@@ -300,7 +301,7 @@ bool TextureConverter::Convert(ID3D11Texture2D* texture, TextureList & output)
   
   ID3D11Buffer             *buffers      [] = { m_vertexBuffer };
   ID3D11SamplerState       *samplerStates[] = { m_samplerState };
-  ID3D11ShaderResourceView *shaderViews  [] = { textureView };
+  ID3D11ShaderResourceView *shaderViews  [] = { textureView.Get() };
   D3D11_VIEWPORT            viewPorts    [] = { {
     0.0f          , 0.0f,
     (float)m_width, (float)m_height,
@@ -337,7 +338,7 @@ bool TextureConverter::Convert(ID3D11Texture2D* texture, TextureList & output)
   m_deviceContext->PSSetShader           (m_psConversion, NULL, 0);
 
   m_deviceContext->DrawIndexed(m_indexCount, 0, 0);
-  textureView = NULL;
+  textureView.Reset();
 
   D3D11_RENDER_TARGET_VIEW_DESC targetDesc;
   ZeroMemory(&targetDesc, sizeof(targetDesc));
@@ -350,10 +351,10 @@ bool TextureConverter::Convert(ID3D11Texture2D* texture, TextureList & output)
     if (m_texFormats[i] == DXGI_FORMAT_UNKNOWN)
       continue;
 
-    ID3D11Texture2D*            src = m_targetTexture[i];
-	  ID3D11Texture2D*			dest;
-    ID3D11RenderTargetView*     view;
-    D3D11_TEXTURE2D_DESC        srcDesc;
+    ID3D11Texture2D* src = m_targetTexture[i];
+	  ID3D11Texture2D* dest;
+    ID3D11RenderTargetView* view;
+    D3D11_TEXTURE2D_DESC srcDesc;
 
     // if there is no scaling
     if (m_scaleFormats[i] == 1)

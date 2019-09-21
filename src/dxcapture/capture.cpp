@@ -151,80 +151,13 @@ int init_capture(CaptureContext* cc) {
 }
 
 int init_video_mode(CaptureContext* cc) {
-
-	if (cc->capture_mode == RGBA) {
-		D3D11_TEXTURE2D_DESC texDesc;
-		ZeroMemory(&texDesc, sizeof(texDesc));
-		texDesc.Width = cc->m_width;
-		texDesc.Height = cc->m_height;
-		texDesc.MipLevels = 1;
-		texDesc.ArraySize = 1;
-		texDesc.SampleDesc.Count = 1;
-		texDesc.SampleDesc.Quality = 0;
-		texDesc.Usage = D3D11_USAGE_STAGING;
-		texDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
-		texDesc.BindFlags = 0;
-		texDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
-		texDesc.MiscFlags = 0;
-
-		HRESULT status = cc->device->CreateTexture2D(&texDesc, NULL, &cc->m_ftexture_rgba);
-		if (FAILED(status))
-		{
-			log_error("Failed to create texture", status);
-			return false;
-		}
-
-		return true;
-
-	} else if (cc->capture_mode == YUV420P) {
-		HRESULT status;
-		D3D11_TEXTURE2D_DESC texDesc;
-
-		ZeroMemory(&texDesc, sizeof(texDesc));
-		texDesc.Width = cc->m_width;
-		texDesc.Height = cc->m_height;
-		texDesc.MipLevels = 1;
-		texDesc.ArraySize = 1;
-		texDesc.SampleDesc.Count = 1;
-		texDesc.SampleDesc.Quality = 0;
-		texDesc.Usage = D3D11_USAGE_STAGING;
-		texDesc.Format = DXGI_FORMAT_R8_UNORM;
-		texDesc.BindFlags = 0;
-		texDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
-		texDesc.MiscFlags = 0;
-
-		status = cc->device->CreateTexture2D(&texDesc, NULL, &cc->m_ftextures_yuv420p[0]);
-		if (FAILED(status))
-		{
-			log_error("Failed to create texture", status);
-			return false;
-		}
-
-		texDesc.Width /= 2;
-		texDesc.Height /= 2;
-
-		status = cc->device->CreateTexture2D(&texDesc, NULL, &cc->m_ftextures_yuv420p[1]);
-		if (FAILED(status))
-		{
-			log_error("Failed to create texture", status);
-			return false;
-		}
-
-		status = cc->device->CreateTexture2D(&texDesc, NULL, &cc->m_ftextures_yuv420p[2]);
-		if (FAILED(status))
-		{
-			log_error("Failed to create texture", status);
-			return false;
-		}
-
-		cc->texture_converter = new TextureConverter();
-		if (!cc->texture_converter->Initialize(cc->context, cc->device, cc->m_width, cc->m_height, FRAME_TYPE_YUV420))
-			return false;
-
-		return true;
-	}
 	
-	return 0;
+	cc->texture_converter = std::make_unique<TextureConverter>();
+	if (!cc->texture_converter->Initialize(cc->context, cc->device, cc->m_width, cc->m_height, FRAME_TYPE_YUV420)) {
+		return false;
+	}
+
+	return true;
 }
 
 int capture_frame(CaptureContext* cc, D3D_FRAME_DATA* Data, FrameData* ffmpeg_frame_data) {
@@ -302,86 +235,64 @@ int done_with_frame(CaptureContext* cc) {
 	return 0;
 }
 
-
-int get_pixels(CaptureContext* cc, FrameData* ffmpeg_frame_data) {
-	D3D11_MAPPED_SUBRESOURCE mapping;
-	ID3D11Texture2D* m_ftexture;
-
-	// Get the device context
-	ComPtr<ID3D11Device> d3dDevice;
-	cc->m_AcquiredDesktopImage->GetDevice(&d3dDevice);
-	ComPtr<ID3D11DeviceContext> d3dContext;
-	d3dDevice->GetImmediateContext(&d3dContext);
-	
-	// First verify that we can map the texture
-	D3D11_TEXTURE2D_DESC desc;
-	cc->m_AcquiredDesktopImage->GetDesc(&desc);
-
-	//ID3D11Texture2D* m_ftexture;
-	D3D11_TEXTURE2D_DESC desc2;
-	desc2.Width = desc.Width;
-	desc2.Height = desc.Height;
-	desc2.MipLevels = desc.MipLevels;
-	desc2.ArraySize = desc.ArraySize;
-	desc2.Format = desc.Format;
-	desc2.SampleDesc = desc.SampleDesc;
-	desc2.Usage = D3D11_USAGE_STAGING;
-	desc2.BindFlags = 0;
-	desc2.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
-	desc2.MiscFlags = 0;
-	HRESULT hr = d3dDevice->CreateTexture2D(&desc2, nullptr, &m_ftexture);
-	if (FAILED(hr)) {
-		log_error("Failed to create staging texture");
-		throw myexception;
-	}
-
-
-	//cc->context->CopyResource(cc->m_AcquiredDesktopImage, m_ftexture);
-	cc->context->CopyResource(m_ftexture, cc->m_AcquiredDesktopImage);
-
-
-	HRESULT status;
-	status = cc->context->Map(m_ftexture, 0, D3D11_MAP_READ, 0, &mapping);
-	if (FAILED(status))
-	{
-		// REGARDER ICI!!!!!!
-		return -1;
-	}
-
-	uint8_t* first_value = (uint8_t *) mapping.pData;
-	int b = *(first_value + (mapping.RowPitch * 5));
-	int g = *(first_value + (mapping.RowPitch * 5) + sizeof(uint8_t));
-	int r = *(first_value + (mapping.RowPitch * 5) + 2 * sizeof(uint8_t));
-	int a = *(first_value + (mapping.RowPitch * 5) + 3 * sizeof(uint8_t));
-
-	//log_info("RGBA(%i, %i, %i, %i)", r, g, b, a);
-
-	return 1;
-}
-
 int get_pixels_yuv420p(CaptureContext* cc, FrameData* ffmpeg_frame_data) {
 
-	int               result;
+	int result;
 	TextureList planes;
 	if (!cc->texture_converter->Convert(cc->m_AcquiredDesktopImage, planes))
 		return -1;
 
-	for (int i = 0; i < 3; ++i)
-	{
-		ID3D11Texture2D* t = planes.at(i);
-		cc->context->CopyResource(cc->m_ftextures_yuv420p[i], t);
+	ComPtr<ID3D11Texture2D> textures[3];
+
+	HRESULT status;
+	D3D11_TEXTURE2D_DESC texDesc = cc->texDesc;
+
+	ZeroMemory(&texDesc, sizeof(texDesc));
+	texDesc.Width = cc->m_width;
+	texDesc.Height = cc->m_height;
+	texDesc.MipLevels = 1;
+	texDesc.ArraySize = 1;
+	texDesc.SampleDesc.Count = 1;
+	texDesc.SampleDesc.Quality = 0;
+	texDesc.Usage = D3D11_USAGE_STAGING;
+	texDesc.Format = DXGI_FORMAT_R8_UNORM;
+	texDesc.BindFlags = 0;
+	texDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+	texDesc.MiscFlags = 0;
+
+	bool texDescSizeReduce = false;
+
+	for (int i = 0; i < 3; ++i) {
+		status = cc->device->CreateTexture2D(&texDesc, NULL, &textures[i]);
+		if (FAILED(status)) {
+			log_error("Failed to create texture", status);
+			return false;
+		}
+
+		if (!texDescSizeReduce) {
+			texDesc.Width /= 2;
+			texDesc.Height /= 2;
+
+			texDescSizeReduce = true;
+		}
 	}
 
-	for (int i = 0; i < 3; ++i)
-	{
+	for (int i = 0; i < 3; ++i) {
+		ID3D11Texture2D* t = planes.at(i);
+		cc->context->CopyResource(textures[i].Get(), t);
+	}
+
+	for (int i = 0; i < 3; ++i)	{
 		HRESULT                  status;
 		D3D11_MAPPED_SUBRESOURCE mapping;
 		D3D11_TEXTURE2D_DESC     desc;
-		cc->m_ftextures_yuv420p[i]->GetDesc(&desc);
-		status = cc->context->Map(cc->m_ftextures_yuv420p[i], 0, D3D11_MAP_READ, 0, &mapping);
 
-		if (FAILED(status))
-		{
+		ID3D11Texture2D* tex = textures[i].Get();
+		tex->GetDesc(&desc);
+		
+		status = cc->context->Map(tex, 0, D3D11_MAP_READ, 0, &mapping);
+
+		if (FAILED(status)) {
 			log_error("Failed to map the texture %i", status);
 			//DeInitialize();
 			return -1;
@@ -392,7 +303,7 @@ int get_pixels_yuv420p(CaptureContext* cc, FrameData* ffmpeg_frame_data) {
 		ffmpeg_frame_data->pFrame->data[i] = (uint8_t *) mapping.pData;
 		ffmpeg_frame_data->pFrame->linesize[i] = mapping.RowPitch;
 
-		cc->context->Unmap(cc->m_ftextures_yuv420p[i], 0);
+		cc->context->Unmap(tex, 0);
 	}
 
 	ffmpeg_frame_data->pitch = cc->m_width;

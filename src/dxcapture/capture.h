@@ -15,6 +15,8 @@
 
 #define NUMVERTICES 6
 
+using namespace Microsoft::WRL;
+
 enum CaptureMode {
 	RGBA,
 	YUV420P
@@ -47,9 +49,6 @@ typedef struct _CaptureContext {
 	IDXGIDevice* dxgi_device;
 	IDXGIOutputDuplication* m_dup;
 	ID3D11Texture2D* m_AcquiredDesktopImage;
-	//ID3D11Texture2D* m_SharedSurf;
-	
-	//ID3D11Texture2D* m_texture[3];
 
 	BYTE* m_MetaDataBuffer; // INPUT
 	UINT m_MetaDataSize; // INPUT
@@ -63,14 +62,13 @@ typedef struct _CaptureContext {
 	unsigned int m_width;
 	unsigned int m_height;
 
-	TextureConverter* texture_converter;
+	std::unique_ptr<TextureConverter> texture_converter;
+	// ComPtr<ID3D11Texture2D> m_ftextures_yuv420p[3];
 
-
-	ID3D11Texture2D* m_ftexture_rgba;
-	ID3D11Texture2D* m_ftextures_yuv420p[3];
-	CaptureMode capture_mode;
-	
+	CaptureMode capture_mode;	
 	StreamingEnvironment* se;
+
+	D3D11_TEXTURE2D_DESC texDesc;
 } CaptureContext;
 
 int init_directx(CaptureContext* cc);
