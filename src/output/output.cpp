@@ -102,83 +102,78 @@ int frame_output_thread(void *arg) {
         usleep(50 * 1000);
     }
 
+    _init_context_frame_output_thread(se);
     int i = 0;
+
     while(se->finishing != 1) {
 
         int current_flow_id = se->flow_id;
+        auto frame_data = (FrameData *) se->frame_output_thread_queue.pop();
 
-        if (se->flow_id > 0) {
+        if (current_flow_id != se->flow_id) {
             _destroy_context_frame_output_thread(se);
+            _init_context_frame_output_thread(se);
         }
 
-        _init_context_frame_output_thread(se);
+        frame_data->sdl_received_time_point = std::chrono::system_clock::now();
 
-        while (current_flow_id == se->flow_id) {
+        // [SDL] Create an AV Picture
+        AVPicture pict;
+        pict.data[0] = se->yPlane;
+        pict.data[1] = se->uPlane;
+        pict.data[2] = se->vPlane;
+        pict.linesize[0] = se->width;
+        pict.linesize[1] = se->uvPitch;
+        pict.linesize[2] = se->uvPitch;
 
+        // Convert the image into YUV format that SDL uses
+        sws_scale(se->sws_ctx,
+                  (uint8_t const *const *) frame_data->pFrame->data,
+                  frame_data->pFrame->linesize,
+                  0,
+                  se->height,
+                  pict.data,
+                  pict.linesize);
+        frame_data->sdl_avframe_rescale_time_point = std::chrono::system_clock::now();
 
+        // [SDL] update SDL overlay
+        SDL_UpdateYUVTexture(
+                se->texture,
+                nullptr,
+                se->yPlane,
+                se->width,
+                se->uPlane,
+                se->uvPitch,
+                se->vPlane,
+                se->uvPitch
+        );
+        SDL_RenderClear(se->renderer);
+        SDL_RenderCopy(se->renderer, se->texture, nullptr, nullptr);
 
-            //log_info("frame_output_thread: %i elements in queue", simple_queue_length(se->frame_output_thread_queue));
-            auto frame_data = (FrameData *) se->frame_output_thread_queue.pop();
-            frame_data->sdl_received_time_point = std::chrono::system_clock::now();
+        if (!se->cursor_disabled) {
+            float ratio_height = 1.0 * se->client_height / se->height;
+            float ratio_width = 1.0 * se->client_width / se->width;
 
-            // [SDL] Create an AV Picture
-            AVPicture pict;
-            pict.data[0] = se->yPlane;
-            pict.data[1] = se->uPlane;
-            pict.data[2] = se->vPlane;
-            pict.linesize[0] = se->width;
-            pict.linesize[1] = se->uvPitch;
-            pict.linesize[2] = se->uvPitch;
+            SDL_Rect dest;
+            dest.x = int(se->client_mouse_x * ratio_width);
+            dest.y = int(se->client_mouse_y * ratio_height);
+            dest.w = 20;
+            dest.h = 20;
 
-            // Convert the image into YUV format that SDL uses
-            sws_scale(se->sws_ctx,
-                      (uint8_t const *const *) frame_data->pFrame->data,
-                      frame_data->pFrame->linesize,
-                      0,
-                      se->height,
-                      pict.data,
-                      pict.linesize);
-            frame_data->sdl_avframe_rescale_time_point = std::chrono::system_clock::now();
+            SDL_RenderCopy(se->renderer, se->mouse_cursor_icon_texture, nullptr, &dest);
+        }
+        SDL_RenderPresent(se->renderer);
+        frame_data->sdl_displayed_time_point = std::chrono::system_clock::now();
 
-            // [SDL] update SDL overlay
-            SDL_UpdateYUVTexture(
-                    se->texture,
-                    nullptr,
-                    se->yPlane,
-                    se->width,
-                    se->uPlane,
-                    se->uvPitch,
-                    se->vPlane,
-                    se->uvPitch
-            );
-            SDL_RenderClear(se->renderer);
-            SDL_RenderCopy(se->renderer, se->texture, nullptr, nullptr);
+        i++;
 
-            if (!se->cursor_disabled) {
-                float ratio_height = 1.0 * se->client_height / se->height;
-                float ratio_width = 1.0 * se->client_width / se->width;
+        frame_data_debug(frame_data);
+        se->frame_extractor_pframe_pool.push(frame_data);
 
-                SDL_Rect dest;
-                dest.x = int(se->client_mouse_x * ratio_width);
-                dest.y = int(se->client_mouse_y * ratio_height);
-                dest.w = 20;
-                dest.h = 20;
-
-                SDL_RenderCopy(se->renderer, se->mouse_cursor_icon_texture, nullptr, &dest);
-            }
-            SDL_RenderPresent(se->renderer);
-            frame_data->sdl_displayed_time_point = std::chrono::system_clock::now();
-
-            i++;
-
-            frame_data_debug(frame_data);
-            se->frame_extractor_pframe_pool.push(frame_data);
-
-            // Put processed frames back in the extractor pool
-            while (se->frame_output_thread_queue.size() > 0) {
-                auto *processed_frame_data = se->frame_output_thread_queue.pop();
-                se->frame_extractor_pframe_pool.push(processed_frame_data);
-            }
+        // Put processed frames back in the extractor pool
+        while (se->frame_output_thread_queue.size() > 0) {
+            auto *processed_frame_data = se->frame_output_thread_queue.pop();
+            se->frame_extractor_pframe_pool.push(processed_frame_data);
         }
     }
 

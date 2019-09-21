@@ -250,55 +250,53 @@ int video_decode_thread(void *arg) {
     int max_packet_size = -1;
     long nb_img = 0;
 
+    _init_context_video_decode_thread(se);
+
     while (se->finishing != 1) {
 
         int current_flow_id = se->flow_id;
+        auto network_packet_data = se->network_simulated_queue.pop();
 
-        if (se->flow_id > 0) {
+        if (current_flow_id != se->flow_id) {
             _destroy_context_video_decode_thread(se);
+            _init_context_video_decode_thread(se);
         }
-        _init_context_video_decode_thread(se);
 
-        while (current_flow_id == se->flow_id) {
+        pkt->data = network_packet_data->data;
+        pkt->size = network_packet_data->size;
 
-            auto network_packet_data = se->network_simulated_queue.pop();
+        if (pkt->size > max_packet_size) {
+            max_packet_size = pkt->size;
+        }
 
-            pkt->data = network_packet_data->data;
-            pkt->size = network_packet_data->size;
+        // fields related to frame management
+        pkt->dts = network_packet_data->dts;
+        pkt->pts = network_packet_data->pts;
+        pkt->flags = network_packet_data->flags;
 
-            if (pkt->size > max_packet_size) {
-                max_packet_size = pkt->size;
-            }
+        int ret;
 
-            // fields related to frame management
-            pkt->dts = network_packet_data->dts;
-            pkt->pts = network_packet_data->pts;
-            pkt->flags = network_packet_data->flags;
-
-            int ret;
-
-            if (pkt) {
-                ret = avcodec_send_packet(se->decodingContext, pkt);
-                if (ret < 0) {
-                    log_error("Error while decoding: %s\n", make_av_error_string(ret));
-                    continue;
-                }
-            }
-
-            ret = avcodec_receive_frame(se->decodingContext, frame_data->pFrame);
-            if (ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF) {
+        if (pkt) {
+            ret = avcodec_send_packet(se->decodingContext, pkt);
+            if (ret < 0) {
+                log_error("Error while decoding: %s\n", make_av_error_string(ret));
                 continue;
-            } else if (ret >= 0) {
-                nb_img++;
-
-                se->frame_output_thread_queue.push(frame_data);
-                frame_data = se->frame_extractor_pframe_pool.pop();
             }
-
-            // free packet
-            free(network_packet_data->data);
-            free(network_packet_data);
         }
+
+        ret = avcodec_receive_frame(se->decodingContext, frame_data->pFrame);
+        if (ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF) {
+            continue;
+        } else if (ret >= 0) {
+            nb_img++;
+
+            se->frame_output_thread_queue.push(frame_data);
+            frame_data = se->frame_extractor_pframe_pool.pop();
+        }
+
+        // free packet
+        free(network_packet_data->data);
+        free(network_packet_data);
     }
 
     _destroy_context_video_decode_thread(se);
