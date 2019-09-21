@@ -56,7 +56,7 @@ typedef struct packet_data {
 // #define WIDTH 1920
 // #define HEIGHT 1080
 #define BITRATE 5 * 1024 * 1024
-#define CRF "14"
+#define CRF "24"
 #define GOP_SIZE 30 * 60
 
 #endif //GAMECLIENTSDL_CODEC_H
