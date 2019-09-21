@@ -112,7 +112,6 @@ public:
             stream->Write(subPacket);
 
             free(mouse_info_ptr);
-
             free(pkt_d->data);
             free(pkt_d);
         }
