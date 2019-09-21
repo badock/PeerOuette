@@ -278,8 +278,8 @@ int get_pixels_yuv420p(CaptureContext* cc, FrameData* ffmpeg_frame_data) {
 	}
 
 	for (int i = 0; i < 3; ++i) {
-		ID3D11Texture2D* t = planes.at(i);
-		cc->context->CopyResource(textures[i].Get(), t);
+		ComPtr<ID3D11Texture2D> t = planes.at(i);
+		cc->context->CopyResource(textures[i].Get(), t.Get());
 	}
 
 	for (int i = 0; i < 3; ++i)	{

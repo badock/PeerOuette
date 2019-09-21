@@ -17,7 +17,7 @@ https://github.com/gnif/LookingGlass/blob/master/host/TextureConverter.h
 
 using namespace Microsoft::WRL;
 
-typedef std::vector<ID3D11Texture2D*> TextureList;
+typedef std::vector<ComPtr<ID3D11Texture2D>> TextureList;
 
 typedef enum FrameType
 {

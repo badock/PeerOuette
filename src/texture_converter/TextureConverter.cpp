@@ -280,22 +280,22 @@ bool TextureConverter::Convert(ID3D11Texture2D* texture, TextureList & output)
   unsigned int offset;
   float color[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
 
-  HRESULT                         result;
-  D3D11_TEXTURE2D_DESC            texDesc;
+  HRESULT result;
+  D3D11_TEXTURE2D_DESC texDesc;
   D3D11_SHADER_RESOURCE_VIEW_DESC viewDesc;
   ComPtr<ID3D11ShaderResourceView> textureView;
   
   texture->GetDesc(&texDesc);
-  viewDesc.Format                    = texDesc.Format;
-  viewDesc.ViewDimension             = D3D11_SRV_DIMENSION_TEXTURE2D;
+  viewDesc.Format = texDesc.Format;
+  viewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
   viewDesc.Texture2D.MostDetailedMip = 0;
-  viewDesc.Texture2D.MipLevels       = 1;
+  viewDesc.Texture2D.MipLevels = 1;
 
   result = m_device->CreateShaderResourceView(texture, &viewDesc, &textureView);
   if (FAILED(result))
   {
     DeInitialize();
-	log_error("Failed to create shader resource view");
+	  log_error("Failed to create shader resource view");
     return false;
   }
   
@@ -352,8 +352,8 @@ bool TextureConverter::Convert(ID3D11Texture2D* texture, TextureList & output)
       continue;
 
     ID3D11Texture2D* src = m_targetTexture[i];
-	  ID3D11Texture2D* dest;
-    ID3D11RenderTargetView* view;
+	  ComPtr<ID3D11Texture2D> dest;
+    ComPtr<ID3D11RenderTargetView> view;
     D3D11_TEXTURE2D_DESC srcDesc;
 
     // if there is no scaling
@@ -368,33 +368,27 @@ bool TextureConverter::Convert(ID3D11Texture2D* texture, TextureList & output)
     viewPorts[0].Height = srcDesc.Height / m_scaleFormats[i];
     srcDesc.Width       = (UINT)viewPorts[0].Width;
     srcDesc.Height      = (UINT)viewPorts[0].Height;
-	  dest = texture;
-	
-	if (!initialised) {
-	  result = m_device->CreateTexture2D(&srcDesc, NULL, &m_destTexture[i]);
 
-	  if (FAILED(result))
-	  {
-		delete[] renderViews;
-		DeInitialize();
-		log_error("Failed to create the target texture");
-		return false;
-	  }
-	}
-	dest = m_destTexture[i];
+    result = m_device->CreateTexture2D(&srcDesc, NULL, &dest);
 
-	targetDesc.Format = srcDesc.Format;
-	result = m_device->CreateRenderTargetView(dest, &targetDesc, &view);
-	if (FAILED(result))
-	{
-		delete[] renderViews;
-		DeInitialize();
-		log_error("Failed to create the target view");
-		return false;
-	}
-	
+    if (FAILED(result)) {
+      delete[] renderViews;
+      DeInitialize();
+      log_error("Failed to create the target texture");
+      return false;
+    }
 
-    renderViews[0] = view;
+    targetDesc.Format = srcDesc.Format;
+    result = m_device->CreateRenderTargetView(dest.Get(), &targetDesc, &view);
+    if (FAILED(result))
+    {
+      delete[] renderViews;
+      DeInitialize();
+      log_error("Failed to create the target view");
+      return false;
+    }	
+
+    renderViews[0] = view.Get();
     shaderViews[0] = m_shaderView[i];
 
     m_deviceContext->OMSetRenderTargets(1, renderViews, NULL);
@@ -403,10 +397,10 @@ bool TextureConverter::Convert(ID3D11Texture2D* texture, TextureList & output)
     m_deviceContext->DrawIndexed(m_indexCount, 0, 0);
 
     output.push_back(dest);
-    view = NULL;
+    view.Reset();
   }
 
-  initialised = 1;
+  // initialised = 1;
   delete[] renderViews;
   return true;
 }
